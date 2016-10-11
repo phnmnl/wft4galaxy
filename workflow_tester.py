@@ -44,25 +44,25 @@ class WorkflowTestSuite():
         self._workflows = {}
         self._workflows_tests = []
         self._galaxy_instance = None
-        self._galaxy_workflows = None
+        self._galaxy_workflow_client = None
         #
         if galaxy_url:
             self._galaxy_url = galaxy_url
-        elif os.environ.has_key(ENV_KEY_GALAXY_URL):
-            self._galaxy_url = os.environ[ENV_KEY_GALAXY_URL]
+        elif _os.environ.has_key(ENV_KEY_GALAXY_URL):
+            self._galaxy_url = _os.environ[ENV_KEY_GALAXY_URL]
         else:
             raise ValueError("GALAXY URL not defined!!!")
         #
         if galaxy_api_key:
             self._galaxy_api_key = galaxy_api_key
-        elif os.environ.has_key(ENV_KEY_GALAXY_API_KEY):
-            self._galaxy_api_key = os.environ[ENV_KEY_GALAXY_API_KEY]
+        elif _os.environ.has_key(ENV_KEY_GALAXY_API_KEY):
+            self._galaxy_api_key = _os.environ[ENV_KEY_GALAXY_API_KEY]
         else:
             raise ValueError("GALAXY API KEY not defined!!!")
 
         # initialize the galaxy instance
-        self._galaxy_instance = GalaxyInstance(self._galaxy_url, self._galaxy_api_key)
-        self._galaxy_workflows = WorkflowClient(self._galaxy_instance.gi)
+        self._galaxy_instance = _GalaxyInstance(self._galaxy_url, self._galaxy_api_key)
+        self._galaxy_workflow_client = _WorkflowClient(self._galaxy_instance.gi)
 
     @property
     def galaxy_url(self):
@@ -107,12 +107,12 @@ class WorkflowTestSuite():
         return runner
 
     def cleanup(self):
-        logger.debug("Cleaning save histories ...")
+        _logger.debug("Cleaning save histories ...")
         hslist = self.galaxy_instance.histories.list()
         for history in [h for h in hslist if DEFAULT_HISTORY_NAME_PREFIX in h.name]:
             self.galaxy_instance.histories.delete(history.id)
 
-        logger.debug("Cleaning workflow library ...")
+        _logger.debug("Cleaning workflow library ...")
         wflist = self.galaxy_instance.workflows.list()
         workflows = [w for w in wflist if DEFAULT_WORKFLOW_NAME_PREFIX in w.name]
         for wf in workflows:
@@ -120,7 +120,7 @@ class WorkflowTestSuite():
 
     def _load_work_flow(self, workflow_filename, workflow_name=None):
         with open(workflow_filename) as f:
-            wf_json = json.load(f)
+            wf_json = _json_load(f)
         if not self._workflows.has_key(wf_json["name"]):
             wf_name = wf_json["name"]
             wf_json["name"] = workflow_name if workflow_name else "_".join([DEFAULT_WORKFLOW_NAME_PREFIX, wf_name])
