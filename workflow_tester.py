@@ -215,22 +215,23 @@ class WorkflowTestRunner(_unittest.TestCase):
             test_case.cleanup()
 
 
-class WorkflowTestCase():
-    def __init__(self, workflow, test_id, input_map, outputs, expected_output_map, output_history,
-                 missing_tools, output_folder=DEFAULT_OUTPUT_FOLDER):
-        self.workflow = workflow
+class WorkflowTestResult():
+    def __init__(self, test_id, workflow, input_map, outputs, output_history, expected_output_map,
+                 missing_tools, results, output_file_map, output_folder=DEFAULT_OUTPUT_FOLDER):
         self.test_id = test_id
+        self.workflow = workflow
         self.inputs = input_map
         self.outputs = outputs
         self.output_history = output_history
         self.expected_output_map = expected_output_map
         self.output_folder = output_folder
         self.missing_tools = missing_tools
-        self.output_file_map = {}
-        self.results = None
+        self.output_file_map = output_file_map
+        self.results = results
 
-        if not os.path.isdir(output_folder):
-            os.makedirs(output_folder)
+        self.failed_outputs = {out[0]: out[1]
+                               for out in self.results.items()
+                               if not out[1]}
 
     def __str__(self):
         return "Test {0}: workflow {1}, intputs=[{2}], outputs=[{3}]" \
@@ -242,36 +243,17 @@ class WorkflowTestCase():
     def __repr__(self):
         return self.__str__()
 
+    def failed(self):
+        return len(self.failed_outputs) > 0
+
+    def passed(self):
+        return not self.failed()
+
     def check_output(self, output, force=False):
-        logger.debug("Checking OUTPUT '%s' ...", output.name)
-        if not self.results or not self.results.has_key(output.name) or force:
-            output_filename = os.path.join(self.output_folder, "output_" + str(self.outputs.index(output)))
-            with open(output_filename, "w") as out_file:
-                output.download(out_file)
-                self.output_file_map[output.name] = {"dataset": output, "filename": output_filename}
-                logger.debug("Downloaded output {0}: dataset_id '{1}', filename '{2}'".format(output.name, output.id,
-                                                                                              output_filename))
-            config = self.expected_output_map[output.name]
-            comparator = _load_comparator(config["comparator"])
-            result = comparator(config["file"], output_filename)
-            logger.debug("Output '{0}' {1} the expected: dataset '{2}', actual-output '{3}', expected-output '{4}'"
-                         .format(output.name, "is equal to" if result else "differs from",
-                                 output.id, output_filename, config["file"]))
-            self.results[output.name] = result
-        logger.debug("Checking OUTPUT '%s': DONE", output.name)
         return self.results[output.name]
 
     def check_outputs(self, force=False):
-        logger.info("Checking test output: ...")
-        if not self.results or force:
-            self.results = {}
-            for output in self.outputs:
-                self.results[output.name] = self.check_output(output)
-        logger.info("Checking test output: DONE")
         return self.results
-
-    def clean_up(self):
-        self.output_history
 
 
 def load_configuration(filename=DEFAULT_CONFIG_FILENAME):
