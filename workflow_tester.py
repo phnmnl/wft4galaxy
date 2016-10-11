@@ -89,6 +89,17 @@ class WorkflowTestSuite():
             results.append(test_case)
         return results
 
+    def run_test_suite(self, workflow_tests_config):
+        suite = _unittest.TestSuite()
+        for test_config in workflow_tests_config["workflows"].values():
+            workflow = self.create_test_runner(test_config)
+            suite.addTest(workflow)
+        _RUNNER = _unittest.TextTestRunner(verbosity=2)
+        _RUNNER.run((suite))
+        # cleanup
+        if not workflow_tests_config["disable_cleanup"]:
+            self.cleanup()
+
     def create_test_runner(self, workflow_test_config):
         workflow = self._load_work_flow(workflow_test_config["file"])
         runner = WorkflowTestRunner(self.galaxy_instance, workflow, workflow_test_config)
@@ -124,8 +135,9 @@ class WorkflowTestSuite():
         self._galaxy_workflows.delete_workflow(workflow_id)
 
 
-class WorkflowTestRunner():
+class WorkflowTestRunner(_unittest.TestCase):
     def __init__(self, galaxy_instance, galaxy_workflow, workflow_test_config):
+
         self._galaxy_instance = galaxy_instance
         self._galaxy_workflow = galaxy_workflow
         self._workflow_test_config = workflow_test_config
@@ -367,12 +379,12 @@ def main(clean_up=True):
 
     # log the current configuration
     _logger.debug("Configuration: %r", config)
-    test_suite = WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
-    test_suite.run_tests(config)
-    if clean_up:
-        test_suite.cleanup()
 
-    return (config, test_suite)
+    # create and run the configured test suite
+    test_suite = WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
+    test_suite.run_test_suite(config)
+
+    return (test_suite, config)
 
 
 if __name__ == '__main__':
