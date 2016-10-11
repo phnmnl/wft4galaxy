@@ -143,6 +143,10 @@ class WorkflowTestRunner(_unittest.TestCase):
         self._workflow_test_config = workflow_test_config
         self._galaxy_history_client = HistoryClient(galaxy_instance.gi)
         self._test_cases = {}
+    def _get_test_uuid(self, update=False):
+        if not self._test_uuid or update:
+            self._test_uuid = str(_uuid1())
+        return self._test_uuid
 
     def find_missing_tools(self):
         _logger.debug("Checking required tools ...")
@@ -159,7 +163,11 @@ class WorkflowTestRunner(_unittest.TestCase):
         _logger.debug("Checking required tools: DONE")
         return missing_tools
 
-    def run_test(self, input_map=None, expected_output_map=None, output_folder=DEFAULT_OUTPUT_FOLDER):
+    def run_test(self, base_path=None, input_map=None, expected_output_map=None,
+                 output_folder=DEFAULT_OUTPUT_FOLDER, assertions=None, cleanup=None):
+
+        # set basepath
+        base_path = self._base_path if not base_path else base_path
 
         # check input_map
         if not input_map:
