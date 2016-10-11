@@ -320,9 +320,13 @@ def _load_comparator(fully_qualified_comparator_function):
 
 
 def _parse_cli_options():
-    parser = optparse.OptionParser()
+    parser = _optparse.OptionParser()
     parser.add_option('--server', help='Galaxy server URL')
     parser.add_option('--api-key', help='Galaxy server API KEY')
+    parser.add_option('--enable-logger', help='Enable log messages', action='store_true')
+    parser.add_option('--debug', help='Enable debug mode', action='store_true')
+    parser.add_option('--disable-cleanup', help='Disable cleanup', action='store_false')
+    parser.add_option('--disable-assertions', help='Disable assertions', action='store_false')
     parser.add_option('-o', '--output', help='absolute path of the folder to download workflow outputs')
     parser.add_option('-f', '--file', default=DEFAULT_CONFIG_FILENAME, help='YAML configuration file of workflow tests')
     (options, args) = parser.parse_args()
@@ -345,6 +349,24 @@ def main(clean_up=True):
         if options.output \
         else config["output_folder"] if config.has_key("output_folder") else DEFAULT_OUTPUT_FOLDER
 
+    config["enable_logger"] = options.enable_logger \
+        if options.enable_logger \
+        else config["enable_logger"] if config.has_key("enable_logger") else False
+
+    config["disable_cleanup"] = options.disable_cleanup
+    config["disable_assertions"] = options.disable_assertions
+
+    for test_config in config["workflows"].values():
+        test_config["disable_cleanup"] = config["disable_cleanup"]
+        test_config["disable_assertions"] = config["disable_assertions"]
+
+    # enable the logger with the proper detail level
+    if config["enable_logger"]:
+        config["logger_level"] = _logging.DEBUG if options.debug else _logging.INFO
+        _logger.setLevel(config["logger_level"])
+
+    # log the current configuration
+    _logger.debug("Configuration: %r", config)
     test_suite = WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
     test_suite.run_tests(config)
     if clean_up:
