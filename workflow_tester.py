@@ -144,19 +144,19 @@ class WorkflowTestRunner(_unittest.TestCase):
         self._galaxy_history_client = HistoryClient(galaxy_instance.gi)
         self._test_cases = {}
 
-    def check_required_tools(self):
-        logger.debug("Checking required tools ...")
+    def find_missing_tools(self):
+        _logger.debug("Checking required tools ...")
         available_tools = self._galaxy_instance.tools.list()
         missing_tools = []
         for order, step in self._galaxy_workflow.steps.items():
             if step.tool_id and len(
                     filter(lambda t: t.id == step.tool_id and t.version == step.tool_version, available_tools)) == 0:
                 missing_tools.append((step.tool_id, step.tool_version))
-        logger.debug("Missing tools: {0}".format("None"
-                                                 if len(missing_tools) == 0
-                                                 else ", ".join(["{0} (version {1})"
-                                                                .format(x[0], x[1]) for x in missing_tools])))
-        logger.debug("Checking required tools: DONE")
+        _logger.debug("Missing tools: {0}".format("None"
+                                                  if len(missing_tools) == 0
+                                                  else ", ".join(["{0} (version {1})"
+                                                                 .format(x[0], x[1]) for x in missing_tools])))
+        _logger.debug("Checking required tools: DONE")
         return missing_tools
 
     def run_test(self, input_map=None, expected_output_map=None, output_folder=DEFAULT_OUTPUT_FOLDER):
