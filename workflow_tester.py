@@ -153,6 +153,17 @@ class WorkflowTestRunner(_unittest.TestCase):
 
         setattr(self, "test_" + workflow_test_config["name"], self.run_test)
         super(WorkflowTestRunner, self).__init__("test_" + workflow_test_config["name"])
+
+    def __str__(self):
+        return "Workflow Test '{0}': testId={1}, workflow='{2}', input=[{3}], output=[{4}]" \
+            .format(self._workflow_test_config["name"],
+                    self._get_test_uuid(),
+                    self._workflow_test_config["name"],
+                    ",".join(self._workflow_test_config[
+                                 "inputs"]),
+                    ",".join(self._workflow_test_config[
+                                 "outputs"]))
+
     def _get_test_uuid(self, update=False):
         if not self._test_uuid or update:
             self._test_uuid = str(_uuid1())
