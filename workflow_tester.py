@@ -126,8 +126,8 @@ class WorkflowTestSuite():
             wf_json = _json_load(f)
         if not self._workflows.has_key(wf_json["name"]):
             wf_name = wf_json["name"]
-            wf_json["name"] = workflow_name if workflow_name else "_".join([DEFAULT_WORKFLOW_NAME_PREFIX, wf_name])
-            wf_info = self._galaxy_workflows.import_workflow_json(wf_json)
+            wf_json["name"] = DEFAULT_WORKFLOW_NAME_PREFIX + (workflow_name if workflow_name else wf_name)
+            wf_info = self._galaxy_workflow_client.import_workflow_json(wf_json)
             workflow = self.galaxy_instance.workflows.get(wf_info["id"])
             self._workflows[wf_name] = workflow
         else:
@@ -135,7 +135,7 @@ class WorkflowTestSuite():
         return workflow
 
     def _unload_workflow(self, workflow_id):
-        self._galaxy_workflows.delete_workflow(workflow_id)
+        self._galaxy_workflow_client.delete_workflow(workflow_id)
 
 
 class WorkflowTestRunner(_unittest.TestCase):
@@ -168,6 +168,14 @@ class WorkflowTestRunner(_unittest.TestCase):
         if not self._test_uuid or update:
             self._test_uuid = str(_uuid1())
         return self._test_uuid
+
+    @property
+    def worflow_test_name(self):
+        return self._workflow_test_config["name"]
+
+    @property
+    def workflow_name(self):
+        return self._galaxy_workflow.name
 
     def find_missing_tools(self):
         _logger.debug("Checking required tools ...")
@@ -298,8 +306,9 @@ class WorkflowTestRunner(_unittest.TestCase):
         return (results, output_file_map)
 
     def cleanup(self):
-        for test_id, test_case in self._test_cases.items():
-            test_case.cleanup()
+        for test_uuid, test_result in self._test_cases.items():
+            if test_result.output_history:
+                self._galaxy_instance.histories.delete(test_result.output_history.id)
 
 
 class WorkflowTestResult():
@@ -348,9 +357,10 @@ def load_configuration(filename=DEFAULT_CONFIG_FILENAME):
     if _os.path.exists(filename):
         base_path = _os.path.dirname(_os.path.abspath(filename))
         with open(filename, "r") as config_file:
-            workflows_conf = yaml.load(config_file)
+            workflows_conf = _yaml_load(config_file)
             config["galaxy_url"] = workflows_conf["galaxy_url"]
             config["galaxy_api_key"] = workflows_conf["galaxy_api_key"]
+            config["enable_logger"] = workflows_conf["enable_logger"]
             config["workflows"] = {}
             for workflow in workflows_conf.get("workflows").items():
                 w = DEFAULT_WORKFLOW_CONFIG.copy()
@@ -366,6 +376,7 @@ def load_configuration(filename=DEFAULT_CONFIG_FILENAME):
                 config["workflows"][w["name"]] = w
     else:
         config["workflows"] = {"unknown": DEFAULT_WORKFLOW_CONFIG.copy()}
+    config["output_folder"] = DEFAULT_OUTPUT_FOLDER
     return config
 
 
@@ -417,9 +428,9 @@ def _parse_cli_options():
     return (options, args)
 
 
-def main(clean_up=True):
+def run_tests(config=None):
     options, args = _parse_cli_options()
-    config = load_configuration(options.file)
+    config = load_configuration(options.file) if not config else config
 
     config["galaxy_url"] = options.server \
         if options.server \
@@ -460,4 +471,4 @@ def main(clean_up=True):
 
 
 if __name__ == '__main__':
-    main()
+    run_tests()
