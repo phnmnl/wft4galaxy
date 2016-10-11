@@ -101,7 +101,10 @@ class WorkflowTestSuite():
             self.cleanup()
 
     def create_test_runner(self, workflow_test_config):
-        workflow = self._load_work_flow(workflow_test_config["file"])
+        workflow_filename = workflow_test_config["file"] \
+            if not workflow_test_config.has_key("base_path") \
+            else _os.path.join(workflow_test_config["base_path"], workflow_test_config["file"])
+        workflow = self._load_work_flow(workflow_filename, workflow_test_config["name"])
         runner = WorkflowTestRunner(self.galaxy_instance, workflow, workflow_test_config)
         self._workflows_tests.append(runner)
         return runner
@@ -214,7 +217,7 @@ class WorkflowTestRunner(_unittest.TestCase):
             for label, config in input_map.items():
                 datamap[label] = []
                 for filename in config["file"]:
-                    datamap[label].append(history.upload_dataset(filename))
+                    datamap[label].append(history.upload_dataset(_os.path.join(base_path, filename)))
 
             # run the workflow
             _logger.info("Workflow '%s' (id: %s) running ...", self._galaxy_workflow.name, self._galaxy_workflow.id)
@@ -331,7 +334,8 @@ class WorkflowTestResult():
 
 def load_configuration(filename=DEFAULT_CONFIG_FILENAME):
     config = {}
-    if os.path.exists(filename):
+    if _os.path.exists(filename):
+        base_path = _os.path.dirname(_os.path.abspath(filename))
         with open(filename, "r") as config_file:
             workflows_conf = yaml.load(config_file)
             config["galaxy_url"] = workflows_conf["galaxy_url"]
@@ -345,6 +349,8 @@ def load_configuration(filename=DEFAULT_CONFIG_FILENAME):
                 w["inputs"] = _parse_yaml_list(w["inputs"])
                 # parse outputs
                 w["outputs"] = _parse_yaml_list(w["outputs"])
+                # add base path
+                w["base_path"] = base_path
                 # add the workflow
                 config["workflows"][w["name"]] = w
     else:
