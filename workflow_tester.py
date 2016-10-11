@@ -34,7 +34,7 @@ DEFAULT_WORKFLOW_CONFIG = {
     }
 }
 
-# configure logger
+# configure module logger
 _logger = _logging.getLogger("WorkflowTest")
 _logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s')
 
@@ -48,14 +48,14 @@ class WorkflowTestSuite():
         #
         if galaxy_url:
             self._galaxy_url = galaxy_url
-        elif _os.environ.has_key(ENV_KEY_GALAXY_URL):
+        elif ENV_KEY_GALAXY_URL in _os.environ:
             self._galaxy_url = _os.environ[ENV_KEY_GALAXY_URL]
         else:
             raise ValueError("GALAXY URL not defined!!!")
         #
         if galaxy_api_key:
             self._galaxy_api_key = galaxy_api_key
-        elif _os.environ.has_key(ENV_KEY_GALAXY_API_KEY):
+        elif ENV_KEY_GALAXY_API_KEY in _os.environ:
             self._galaxy_api_key = _os.environ[ENV_KEY_GALAXY_API_KEY]
         else:
             raise ValueError("GALAXY API KEY not defined!!!")
@@ -102,7 +102,7 @@ class WorkflowTestSuite():
 
     def create_test_runner(self, workflow_test_config):
         workflow_filename = workflow_test_config["file"] \
-            if not workflow_test_config.has_key("base_path") \
+            if not "base_path" in workflow_test_config \
             else _os.path.join(workflow_test_config["base_path"], workflow_test_config["file"])
         workflow = self._load_work_flow(workflow_filename, workflow_test_config["name"])
         runner = WorkflowTestRunner(self.galaxy_instance, workflow, workflow_test_config)
@@ -114,7 +114,6 @@ class WorkflowTestSuite():
         hslist = self.galaxy_instance.histories.list()
         for history in [h for h in hslist if DEFAULT_HISTORY_NAME_PREFIX in h.name]:
             self.galaxy_instance.histories.delete(history.id)
-
         _logger.debug("Cleaning workflow library ...")
         wflist = self.galaxy_instance.workflows.list()
         workflows = [w for w in wflist if DEFAULT_WORKFLOW_NAME_PREFIX in w.name]
@@ -124,7 +123,7 @@ class WorkflowTestSuite():
     def _load_work_flow(self, workflow_filename, workflow_name=None):
         with open(workflow_filename) as f:
             wf_json = _json_load(f)
-        if not self._workflows.has_key(wf_json["name"]):
+        if not wf_json["name"] in self._workflows:
             wf_name = wf_json["name"]
             wf_json["name"] = DEFAULT_WORKFLOW_NAME_PREFIX + (workflow_name if workflow_name else wf_name)
             wf_info = self._galaxy_workflow_client.import_workflow_json(wf_json)
@@ -200,13 +199,13 @@ class WorkflowTestRunner(_unittest.TestCase):
 
         # check input_map
         if not input_map:
-            if self._workflow_test_config.has_key("inputs"):
+            if "inputs" in self._workflow_test_config:
                 input_map = self._workflow_test_config["inputs"]
             else:
                 raise ValueError("No input configured !!!")
         # check expected_output_map
         if not expected_output_map:
-            if self._workflow_test_config.has_key("outputs"):
+            if "outputs" in self._workflow_test_config:
                 expected_output_map = self._workflow_test_config["outputs"]
             else:
                 raise ValueError("No output configured !!!")
@@ -382,7 +381,7 @@ def load_configuration(filename=DEFAULT_CONFIG_FILENAME):
 
 def load_workflow_test_configuration(workflow_test_name, filename=DEFAULT_CONFIG_FILENAME):
     config = load_configuration(filename)
-    if config["workflows"].has_key(workflow_test_name):
+    if workflow_test_name in config["workflows"]:
         return config["workflows"][workflow_test_name]
     else:
         raise KeyError("WorkflowTest with name '%s' not found" % workflow_test_name)
@@ -434,19 +433,19 @@ def run_tests(config=None):
 
     config["galaxy_url"] = options.server \
         if options.server \
-        else config["galaxy_url"] if config.has_key("galaxy_url") else None
+        else config["galaxy_url"] if "galaxy_url" in config else None
 
     config["galaxy_api_key"] = options.api_key \
         if options.api_key \
-        else config["galaxy_api_key"] if config.has_key("galaxy_api_key") else None
+        else config["galaxy_api_key"] if "galaxy_api_key" in config else None
 
     config["output_folder"] = options.output \
         if options.output \
-        else config["output_folder"] if config.has_key("output_folder") else DEFAULT_OUTPUT_FOLDER
+        else config["output_folder"] if "output_folder" in config else DEFAULT_OUTPUT_FOLDER
 
     config["enable_logger"] = options.enable_logger \
         if options.enable_logger \
-        else config["enable_logger"] if config.has_key("enable_logger") else False
+        else config["enable_logger"] if "enable_logger" in config else False
 
     config["disable_cleanup"] = options.disable_cleanup
     config["disable_assertions"] = options.disable_assertions
