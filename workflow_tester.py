@@ -139,10 +139,17 @@ class WorkflowTestRunner(_unittest.TestCase):
     def __init__(self, galaxy_instance, galaxy_workflow, workflow_test_config):
 
         self._galaxy_instance = galaxy_instance
-        self._galaxy_workflow = galaxy_workflow
         self._workflow_test_config = workflow_test_config
-        self._galaxy_history_client = HistoryClient(galaxy_instance.gi)
+        self._galaxy_workflow = galaxy_workflow
+        self._galaxy_history_client = _HistoryClient(galaxy_instance.gi)
+        self._disable_cleanup = workflow_test_config.get("disable_cleanup", False)
+        self._disable_assertions = workflow_test_config.get("disable_assertions", False)
+        self._base_path = workflow_test_config.get("base_path", "")
         self._test_cases = {}
+        self._test_uuid = None
+
+        setattr(self, "test_" + workflow_test_config["name"], self.run_test)
+        super(WorkflowTestRunner, self).__init__("test_" + workflow_test_config["name"])
     def _get_test_uuid(self, update=False):
         if not self._test_uuid or update:
             self._test_uuid = str(_uuid1())
@@ -182,17 +189,24 @@ class WorkflowTestRunner(_unittest.TestCase):
             else:
                 raise ValueError("No output configured !!!")
 
+        # update config options
+        disable_cleanup = self._disable_cleanup if not cleanup else not cleanup
+        disable_assertions = self._disable_assertions if not assertions else not assertions
+
         # uuid of the current test
-        test_uuid = DEFAULT_HISTORY_NAME_PREFIX + str(uuid.uuid1())
+        test_uuid = self._get_test_uuid(True)
+
+        # store the current message
+        error_msg = None
 
         # check tools
-        missing_tools = self.check_required_tools()
+        missing_tools = self.find_missing_tools()
         if len(missing_tools) == 0:
 
             # create a new history for the current test
-            history_info = self._galaxy_history_client.create_history(test_uuid)
+            history_info = self._galaxy_history_client.create_history(DEFAULT_HISTORY_NAME_PREFIX + test_uuid)
             history = self._galaxy_instance.histories.get(history_info["id"])
-            logger.info("Create a history '%s' (id: %r)", history.name, history.id)
+            _logger.info("Create a history '%s' (id: %r)", history.name, history.id)
 
             # upload input data to the current history
             # and generate the datamap INPUT --> DATASET
@@ -203,20 +217,71 @@ class WorkflowTestRunner(_unittest.TestCase):
                     datamap[label].append(history.upload_dataset(filename))
 
             # run the workflow
-            logger.info("Workflow '%s' (id: %s) running ...", self._galaxy_workflow.name, self._galaxy_workflow.id)
+            _logger.info("Workflow '%s' (id: %s) running ...", self._galaxy_workflow.name, self._galaxy_workflow.id)
             outputs, output_history = self._galaxy_workflow.run(datamap, history, wait=True, polling_interval=0.5)
-            logger.info("Workflow '%s' (id: %s) executed", self._galaxy_workflow.name, self._galaxy_workflow.id)
+            _logger.info("Workflow '%s' (id: %s) executed", self._galaxy_workflow.name, self._galaxy_workflow.id)
 
-            # test output ...
-            test_case = WorkflowTestCase(self._galaxy_workflow, test_uuid, input_map,
-                                         outputs, expected_output_map, output_history, missing_tools, output_folder)
+            # check outputs
+            results, output_file_map = self._check_outputs(base_path, outputs, expected_output_map, output_folder)
+
+            # instantiate the result object
+            test_result = WorkflowTestResult(test_uuid, self._galaxy_workflow, input_map, outputs, output_history,
+                                             expected_output_map, missing_tools, results, output_file_map,
+                                             output_folder)
+            if test_result.failed():
+                error_msg = "Some outputs differ from the expected ones: {0}".format(
+                    ", ".join(test_result.failed_outputs))
+
         else:
-            # test output ...
-            test_case = WorkflowTestCase(self._galaxy_workflow, test_uuid, input_map, [],
-                                         expected_output_map, None, missing_tools, output_folder)
-        self._test_cases[test_uuid] = test_case
-        test_case.check_outputs()
-        return test_case
+            # instantiate the result object
+            test_result = WorkflowTestResult(test_uuid, self._galaxy_workflow, input_map, [], None,
+                                             expected_output_map, missing_tools, [], {}, output_folder)
+            error_msg = "Some workflow tools are not available in Galaxy: {0}".format(", ".join(missing_tools))
+
+        # store
+        self._test_cases[test_uuid] = test_result
+
+        # cleanup
+        if not disable_cleanup:
+            self.cleanup()
+
+        # raise error message
+        if error_msg:
+            _logger.error(error_msg)
+            if not disable_assertions:
+                raise AssertionError(error_msg)
+
+        return test_result
+
+    def _check_outputs(self, base_path, outputs, expected_output_map, output_folder):
+        results = {}
+        output_file_map = {}
+
+        if not _os.path.isdir(output_folder):
+            _os.makedirs(output_folder)
+
+        _logger.info("Checking test output: ...")
+        for output in outputs:
+            _logger.debug("Checking OUTPUT '%s' ...", output.name)
+            output_filename = _os.path.join(output_folder, "output_" + str(outputs.index(output)))
+            with open(output_filename, "w") as out_file:
+                output.download(out_file)
+                output_file_map[output.name] = {"dataset": output, "filename": output_filename}
+                _logger.debug(
+                    "Downloaded output {0}: dataset_id '{1}', filename '{2}'".format(output.name, output.id,
+                                                                                     output_filename))
+            config = expected_output_map[output.name]
+            comparator = _load_comparator(config["comparator"])
+            expected_output_filename = _os.path.join(base_path, config["file"])
+            result = comparator(output_filename, expected_output_filename)
+            _logger.debug(
+                "Output '{0}' {1} the expected: dataset '{2}', actual-output '{3}', expected-output '{4}'"
+                    .format(output.name, "is equal to" if result else "differs from",
+                            output.id, output_filename, expected_output_filename))
+            results[output.name] = result
+            _logger.debug("Checking OUTPUT '%s': DONE", output.name)
+        _logger.info("Checking test output: DONE")
+        return (results, output_file_map)
 
     def cleanup(self):
         for test_id, test_case in self._test_cases.items():
