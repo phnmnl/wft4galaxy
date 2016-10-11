@@ -1,14 +1,18 @@
 #!/usr/bin/env python
 
-import os
-import json
-import uuid
-import yaml
-import logging
-import optparse
-from bioblend.galaxy.objects import GalaxyInstance
-from bioblend.galaxy.workflows import WorkflowClient
-from bioblend.galaxy.histories import HistoryClient
+import os as _os
+
+import logging as _logging
+import unittest as _unittest
+import optparse as _optparse
+
+from json import load as _json_load
+from yaml import load as _yaml_load
+from uuid import uuid1 as  _uuid1
+
+from bioblend.galaxy.objects import GalaxyInstance as _GalaxyInstance
+from bioblend.galaxy.workflows import WorkflowClient as _WorkflowClient
+from bioblend.galaxy.histories import HistoryClient as _HistoryClient
 
 # Galaxy ENV variable names
 ENV_KEY_GALAXY_URL = "BIOBLEND_GALAXY_URL"
