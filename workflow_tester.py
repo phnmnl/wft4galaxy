@@ -35,9 +35,8 @@ DEFAULT_WORKFLOW_CONFIG = {
 }
 
 # configure logger
-logger = logging.getLogger("WorkflowTest")
-logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s')
-logger.setLevel(logging.DEBUG)
+_logger = _logging.getLogger("WorkflowTest")
+_logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s')
 
 
 class WorkflowTestSuite():
