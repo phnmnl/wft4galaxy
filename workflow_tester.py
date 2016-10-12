@@ -482,9 +482,9 @@ def _parse_cli_options():
     return (options, args)
 
 
-def run_tests(config=None):
+def run_tests(config=None, debug=None, cleanup=None, assertions=None):
     options, args = _parse_cli_options()
-    config = load_configuration(options.file) if not config else config
+    config = WorkflowTestConfiguration.load(options.file) if not config else config
 
     config["galaxy_url"] = options.server \
         if options.server \
@@ -496,14 +496,12 @@ def run_tests(config=None):
 
     config["output_folder"] = options.output \
         if options.output \
-        else config["output_folder"] if "output_folder" in config else DEFAULT_OUTPUT_FOLDER
+        else config["output_folder"] if "output_folder" in config else WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
 
-    config["enable_logger"] = options.enable_logger \
-        if options.enable_logger \
-        else config["enable_logger"] if "enable_logger" in config else False
-
-    config["disable_cleanup"] = options.disable_cleanup
-    config["disable_assertions"] = options.disable_assertions
+    config["enable_logger"] = True if options.enable_logger else config.get("enable_logger", False)
+    config["debug"] = options.debug if not debug else debug
+    config["disable_cleanup"] = options.disable_cleanup if not cleanup else cleanup
+    config["disable_assertions"] = options.disable_assertions if not assertions else assertions
 
     for test_config in config["workflows"].values():
         test_config["disable_cleanup"] = config["disable_cleanup"]
@@ -511,11 +509,11 @@ def run_tests(config=None):
 
     # enable the logger with the proper detail level
     if config["enable_logger"]:
-        config["logger_level"] = _logging.DEBUG if options.debug else _logging.INFO
+        config["logger_level"] = _logging.DEBUG if debug or options.debug else _logging.INFO
         _logger.setLevel(config["logger_level"])
 
     # log the current configuration
-    _logger.debug("Configuration: %r", config)
+    _logger.info("Configuration: %r", config)
 
     # create and run the configured test suite
     test_suite = WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
