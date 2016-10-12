@@ -75,6 +75,62 @@ class WorkflowTestConfiguration:
             config["workflows"] = {"unknown": WorkflowTestConfiguration.DEFAULT_WORKFLOW_CONFIG.copy()}
         config["output_folder"] = WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
         return config
+
+
+class WorkflowLoader:
+    _instance = None
+
+    @staticmethod
+    def get_instance():
+        if not WorkflowLoader._instance:
+            WorkflowLoader._instance = WorkflowLoader()
+        return WorkflowLoader._instance
+
+    def __init__(self, galaxy_instance=None):
+        self._galaxy_instance = galaxy_instance
+        self._galaxy_workflow_client = None
+        self._workflows = {}
+        # if galaxy_instance exists, complete initialization
+        if galaxy_instance:
+            self.initialize()
+
+    def initialize(self, galaxy_url=None, galaxy_api_key=None):
+        if not self._galaxy_instance:
+            # initialize the galaxy instance
+            self._galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
+        # initialize the workflow client
+        self._galaxy_workflow_client = _WorkflowClient(self._galaxy_instance.gi)
+
+    def load_workflow(self, workflow_test_config, workflow_name=None):
+        workflow_filename = workflow_test_config["file"] \
+            if not "base_path" in workflow_test_config \
+            else _os.path.join(workflow_test_config["base_path"], workflow_test_config["file"])
+        return self.load_workflow_by_filename(workflow_filename, workflow_name)
+
+    def load_workflow_by_filename(self, workflow_filename, workflow_name=None):
+        with open(workflow_filename) as f:
+            wf_json = _json_load(f)
+        # TODO: register workflow by ID (equal to UUID?)
+        if not wf_json["name"] in self._workflows:
+            wf_name = wf_json["name"]
+            wf_json["name"] = WorkflowTestConfiguration.DEFAULT_WORKFLOW_NAME_PREFIX \
+                              + (workflow_name if workflow_name else wf_name)
+            wf_info = self._galaxy_workflow_client.import_workflow_json(wf_json)
+            workflow = self._galaxy_instance.workflows.get(wf_info["id"])
+            self._workflows[wf_name] = workflow
+        else:
+            workflow = self._workflows[wf_json["name"]]
+        return workflow
+
+    def unload_workflow(self, workflow_id):
+        self._galaxy_workflow_client.delete_workflow(workflow_id)
+        # TODO: remove workflow from the list
+
+    def unload_workflows(self):
+        for wf_name, wf in self._workflows.items():
+            self.unload_workflow(wf[id])
+
+
 class WorkflowTestSuite():
     def __init__(self, galaxy_url=None, galaxy_api_key=None):
         self._workflows = {}
@@ -107,6 +163,8 @@ class WorkflowTestSuite():
     @property
     def galaxy_api_key(self):
         return self._galaxy_api_key
+        # initialize the workflow loader
+        self._workflow_loader = WorkflowLoader(self._galaxy_instance)
 
     @property
     def galaxy_instance(self):
@@ -114,6 +172,9 @@ class WorkflowTestSuite():
 
     @property
     def workflows(self):
+    def workflow_loader(self):
+        return self._workflow_loader
+
         return self.galaxy_instance.workflows.list()
 
     def run_tests(self, workflow_tests_config):
@@ -156,27 +217,13 @@ class WorkflowTestSuite():
         for wf in workflows:
             self._unload_workflow(wf.id)
 
-    def _load_work_flow(self, workflow_filename, workflow_name=None):
-        with open(workflow_filename) as f:
-            wf_json = _json_load(f)
-        if not wf_json["name"] in self._workflows:
-            wf_name = wf_json["name"]
-            wf_json["name"] = DEFAULT_WORKFLOW_NAME_PREFIX + (workflow_name if workflow_name else wf_name)
-            wf_info = self._galaxy_workflow_client.import_workflow_json(wf_json)
-            workflow = self.galaxy_instance.workflows.get(wf_info["id"])
-            self._workflows[wf_name] = workflow
-        else:
-            workflow = self._workflows[wf_json["name"]]
-        return workflow
-
-    def _unload_workflow(self, workflow_id):
-        self._galaxy_workflow_client.delete_workflow(workflow_id)
 
 
 class WorkflowTestRunner(_unittest.TestCase):
     def __init__(self, galaxy_instance, galaxy_workflow, workflow_test_config):
 
         self._galaxy_instance = galaxy_instance
+        self._workflow_loader = workflow_loader
         self._workflow_test_config = workflow_test_config
         self._galaxy_workflow = galaxy_workflow
         self._galaxy_history_client = _HistoryClient(galaxy_instance.gi)
@@ -226,6 +273,10 @@ class WorkflowTestRunner(_unittest.TestCase):
                                                                  .format(x[0], x[1]) for x in missing_tools])))
         _logger.debug("Checking required tools: DONE")
         return missing_tools
+    def get_galaxy_workflow(self):
+        if not self._galaxy_workflow:
+            self._galaxy_workflow = self._workflow_loader.load_workflow(self._workflow_test_config)
+        return self._galaxy_workflow
 
     def run_test(self, base_path=None, input_map=None, expected_output_map=None,
                  output_folder=DEFAULT_OUTPUT_FOLDER, assertions=None, cleanup=None):
@@ -344,6 +395,9 @@ class WorkflowTestRunner(_unittest.TestCase):
         for test_uuid, test_result in self._test_cases.items():
             if test_result.output_history:
                 self._galaxy_instance.histories.delete(test_result.output_history.id)
+        if self._galaxy_workflow:
+            self._workflow_loader.unload_workflow(self._galaxy_workflow.id)
+            self._galaxy_workflow = None
 
 
 class WorkflowTestResult():
