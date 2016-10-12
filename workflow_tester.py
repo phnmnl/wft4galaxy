@@ -219,6 +219,13 @@ class WorkflowTestRunner(_unittest.TestCase):
         setattr(self, "test_" + workflow_test_config["name"], self.run_test)
         super(WorkflowTestRunner, self).__init__("test_" + workflow_test_config["name"])
 
+    @staticmethod
+    def new_instance(workflow_test_config, galaxy_url=None, galaxy_api_key=None):
+        # initialize the galaxy instance
+        galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
+        workflow_loader = WorkflowLoader(galaxy_instance)
+        # return the runner instance
+        return WorkflowTestRunner(galaxy_instance, workflow_loader, workflow_test_config)
     def __str__(self):
         return "Workflow Test '{0}': testId={1}, workflow='{2}', input=[{3}], output=[{4}]" \
             .format(self._workflow_test_config["name"],
