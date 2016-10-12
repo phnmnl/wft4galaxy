@@ -137,32 +137,9 @@ class WorkflowTestSuite():
         self._workflows_tests = []
         self._galaxy_instance = None
         self._galaxy_workflow_client = None
-        #
-        if galaxy_url:
-            self._galaxy_url = galaxy_url
-        elif ENV_KEY_GALAXY_URL in _os.environ:
-            self._galaxy_url = _os.environ[ENV_KEY_GALAXY_URL]
-        else:
-            raise ValueError("GALAXY URL not defined!!!")
-        #
-        if galaxy_api_key:
-            self._galaxy_api_key = galaxy_api_key
-        elif ENV_KEY_GALAXY_API_KEY in _os.environ:
-            self._galaxy_api_key = _os.environ[ENV_KEY_GALAXY_API_KEY]
-        else:
-            raise ValueError("GALAXY API KEY not defined!!!")
 
         # initialize the galaxy instance
-        self._galaxy_instance = _GalaxyInstance(self._galaxy_url, self._galaxy_api_key)
-        self._galaxy_workflow_client = _WorkflowClient(self._galaxy_instance.gi)
-
-    @property
-    def galaxy_url(self):
-        return self._galaxy_url
-
-    @property
-    def galaxy_api_key(self):
-        return self._galaxy_api_key
+        self._galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
         # initialize the workflow loader
         self._workflow_loader = WorkflowLoader(self._galaxy_instance)
 
@@ -441,6 +418,20 @@ class WorkflowTestResult():
         return self.results
 
 
+def _get_galaxy_instance(galaxy_url=None, galaxy_api_key=None):
+    if not galaxy_url:
+        if ENV_KEY_GALAXY_URL in _os.environ:
+            galaxy_url = _os.environ[ENV_KEY_GALAXY_URL]
+        else:
+            raise ValueError("GALAXY URL not defined!!!")
+    # set the galaxy api key
+    if not galaxy_api_key:
+        if ENV_KEY_GALAXY_API_KEY in _os.environ:
+            galaxy_api_key = _os.environ[ENV_KEY_GALAXY_API_KEY]
+        else:
+            raise ValueError("GALAXY API KEY not defined!!!")
+    # initialize the galaxy instance
+    return _GalaxyInstance(galaxy_url, galaxy_api_key)
 
 
 def _parse_yaml_list(ylist):
