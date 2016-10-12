@@ -428,7 +428,7 @@ class _WorkflowTestResult():
         return not self.failed()
 
     def check_output(self, output, force=False):
-        return self.results[output.name]
+        return self.results[output if isinstance(output, str) else output.name]
 
     def check_outputs(self, force=False):
         return self.results
