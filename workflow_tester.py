@@ -134,7 +134,8 @@ class WorkflowLoader:
 class WorkflowTestSuite():
     def __init__(self, galaxy_url=None, galaxy_api_key=None):
         self._workflows = {}
-        self._workflows_tests = []
+        self._workflow_runners = []
+        self._workflow_test_results = []
         self._galaxy_instance = None
         self._galaxy_workflow_client = None
 
@@ -154,6 +155,12 @@ class WorkflowTestSuite():
 
         return self.galaxy_instance.workflows.list()
 
+    def get_workflow_test_results(self, workflow_id=None):
+        return list([w for w in self._workflow_test_results if w.id == workflow_id] if workflow_id
+                    else self._workflow_test_results)
+
+    def _add_test_result(self, test_result):
+        self._workflow_test_results.append(test_result)
     def run_tests(self, workflow_tests_config):
         results = []
         for test_config in workflow_tests_config["workflows"].values():
@@ -197,12 +204,11 @@ class WorkflowTestSuite():
 
 
 class WorkflowTestRunner(_unittest.TestCase):
-    def __init__(self, galaxy_instance, galaxy_workflow, workflow_test_config):
-
+    def __init__(self, galaxy_instance, workflow_loader, workflow_test_config, test_suite=None):
         self._galaxy_instance = galaxy_instance
         self._workflow_loader = workflow_loader
         self._workflow_test_config = workflow_test_config
-        self._galaxy_workflow = galaxy_workflow
+        self._test_suite = test_suite
         self._galaxy_history_client = _HistoryClient(galaxy_instance.gi)
         self._disable_cleanup = workflow_test_config.get("disable_cleanup", False)
         self._disable_assertions = workflow_test_config.get("disable_assertions", False)
@@ -323,8 +329,10 @@ class WorkflowTestRunner(_unittest.TestCase):
                                              expected_output_map, missing_tools, [], {}, output_folder)
             error_msg = "Some workflow tools are not available in Galaxy: {0}".format(", ".join(missing_tools))
 
-        # store
+        # store result
         self._test_cases[test_uuid] = test_result
+        if self._test_suite:
+            self._test_suite._add_test_result(test_result)
 
         # cleanup
         if not disable_cleanup:
