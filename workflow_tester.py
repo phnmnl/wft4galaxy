@@ -18,27 +18,63 @@ from bioblend.galaxy.histories import HistoryClient as _HistoryClient
 ENV_KEY_GALAXY_URL = "BIOBLEND_GALAXY_URL"
 ENV_KEY_GALAXY_API_KEY = "BIOBLEND_GALAXY_API_KEY"
 
-# Default settings
-DEFAULT_HISTORY_NAME_PREFIX = "_WorkflowTestHistory_"
-DEFAULT_WORKFLOW_NAME_PREFIX = "_WorkflowTest_"
-DEFAULT_OUTPUT_FOLDER = "results"
-DEFAULT_CONFIG_FILENAME = "workflows.yml"
-DEFAULT_WORKFLOW_CONFIG = {
-    "file": "workflow.ga",
-    "inputs": {
-        "Input Dataset": {"name": "Input Dataset", "file": ["input"]}
-    },
-    "outputs": {
-        "output1": {"file": "expected_output", "comparator": "filecmp.cmp", "name": "output1"},
-        "output2": {"file": "expected_output", "comparator": "filecmp.cmp", "name": "output2"}
-    }
-}
-
 # configure module logger
 _logger = _logging.getLogger("WorkflowTest")
 _logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s')
 
 
+class WorkflowTestConfiguration:
+    # Default settings
+    DEFAULT_HISTORY_NAME_PREFIX = "_WorkflowTestHistory_"
+    DEFAULT_WORKFLOW_NAME_PREFIX = "_WorkflowTest_"
+    DEFAULT_OUTPUT_FOLDER = "results"
+    DEFAULT_CONFIG_FILENAME = "workflows.yml"
+    DEFAULT_WORKFLOW_CONFIG = {
+        "file": "workflow.ga",
+        "inputs": {
+            "Input Dataset": {"name": "Input Dataset", "file": ["input"]}
+        },
+        "outputs": {
+            "output1": {"file": "expected_output", "comparator": "filecmp.cmp", "name": "output1"},
+            "output2": {"file": "expected_output", "comparator": "filecmp.cmp", "name": "output2"}
+        }
+    }
+
+    @staticmethod
+    def load(filename=DEFAULT_CONFIG_FILENAME, workflow_test_name=None):
+        config = {}
+        if _os.path.exists(filename):
+            base_path = _os.path.dirname(_os.path.abspath(filename))
+            with open(filename, "r") as config_file:
+                workflows_conf = _yaml_load(config_file)
+                config["galaxy_url"] = workflows_conf["galaxy_url"]
+                config["galaxy_api_key"] = workflows_conf["galaxy_api_key"]
+                config["enable_logger"] = workflows_conf["enable_logger"]
+                config["workflows"] = {}
+                for workflow in workflows_conf.get("workflows").items():
+                    w = WorkflowTestConfiguration.DEFAULT_WORKFLOW_CONFIG.copy()
+                    w["name"] = workflow[0]
+                    w.update(workflow[1])
+                    # parse inputs
+                    w["inputs"] = _parse_yaml_list(w["inputs"])
+                    # parse outputs
+                    w["outputs"] = _parse_yaml_list(w["outputs"])
+                    # add base path
+                    w["base_path"] = base_path
+                    # add the workflow
+                    config["workflows"][w["name"]] = w
+                    # returns the current workflow test config
+                    # if its name matches the 'workflow_test_name' param
+                    if workflow_test_name and w["name"] == workflow_test_name:
+                        return w
+                # raise an exception if the workflow test we are searching for
+                # cannot be found within the configuration file.
+                if workflow_test_name:
+                    raise KeyError("WorkflowTest with name '%s' not found" % workflow_test_name)
+        else:
+            config["workflows"] = {"unknown": WorkflowTestConfiguration.DEFAULT_WORKFLOW_CONFIG.copy()}
+        config["output_folder"] = WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
+        return config
 class WorkflowTestSuite():
     def __init__(self, galaxy_url=None, galaxy_api_key=None):
         self._workflows = {}
@@ -351,40 +387,6 @@ class WorkflowTestResult():
         return self.results
 
 
-def load_configuration(filename=DEFAULT_CONFIG_FILENAME):
-    config = {}
-    if _os.path.exists(filename):
-        base_path = _os.path.dirname(_os.path.abspath(filename))
-        with open(filename, "r") as config_file:
-            workflows_conf = _yaml_load(config_file)
-            config["galaxy_url"] = workflows_conf["galaxy_url"]
-            config["galaxy_api_key"] = workflows_conf["galaxy_api_key"]
-            config["enable_logger"] = workflows_conf["enable_logger"]
-            config["workflows"] = {}
-            for workflow in workflows_conf.get("workflows").items():
-                w = DEFAULT_WORKFLOW_CONFIG.copy()
-                w["name"] = workflow[0]
-                w.update(workflow[1])
-                # parse inputs
-                w["inputs"] = _parse_yaml_list(w["inputs"])
-                # parse outputs
-                w["outputs"] = _parse_yaml_list(w["outputs"])
-                # add base path
-                w["base_path"] = base_path
-                # add the workflow
-                config["workflows"][w["name"]] = w
-    else:
-        config["workflows"] = {"unknown": DEFAULT_WORKFLOW_CONFIG.copy()}
-    config["output_folder"] = DEFAULT_OUTPUT_FOLDER
-    return config
-
-
-def load_workflow_test_configuration(workflow_test_name, filename=DEFAULT_CONFIG_FILENAME):
-    config = load_configuration(filename)
-    if workflow_test_name in config["workflows"]:
-        return config["workflows"][workflow_test_name]
-    else:
-        raise KeyError("WorkflowTest with name '%s' not found" % workflow_test_name)
 
 
 def _parse_yaml_list(ylist):
