@@ -475,15 +475,15 @@ class WorkflowTestRunner(_unittest.TestCase):
 
 
 class _WorkflowTestResult():
-    def __init__(self, test_id, workflow, input_map, outputs, output_history, expected_output_map,
+    def __init__(self, test_id, workflow, inputs, outputs, output_history, expected_outputs,
                  missing_tools, results, output_file_map,
                  output_folder=WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER):
         self.test_id = test_id
         self.workflow = workflow
-        self.inputs = input_map
+        self.inputs = inputs
         self.outputs = outputs
         self.output_history = output_history
-        self.expected_output_map = expected_output_map
+        self.expected_outputs = expected_outputs
         self.output_folder = output_folder
         self.missing_tools = missing_tools
         self.output_file_map = output_file_map
