@@ -40,6 +40,93 @@ class WorkflowTestConfiguration:
         }
     }
 
+    def __init__(self, base_path=".", filename="workflow.ga", name=None, inputs={}, expected_outputs={},
+                 cleanup=True, assertions=True):
+        # init properties
+        self._base_path = None
+        self._filename = None
+        self._inputs = {}
+        self._expected_outputs = {}
+
+        # set parameters
+        self.name = name
+        self.set_base_path(base_path)
+        self.set_filename(filename)
+        self.set_inputs(inputs)
+        self.set_expected_outputs(expected_outputs)
+        self.disable_cleanup = not cleanup
+        self.disable_assertions = not assertions
+
+    def __str__(self):
+        return "WorkflowTestConfig: name={0}, file={1}, inputs=[{2}], expected_outputs=[{3}]".format(
+            self.name, self.filename, ",".join(self.inputs.keys()), ",".join(self.expected_outputs.keys()))
+
+    def __repr__(self):
+        return self.__str__()
+
+    @property
+    def base_path(self):
+        return self._base_path
+
+    def set_base_path(self, base_path):
+        self._base_path = base_path
+
+    @property
+    def filename(self):
+        return self._filename
+
+    def set_filename(self, filename):
+        self._filename = filename
+
+    @property
+    def inputs(self):
+        return self._inputs
+
+    def set_inputs(self, inputs):
+        print inputs
+        for name, config in inputs.items():
+            self.add_input(name, config["file"])
+
+    def add_input(self, name, file):
+        if not name:
+            raise ValueError("Input name not defined")
+        self._inputs[name] = {"name": name, "file": file if isinstance(file, list) else [file]}
+
+    def remove_input(self, name):
+        if name in self._inputs:
+            del self._inputs[name]
+
+    def get_input(self, name):
+        return self._inputs.get(name, None)
+
+    @property
+    def expected_outputs(self):
+        return self._expected_outputs
+
+    def set_expected_outputs(self, expected_outputs):
+        for name, config in expected_outputs.items():
+            self.add_expected_output(name, config["file"], config["comparator"])
+
+    def add_expected_output(self, name, filename, comparator="filecmp.cmp"):
+        if not name:
+            raise ValueError("Input name not defined")
+        self._expected_outputs[name] = {"name": name, "file": filename, "comparator": comparator}
+
+    def remove_expected_output(self, name):
+        if name in self._expected_outputs:
+            del self._expected_outputs[name]
+
+    def get_expected_output(self, name):
+        return self._expected_outputs.get(name, None)
+
+    def to_json(self):
+        return dict({
+            "name": self.name,
+            "file": self.filename,
+            "inputs": self.inputs,
+            "outputs": self.expected_outputs
+        })
+
     @staticmethod
     def load(filename=DEFAULT_CONFIG_FILENAME, workflow_test_name=None):
         config = {}
