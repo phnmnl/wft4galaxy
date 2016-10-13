@@ -138,21 +138,14 @@ class WorkflowTestConfiguration:
                 config["galaxy_api_key"] = workflows_conf["galaxy_api_key"]
                 config["enable_logger"] = workflows_conf["enable_logger"]
                 config["workflows"] = {}
-                for workflow in workflows_conf.get("workflows").items():
-                    w = WorkflowTestConfiguration.DEFAULT_WORKFLOW_CONFIG.copy()
-                    w["name"] = workflow[0]
-                    w.update(workflow[1])
-                    # parse inputs
-                    w["inputs"] = _parse_yaml_list(w["inputs"])
-                    # parse outputs
-                    w["outputs"] = _parse_yaml_list(w["outputs"])
-                    # add base path
-                    w["base_path"] = base_path
+                for wf_name, wf_config in workflows_conf.get("workflows").items():
                     # add the workflow
-                    config["workflows"][w["name"]] = w
+                    w = WorkflowTestConfiguration(base_path=base_path, filename=wf_config["file"], name=wf_name,
+                                                  inputs=wf_config["inputs"], expected_outputs=wf_config["outputs"])
+                    config["workflows"][wf_name] = w
                     # returns the current workflow test config
                     # if its name matches the 'workflow_test_name' param
-                    if workflow_test_name and w["name"] == workflow_test_name:
+                    if workflow_test_name and wf_name == workflow_test_name:
                         return w
                 # raise an exception if the workflow test we are searching for
                 # cannot be found within the configuration file.
@@ -189,9 +182,9 @@ class WorkflowLoader:
         self._galaxy_workflow_client = _WorkflowClient(self._galaxy_instance.gi)
 
     def load_workflow(self, workflow_test_config, workflow_name=None):
-        workflow_filename = workflow_test_config["file"] \
-            if not "base_path" in workflow_test_config \
-            else _os.path.join(workflow_test_config["base_path"], workflow_test_config["file"])
+        workflow_filename = workflow_test_config.filename \
+            if not workflow_test_config.base_path \
+            else _os.path.join(workflow_test_config.base_path, workflow_test_config.filename)
         return self.load_workflow_by_filename(workflow_filename, workflow_name)
 
     def load_workflow_by_filename(self, workflow_filename, workflow_name=None):
@@ -293,15 +286,15 @@ class WorkflowTestRunner(_unittest.TestCase):
         self._workflow_test_config = workflow_test_config
         self._test_suite = test_suite
         self._galaxy_history_client = _HistoryClient(galaxy_instance.gi)
-        self._disable_cleanup = workflow_test_config.get("disable_cleanup", False)
-        self._disable_assertions = workflow_test_config.get("disable_assertions", False)
-        self._base_path = workflow_test_config.get("base_path", "")
+        self._disable_cleanup = workflow_test_config.disable_cleanup
+        self._disable_assertions = workflow_test_config.disable_assertions
+        self._base_path = workflow_test_config.base_path
         self._test_cases = {}
         self._test_uuid = None
         self._galaxy_workflow = None
 
-        setattr(self, "test_" + workflow_test_config["name"], self.run_test)
-        super(WorkflowTestRunner, self).__init__("test_" + workflow_test_config["name"])
+        setattr(self, "test_" + workflow_test_config.name, self.run_test)
+        super(WorkflowTestRunner, self).__init__("test_" + workflow_test_config.name)
 
     @staticmethod
     def new_instance(workflow_test_config, galaxy_url=None, galaxy_api_key=None):
@@ -312,18 +305,20 @@ class WorkflowTestRunner(_unittest.TestCase):
         return WorkflowTestRunner(galaxy_instance, workflow_loader, workflow_test_config)
 
     @property
+    def workflow_test_config(self):
+        return self._workflow_test_config
+
+    @property
     def worflow_test_name(self):
-        return self._workflow_test_config["name"]
+        return self._workflow_test_config.name
 
     def __str__(self):
         return "Workflow Test '{0}': testId={1}, workflow='{2}', input=[{3}], output=[{4}]" \
-            .format(self._workflow_test_config["name"],
+            .format(self._workflow_test_config.name,
                     self._get_test_uuid(),
-                    self._workflow_test_config["name"],
-                    ",".join(self._workflow_test_config[
-                                 "inputs"]),
-                    ",".join(self._workflow_test_config[
-                                 "outputs"]))
+                    self._workflow_test_config.name,
+                    ",".join(self._workflow_test_config.inputs),
+                    ",".join(self._workflow_test_config.expected_outputs))
 
     def _get_test_uuid(self, update=False):
         if not self._test_uuid or update:
@@ -346,14 +341,14 @@ class WorkflowTestRunner(_unittest.TestCase):
 
         # check input_map
         if not input_map:
-            if "inputs" in self._workflow_test_config:
-                input_map = self._workflow_test_config["inputs"]
+            if len(self._workflow_test_config.inputs) > 0:
+                input_map = self._workflow_test_config.inputs
             else:
                 raise ValueError("No input configured !!!")
         # check expected_output_map
         if not expected_output_map:
-            if "outputs" in self._workflow_test_config:
-                expected_output_map = self._workflow_test_config["outputs"]
+            if len(self._workflow_test_config.expected_outputs) > 0:
+                expected_output_map = self._workflow_test_config.expected_outputs
             else:
                 raise ValueError("No output configured !!!")
 
@@ -600,8 +595,8 @@ def run_tests(config=None, debug=None, cleanup=None, assertions=None):
     config["disable_assertions"] = options.disable_assertions if not assertions else assertions
 
     for test_config in config["workflows"].values():
-        test_config["disable_cleanup"] = config["disable_cleanup"]
-        test_config["disable_assertions"] = config["disable_assertions"]
+        test_config.disable_cleanup = config["disable_cleanup"]
+        test_config.disable_assertions = config["disable_assertions"]
 
     # enable the logger with the proper detail level
     if config["enable_logger"]:
