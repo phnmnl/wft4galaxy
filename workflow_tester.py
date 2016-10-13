@@ -156,6 +156,18 @@ class WorkflowTestConfiguration:
         config["output_folder"] = WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
         return config
 
+    @staticmethod
+    def dump(filename, worflow_test_list):
+        workflows = {}
+        config = {"workflows": workflows}
+        worflow_test_list = worflow_test_list.values() if isinstance(worflow_test_list, dict) else worflow_test_list
+        print worflow_test_list
+        for worlflow in worflow_test_list:
+            workflows[worlflow.name] = worlflow.to_json()
+        with open(filename, "w") as f:
+            _yaml_dump(config, f)
+        return config
+
 
 class WorkflowLoader:
     _instance = None
