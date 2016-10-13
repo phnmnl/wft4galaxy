@@ -6,9 +6,9 @@ import logging as _logging
 import unittest as _unittest
 import optparse as _optparse
 
-from json import load as _json_load
-from yaml import load as _yaml_load
 from uuid import uuid1 as  _uuid1
+from yaml import load as _yaml_load, dump as _yaml_dump
+from json import load as _json_load, dump as _json_dump
 
 from bioblend.galaxy.objects import GalaxyInstance as _GalaxyInstance
 from bioblend.galaxy.workflows import WorkflowClient as _WorkflowClient
