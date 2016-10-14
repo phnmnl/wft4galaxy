@@ -513,6 +513,38 @@ class WorkflowTestSuite:
         return list([w for w in self._workflow_test_results if w.id == workflow_id] if workflow_id
                     else self._workflow_test_results)
 
+    @property
+    def workflow_tests(self):
+        """
+        Return the configurations of the workflows associated to this test suite.
+
+        :rtype: dict
+        :return: a map <WORKFLOW_TEST_NAME> : <WORKFLOW_TEST_CONFIGURATION>
+        """
+        return self._workflow_test_suite_configuration["workflows"].copy()
+
+    def add_workflow_test(self, workflow_test_configuration):
+        """
+        Add a new workflow test to this suite.
+
+        :type workflow_test_configuration: :class:"WorkflowTestConfiguration"
+        :param workflow_test_configuration: a workflow test configuration
+        """
+        self._workflow_test_suite_configuration["workflows"][
+            workflow_test_configuration.name] = workflow_test_configuration
+
+    def remove_workflow_test(self, workflow_test):
+        """
+        Remove a workflow test from this suite.
+
+        :type workflow_test: str or :class:"WorkflowTestConfiguration"
+        :param workflow_test: the name of the workflow test to remove or its configuration
+        """
+        if isinstance(workflow_test, WorkflowTestConfiguration):
+            del self._workflow_test_suite_configuration[workflow_test.name]
+        elif isinstance(workflow_test, str):
+            del self._workflow_test_suite_configuration[workflow_test]
+
     def _add_test_result(self, test_result):
         """
         Private method to publish a test result.
