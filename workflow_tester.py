@@ -576,6 +576,21 @@ class WorkflowTestSuite:
         for wf in workflows:
             self._workflow_loader.unload_workflow(wf.id)
 
+    def load(self, filename=None):
+        """
+        Load a test suite configuration and set it as default suite to run.
+
+        :type filename: str
+        :param filename: the path of suite configuration file
+        """
+        self._workflow_test_suite_configuration = WorkflowTestSuite._DEFAULT_SUITE_CONFIGURATION.copy()
+        self._workflow_test_suite_configuration.update(
+            WorkflowTestConfiguration.load(filename or WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME))
+
+    def dump(self, filename):
+        WorkflowTestConfiguration.dump(filename or WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME,
+                                       self._workflow_test_suite_configuration)
+
 
 class WorkflowTestRunner(_unittest.TestCase):
     """
