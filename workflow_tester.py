@@ -850,8 +850,10 @@ class WorkflowTestRunner(_unittest.TestCase):
                                               expected_outputs, missing_tools, results, output_file_map,
                                               output_folder)
             if test_result.failed():
-                error_msg = "The following outputs differ from the expected ones: {0}".format(
-                    ", ".join(test_result.failed_outputs))
+                error_msg = "The actual output{0} {2} differ{1} from the expected one{0}." \
+                    .format("" if len(test_result.failed_outputs) == 1 else "s",
+                            "" if len(test_result.failed_outputs) > 1 else "s",
+                            ", ".join(["'{0}'".format(n) for n in test_result.failed_outputs]))
 
         else:
             # instantiate the result object
