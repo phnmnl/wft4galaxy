@@ -476,6 +476,8 @@ class WorkflowTestSuite:
         self._galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
         # initialize the workflow loader
         self._workflow_loader = WorkflowLoader(self._galaxy_instance)
+        # default suite configuration
+        self._workflow_test_suite_configuration = WorkflowTestSuite._DEFAULT_SUITE_CONFIGURATION.copy()
 
     @property
     def galaxy_instance(self):
@@ -484,6 +486,10 @@ class WorkflowTestSuite:
     @property
     def workflow_loader(self):
         return self._workflow_loader
+
+    @property
+    def configuration(self):
+        return self._workflow_test_suite_configuration
 
     # def get_workflows(self):
     #     """
