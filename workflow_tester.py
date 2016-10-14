@@ -44,7 +44,7 @@ class WorkflowTestConfiguration:
     }
 
     def __init__(self, base_path=".", filename="workflow.ga", name=None, inputs={}, expected_outputs={},
-                 cleanup=True, assertions=True):
+                 disable_cleanup=True, disable_assertions=True):
         """
         Create a new class instance and initialize its initial properties.
 
@@ -83,13 +83,13 @@ class WorkflowTestConfiguration:
                             ....
                             return True | False
 
-        :type cleanup: bool
-        :param cleanup: ``True`` (default) to perform a cleanup (Galaxy workflow, history, datasets)
-                        after the workflow test execution; ``False`` otherwise.
+        :type disable_cleanup: bool
+        :param disable_cleanup: ``True`` to skip cleanup (Galaxy workflow, history, datasets)
+                        after the workflow test execution; ``False`` (default) otherwise.
 
-        :type assertions: bool
-        :param assertions: ``True`` (default) to disable assertions during the workflow test execution;
-                           ``False`` otherwise.
+        :type disable_assertions: bool
+        :param disable_assertions: ``True`` to disable assertions during the workflow test execution;
+                           ``False`` (default) otherwise.
         """
 
         # init properties
@@ -104,8 +104,8 @@ class WorkflowTestConfiguration:
         self.set_filename(filename)
         self.set_inputs(inputs)
         self.set_expected_outputs(expected_outputs)
-        self.disable_cleanup = not cleanup
-        self.disable_assertions = not assertions
+        self.disable_cleanup = disable_cleanup
+        self.disable_assertions = disable_assertions
 
     def __str__(self):
         return "WorkflowTestConfig: name={0}, file={1}, inputs=[{2}], expected_outputs=[{3}]".format(
@@ -568,7 +568,21 @@ class WorkflowTestSuite:
         self._workflow_runners.append(runner)
         return runner
 
-    def run_tests(self, workflow_tests_config):
+    def _suite_setup(self, config, enable_logger=None,
+                     enable_debug=None, disable_cleanup=None, disable_assertions=None):
+        config["enable_logger"] = enable_logger if not enable_logger is None else config.get("enable_logger", True)
+        config["enable_debug"] = enable_debug if not enable_debug is None else config.get("enable_debug", False)
+        config["disable_cleanup"] = disable_cleanup \
+            if not disable_cleanup is None else config.get("disable_cleanup", False)
+        config["disable_assertions"] = disable_assertions \
+            if not disable_assertions is None else config.get("disable_assertions", False)
+        # update logger level
+        if config.get("enable_logger", True):
+            config["logger_level"] = _logging.DEBUG if config.get("enable_debug", False) else _logging.INFO
+            _logger.setLevel(config["logger_level"])
+
+    def run_tests(self, workflow_tests_config=None, enable_logger=None,
+                  enable_debug=None, disable_cleanup=None, disable_assertions=None):
         """
         Execute tests associated to this suite and return the corresponding results.
 
@@ -580,17 +594,19 @@ class WorkflowTestSuite:
         :return: the list of :class:'WorkflowTestResult' instances
         """
         results = []
-        for test_config in workflow_tests_config["workflows"].values():
+        suite_config = workflow_tests_config or self._workflow_test_suite_configuration
+        self._suite_setup(suite_config, enable_logger, enable_debug, disable_cleanup, disable_assertions)
+        for test_config in suite_config["workflows"].values():
             runner = self._create_test_runner(test_config)
-            result = runner.run_test(test_config["inputs"], test_config["outputs"],
-                                     workflow_tests_config["output_folder"])
+            result = runner.run_test()
             results.append(result)
         # cleanup
-        if not workflow_tests_config["disable_cleanup"]:
+        if not suite_config["disable_cleanup"]:
             self.cleanup()
         return results
 
-    def run_test_suite(self, workflow_tests_config):
+    def run_test_suite(self, workflow_tests_config=None, enable_logger=None,
+                       enable_debug=None, disable_cleanup=None, disable_assertions=None):
         """
         Execute tests associated to this suite using the unittest framework.
 
@@ -599,13 +615,15 @@ class WorkflowTestSuite:
                by the `WorkflowTestConfiguration.load(...)` method
         """
         suite = _unittest.TestSuite()
-        for test_config in workflow_tests_config["workflows"].values():
+        suite_config = workflow_tests_config or self._workflow_test_suite_configuration
+        self._suite_setup(suite_config, enable_logger, enable_debug, disable_cleanup, disable_assertions)
+        for test_config in suite_config["workflows"].values():
             runner = self._create_test_runner(test_config)
             suite.addTest(runner)
         _RUNNER = _unittest.TextTestRunner(verbosity=2)
         _RUNNER.run((suite))
         # cleanup
-        if not workflow_tests_config["disable_cleanup"]:
+        if not suite_config["disable_cleanup"]:
             self.cleanup()
 
     def cleanup(self):
@@ -674,7 +692,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         :param galaxy_api_key: a registered Galaxy API KEY
 
         :rtype: :class:`WorkflowTestRunner`
-        :return:
+        :return: a :class:`WorkflowTestRunner` instance
         """
         # initialize the galaxy instance
         galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
@@ -724,7 +742,8 @@ class WorkflowTestRunner(_unittest.TestCase):
         return self._galaxy_workflow
 
     def run_test(self, base_path=None, inputs=None, expected_outputs=None,
-                 output_folder=WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER, assertions=None, cleanup=None):
+                 output_folder=WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER,
+                 disable_assertions=None, disable_cleanup=None):
         """
         Run the test with the given inputs and expected_outputs.
 
@@ -760,13 +779,13 @@ class WorkflowTestRunner(_unittest.TestCase):
         :type output_folder: str
         :param output_folder: the path of folder to temporary store intermediate results
 
-        :type cleanup: bool
-        :param cleanup: ``True`` (default) to perform a cleanup (Galaxy workflow, history, datasets)
-                        after the workflow test execution; ``False`` otherwise.
+        :type disable_cleanup: bool
+        :param disable_cleanup: ``True`` to skip cleanup (Galaxy workflow, history, datasets)
+                        after the workflow test execution; ``False`` (default) otherwise.
 
-        :type assertions: bool
-        :param assertions: ``True`` (default) to disable assertions during the workflow test execution;
-                           ``False`` otherwise.
+        :type disable_assertions: bool
+        :param disable_assertions: ``True`` to disable assertions during the workflow test execution;
+                           ``False`` (default) otherwise.
 
         :rtype: :class:``WorkflowTestResult``
         :return: workflow test result
@@ -791,8 +810,8 @@ class WorkflowTestRunner(_unittest.TestCase):
                 raise ValueError("No output configured !!!")
 
         # update config options
-        disable_cleanup = self._disable_cleanup if not cleanup else not cleanup
-        disable_assertions = self._disable_assertions if not assertions else not assertions
+        disable_cleanup = disable_cleanup if not disable_cleanup is None else self._disable_cleanup
+        disable_assertions = disable_assertions if not disable_assertions is None else self._disable_assertions
 
         # uuid of the current test
         test_uuid = self._get_test_uuid(True)
@@ -1087,11 +1106,13 @@ def _parse_cli_options():
     return (options, args)
 
 
-def run_tests(config=None, debug=None, cleanup=None, assertions=None):
+def run_tests(config=None, enable_logger=None, enable_debug=None, disable_cleanup=None, disable_assertions=None):
     """
     Run a configured test suite.
 
-    :param config:
+    :type config: dict
+    :param config: a test suite configuration resulting from YAML configuration file or used defined.
+
     :param debug:
     :param cleanup:
     :param assertions:
@@ -1110,12 +1131,14 @@ def run_tests(config=None, debug=None, cleanup=None, assertions=None):
 
     config["output_folder"] = options.output \
         if options.output \
-        else config["output_folder"] if "output_folder" in config else WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
+        else config["output_folder"] if "output_folder" in config \
+        else WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
 
-    config["enable_logger"] = True if options.enable_logger else config.get("enable_logger", False)
-    config["debug"] = options.debug if not debug else debug
-    config["disable_cleanup"] = options.disable_cleanup if not cleanup else cleanup
-    config["disable_assertions"] = options.disable_assertions if not assertions else assertions
+    config["enable_logger"] = enable_logger or options.enable_logger or config.get("enable_logger", False)
+    config["enable_debug"] = enable_debug or options.debug or config.get("enable_debug", False)
+    config["disable_cleanup"] = disable_cleanup or options.disable_cleanup or config.get("disable_cleanup", False)
+    config["disable_assertions"] = disable_assertions or options.disable_assertions \
+                                   or config.get("disable_assertions", False)
 
     for test_config in config["workflows"].values():
         test_config.disable_cleanup = config["disable_cleanup"]
@@ -1123,7 +1146,7 @@ def run_tests(config=None, debug=None, cleanup=None, assertions=None):
 
     # enable the logger with the proper detail level
     if config["enable_logger"]:
-        config["logger_level"] = _logging.DEBUG if debug or options.debug else _logging.INFO
+        config["logger_level"] = _logging.DEBUG if config["enable_debug"] else _logging.INFO
         _logger.setLevel(config["logger_level"])
 
     # log the current configuration
