@@ -449,7 +449,15 @@ class WorkflowTestSuite:
     Define a test suite.
     """
 
-    def __init__(self, galaxy_url, galaxy_api_key):
+    _DEFAULT_SUITE_CONFIGURATION = {
+        "enable_logger": True,
+        "enable_debug": False,
+        "disable_cleanup": False,
+        "disable_assertions": False,
+        "workflows": {}
+    }
+
+    def __init__(self, galaxy_url=None, galaxy_api_key=None):
         """
         Create an instance of :class:`WorkflowTestSuite`.
 
