@@ -1106,20 +1106,29 @@ def _parse_cli_options():
     return (options, args)
 
 
-def run_tests(config=None, enable_logger=None, enable_debug=None, disable_cleanup=None, disable_assertions=None):
+def run_tests(enable_logger=None, enable_debug=None, disable_cleanup=None, disable_assertions=None):
     """
-    Run a configured test suite.
+    Run a workflow test suite defined in a configuration file.
 
-    :type config: dict
-    :param config: a test suite configuration resulting from YAML configuration file or used defined.
+    :type enable_logger: bool
+    :param enable_logger: enable logger (disabled by default)
 
-    :param debug:
-    :param cleanup:
-    :param assertions:
-    :return:
+    :type enable_debug: bool
+    :param enable_debug: enable debug messages (disabled by default)
+
+    :type disable_cleanup: bool
+    :param disable_cleanup: ``True`` to skip cleanup (Galaxy workflow, history, datasets)
+                            after the workflow test execution; ``False`` (default) otherwise.
+
+    :type disable_assertions: bool
+    :param disable_assertions: ``True`` to disable assertions during the workflow test execution;
+           ``False`` (default) otherwise.
+
+    :rtype: tuple
+    :return: a tuple (test_suite_instance,suite_configuration)
     """
     options, args = _parse_cli_options()
-    config = WorkflowTestConfiguration.load(options.file) if not config else config
+    config = WorkflowTestConfiguration.load(options.file)
 
     config["galaxy_url"] = options.server \
         if options.server \
