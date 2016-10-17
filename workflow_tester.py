@@ -1183,7 +1183,7 @@ def run_tests(enable_logger=None, enable_debug=None, disable_cleanup=None, disab
         test_config.disable_assertions = config["disable_assertions"]
 
     # enable the logger with the proper detail level
-    if config["enable_logger"]:
+    if config["enable_logger"] or config["enable_debug"]:
         config["logger_level"] = _logging.DEBUG if config["enable_debug"] else _logging.INFO
         _logger.setLevel(config["logger_level"])
 
