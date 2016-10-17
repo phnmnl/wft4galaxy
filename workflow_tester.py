@@ -1128,7 +1128,7 @@ def _parse_cli_options():
     parser.add_option('--debug', help='Enable debug mode', action='store_true')
     parser.add_option('--disable-cleanup', help='Disable cleanup', action='store_false')
     parser.add_option('--disable-assertions', help='Disable assertions', action='store_false')
-    parser.add_option('-o', '--output', help='absolute path of the folder to download workflow outputs')
+    parser.add_option('-o', '--output', help='absolute path of the folder where output is written')
     parser.add_option('-f', '--file', default=WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME,
                       help='YAML configuration file of workflow tests')
     (options, args) = parser.parse_args()
