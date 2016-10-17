@@ -1092,10 +1092,18 @@ def _load_comparator(fully_qualified_comparator_function):
 
     :return: a callable reference to the loaded comparator function
     """
-    components = fully_qualified_comparator_function.split('.')
-    mod = __import__(components[0])
-    for comp in components[1:]:
-        mod = getattr(mod, comp)
+    mod = None
+    try:
+        components = fully_qualified_comparator_function.split('.')
+        mod = __import__(components[0])
+        for comp in components[1:]:
+            mod = getattr(mod, comp)
+    except ImportError, e:
+        _logger.error(e)
+    except AttributeError, e:
+        _logger.error(e)
+    except:
+        _logger.error("Unexpected error:", _exc_info()[0])
     return mod
 
 
