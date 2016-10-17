@@ -680,7 +680,7 @@ class WorkflowTestRunner(_unittest.TestCase):
     @staticmethod
     def new_instance(workflow_test_config, galaxy_url=None, galaxy_api_key=None):
         """
-        Factory method to create and intialize an instance of :class:`WorkflowTestRunner`.
+        Factory method to create and initialize an instance of :class:`WorkflowTestRunner`.
 
         :type workflow_test_config: :class:`WorkflowTestConfiguration`
         :param workflow_test_config: the configuration of a workflow test
@@ -709,6 +709,9 @@ class WorkflowTestRunner(_unittest.TestCase):
         return self._workflow_test_config.name
 
     def __str__(self):
+        return "Workflow Test: '{0}'".format(self._workflow_test_config.name)
+
+    def to_string(self):
         return "Workflow Test '{0}': testId={1}, workflow='{2}', input=[{3}], output=[{4}]" \
             .format(self._workflow_test_config.name,
                     self._get_test_uuid(),
