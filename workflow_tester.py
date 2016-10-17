@@ -211,7 +211,7 @@ class WorkflowTestConfiguration:
                                         'name': 'output1'}}
         """
         for name, config in expected_outputs.items():
-            self.add_expected_output(name, config["file"], config["comparator"])
+            self.add_expected_output(name, config["file"], config.get("comparator", None))
 
     def add_expected_output(self, name, filename, comparator="filecmp.cmp"):
         """
@@ -939,14 +939,17 @@ class WorkflowTestRunner(_unittest.TestCase):
                         "Downloaded output {0}: dataset_id '{1}', filename '{2}'".format(output.name, output.id,
                                                                                          output_filename))
                 config = expected_output_map[output.name]
-                comparator = _load_comparator(config["comparator"])
-                expected_output_filename = _os.path.join(base_path, config["file"])
-                result = comparator(output_filename, expected_output_filename)
-                _logger.debug(
-                    "Output '{0}' {1} the expected: dataset '{2}', actual-output '{3}', expected-output '{4}'"
-                        .format(output.name, "is equal to" if result else "differs from",
-                                output.id, output_filename, expected_output_filename))
-                results[output.name] = result
+                comparator_fn = config.get("comparator", None)
+                _logger.debug("Configured comparator function: %s", comparator_fn)
+                comparator = _load_comparator(comparator_fn) if comparator_fn else base_comparator
+                if comparator:
+                    expected_output_filename = _os.path.join(base_path, config["file"])
+                    result = comparator(output_filename, expected_output_filename)
+                    _logger.debug(
+                        "Output '{0}' {1} the expected: dataset '{2}', actual-output '{3}', expected-output '{4}'"
+                            .format(output.name, "is equal to" if result else "differs from",
+                                    output.id, output_filename, expected_output_filename))
+                    results[output.name] = result
                 _logger.debug("Checking OUTPUT '%s': DONE", output.name)
         _logger.info("Checking test output: DONE")
         return (results, output_file_map)
