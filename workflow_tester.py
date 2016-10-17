@@ -1099,6 +1099,16 @@ def _load_comparator(fully_qualified_comparator_function):
     return mod
 
 
+def base_comparator(actual_output_filename, expected_output_filename):
+    _logger.debug("Using default comparator....")
+    with open(actual_output_filename) as aout, open(expected_output_filename) as eout:
+        diff = _unified_diff(aout.readlines(), eout.readlines(), actual_output_filename, expected_output_filename)
+        ldiff = list(diff)
+        if len(ldiff) > 0:
+            print "\n{0}\n...\n".format("".join(ldiff[:20]))
+        return len(ldiff) == 0
+
+
 def _parse_cli_options():
     parser = _optparse.OptionParser()
     parser.add_option('--server', help='Galaxy server URL')
