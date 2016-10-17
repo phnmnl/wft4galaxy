@@ -46,7 +46,7 @@ class WorkflowTestConfiguration:
     }
 
     def __init__(self, base_path=".", filename="workflow.ga", name=None, inputs={}, expected_outputs={},
-                 disable_cleanup=True, disable_assertions=True):
+                 output_folder=DEFAULT_OUTPUT_FOLDER, disable_cleanup=True, disable_assertions=True):
         """
         Create a new class instance and initialize its initial properties.
 
@@ -85,6 +85,9 @@ class WorkflowTestConfiguration:
                             ....
                             return True | False
 
+        :type output_folder: str
+        :param output_folder: absolute path of the folder where output is written
+
         :type disable_cleanup: bool
         :param disable_cleanup: ``True`` to skip cleanup (Galaxy workflow, history, datasets)
                         after the workflow test execution; ``False`` (default) otherwise.
@@ -106,6 +109,7 @@ class WorkflowTestConfiguration:
         self.set_filename(filename)
         self.set_inputs(inputs)
         self.set_expected_outputs(expected_outputs)
+        self.output_folder = output_folder
         self.disable_cleanup = disable_cleanup
         self.disable_assertions = disable_assertions
 
