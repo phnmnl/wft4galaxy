@@ -7,6 +7,8 @@ import unittest as _unittest
 import optparse as _optparse
 
 from uuid import uuid1 as  _uuid1
+from sys import exc_info as _exc_info
+from difflib import unified_diff as _unified_diff
 from yaml import load as _yaml_load, dump as _yaml_dump
 from json import load as _json_load, dump as _json_dump
 
