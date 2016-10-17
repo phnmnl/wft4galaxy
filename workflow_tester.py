@@ -297,14 +297,19 @@ class WorkflowTestConfiguration:
             base_path = _os.path.dirname(_os.path.abspath(filename))
             with open(filename, "r") as config_file:
                 workflows_conf = _yaml_load(config_file)
-                config["galaxy_url"] = workflows_conf["galaxy_url"]
-                config["galaxy_api_key"] = workflows_conf["galaxy_api_key"]
-                config["enable_logger"] = workflows_conf["enable_logger"]
+                config["galaxy_url"] = workflows_conf.get("galaxy_url", None)
+                config["galaxy_api_key"] = workflows_conf.get("galaxy_api_key", None)
+                config["enable_logger"] = workflows_conf.get("enable_logger", False)
+                config["output_folder"] = workflows_conf.get("output_folder",
+                                                             WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER)
                 config["workflows"] = {}
                 for wf_name, wf_config in workflows_conf.get("workflows").items():
+                    wf_config["output_folder"] = _os.path.join(config["output_folder"],
+                                                               wf_config.get("output_folder", wf_name))
                     # add the workflow
                     w = WorkflowTestConfiguration(base_path=base_path, filename=wf_config["file"], name=wf_name,
-                                                  inputs=wf_config["inputs"], expected_outputs=wf_config["outputs"])
+                                                  inputs=wf_config["inputs"], expected_outputs=wf_config["outputs"],
+                                                  output_folder=wf_config["output_folder"])
                     config["workflows"][wf_name] = w
                     # returns the current workflow test config
                     # if its name matches the 'workflow_test_name' param
@@ -751,8 +756,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         return self._galaxy_workflow
 
     def run_test(self, base_path=None, inputs=None, expected_outputs=None,
-                 output_folder=WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER,
-                 disable_assertions=None, disable_cleanup=None):
+                 output_folder=None, disable_assertions=None, disable_cleanup=None):
         """
         Run the test with the given inputs and expected_outputs.
 
@@ -804,6 +808,10 @@ class WorkflowTestRunner(_unittest.TestCase):
 
         # load workflow
         workflow = self.get_galaxy_workflow()
+
+        # output folder
+        if not output_folder:
+            output_folder = self._workflow_test_config.output_folder
 
         # check input_map
         if not inputs:
@@ -1183,6 +1191,7 @@ def run_tests(enable_logger=None, enable_debug=None, disable_cleanup=None, disab
                                    or config.get("disable_assertions", False)
 
     for test_config in config["workflows"].values():
+        test_config.output_folder = config["output_folder"]
         test_config.disable_cleanup = config["disable_cleanup"]
         test_config.disable_assertions = config["disable_assertions"]
 
