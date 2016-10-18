@@ -296,30 +296,29 @@ class WorkflowTestConfiguration:
         config = {}
         if _os.path.exists(filename):
             base_path = _os.path.dirname(_os.path.abspath(filename))
-            with open(filename, "r") as config_file:
-                workflows_conf = _yaml_load(config_file)
-                config["galaxy_url"] = workflows_conf.get("galaxy_url", None)
-                config["galaxy_api_key"] = workflows_conf.get("galaxy_api_key", None)
-                config["enable_logger"] = workflows_conf.get("enable_logger", False)
-                config["output_folder"] = workflows_conf.get("output_folder",
-                                                             WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER)
-                config["workflows"] = {}
-                for wf_name, wf_config in workflows_conf.get("workflows").items():
-                    wf_config["output_folder"] = _os.path.join(config["output_folder"],
-                                                               wf_config.get("output_folder", wf_name))
-                    # add the workflow
-                    w = WorkflowTestConfiguration(name=wf_name, base_path=base_path, filename=wf_config["file"],
-                                                  inputs=wf_config["inputs"], expected_outputs=wf_config["expected"],
-                                                  output_folder=wf_config["output_folder"])
-                    config["workflows"][wf_name] = w
-                    # returns the current workflow test config
-                    # if its name matches the 'workflow_test_name' param
-                    if workflow_test_name and wf_name == workflow_test_name:
-                        return w
-                # raise an exception if the workflow test we are searching for
-                # cannot be found within the configuration file.
-                if workflow_test_name:
-                    raise KeyError("WorkflowTest with name '%s' not found" % workflow_test_name)
+            workflows_conf = _load_configuration(filename)
+            config["galaxy_url"] = workflows_conf.get("galaxy_url", None)
+            config["galaxy_api_key"] = workflows_conf.get("galaxy_api_key", None)
+            config["enable_logger"] = workflows_conf.get("enable_logger", False)
+            config["output_folder"] = workflows_conf.get("output_folder",
+                                                         WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER)
+            config["workflows"] = {}
+            for wf_name, wf_config in workflows_conf.get("workflows").items():
+                wf_config["output_folder"] = _os.path.join(config["output_folder"],
+                                                           wf_config.get("output_folder", wf_name))
+                # add the workflow
+                w = WorkflowTestConfiguration(name=wf_name, base_path=base_path, filename=wf_config["file"],
+                                              inputs=wf_config["inputs"], expected_outputs=wf_config["expected"],
+                                              output_folder=wf_config["output_folder"])
+                config["workflows"][wf_name] = w
+                # returns the current workflow test config
+                # if its name matches the 'workflow_test_name' param
+                if workflow_test_name and wf_name == workflow_test_name:
+                    return w
+            # raise an exception if the workflow test we are searching for
+            # cannot be found within the configuration file.
+            if workflow_test_name:
+                raise KeyError("WorkflowTest with name '%s' not found" % workflow_test_name)
         else:
             config["workflows"] = {"unknown": WorkflowTestConfiguration.DEFAULT_WORKFLOW_CONFIG.copy()}
         config["output_folder"] = WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
@@ -1092,22 +1091,27 @@ def _get_galaxy_instance(galaxy_url=None, galaxy_api_key=None):
     return _GalaxyInstance(galaxy_url, galaxy_api_key)
 
 
-def _parse_yaml_list(ylist):
-    objs = {}
-    if isinstance(ylist, list):
-        for obj in ylist:
-            obj_data = obj.items()
-            obj_name = obj_data[0][0]
-            obj_file = obj_data[0][1]
-            objs[obj_name] = {
-                "name": obj_name,
-                "file": obj_file
-            }
-    elif isinstance(ylist, dict):
-        for obj_name, obj_data in ylist.items():
-            obj_data["name"] = obj_name
-            objs[obj_name] = obj_data
-    return objs
+def _load_configuration(config_filename):
+    with open(config_filename) as config_file:
+        workflows_conf = _yaml_load(config_file)
+        for wf_name, wf in workflows_conf["workflows"].items():
+            wf["inputs"] = _parse_dict(wf["inputs"])
+            wf["expected"] = _parse_dict(wf["expected"])
+    return workflows_conf
+
+
+def _parse_dict(elements):
+    results = {}
+    for name, value in elements.items():
+        result = value
+        if isinstance(value, str):
+            result = {"name": name, "file": value}
+        elif isinstance(value, dict):
+            result["name"] = name
+        else:
+            raise ValueError("Configuration error: %r", elements)
+        results[name] = result
+    return results
 
 
 def _load_comparator(fully_qualified_comparator_function):
