@@ -25,6 +25,21 @@ _logger = _logging.getLogger("WorkflowTest")
 _logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s')
 
 
+class FILE_FORMATS:
+    YAML = "YAML"
+    JSON = "JSON"
+
+    @staticmethod
+    def is_yaml(file_format):
+        return file_format and (isinstance(file_format, str) or isinstance(file_format, unicode)) and \
+               file_format.upper() == FILE_FORMATS.YAML
+
+    @staticmethod
+    def is_json(file_format):
+        return file_format and (isinstance(file_format, str) or isinstance(file_format, unicode)) and \
+               file_format.upper() == FILE_FORMATS.JSON
+
+
 class WorkflowTestConfiguration:
     """
     Utility class for programmatically handle a workflow test configuration.
@@ -325,26 +340,37 @@ class WorkflowTestConfiguration:
         return config
 
     @staticmethod
-    def dump(filename, worflow_test_list):
+    def dump(filename, worflow_tests_config, file_format=FILE_FORMATS.YAML):
         """
         Write the configuration of a workflow test suite to a YAML file.
 
         :type filename: str
         :param filename: the absolute path of the YAML file
 
-        :type worflow_test_list: dict
-        :param worflow_test_list: a dictionary which maps a workflow test name
+        :type worflow_tests_config: dict or list
+        :param worflow_tests_config: a dictionary which maps a workflow test name
                to the corresponding configuration (:class:`WorkflowTestConfiguration`)
+
+        :type file_format: str
+        :param file_format: 'YAML' or 'JSON'
         """
-
         workflows = {}
-        config = {"workflows": workflows}
-        worflow_test_list = worflow_test_list.values() if isinstance(worflow_test_list, dict) else worflow_test_list
+        config = worflow_tests_config.copy() if isinstance(worflow_tests_config, dict) else {}
+        config["workflows"] = workflows
 
-        for worlflow in worflow_test_list:
+        if isinstance(worflow_tests_config, dict):
+            worflow_tests_config = worflow_tests_config["workflows"].values()
+        elif not isinstance(worflow_tests_config, list):
+            raise ValueError(
+                "'workflow_tests_config' must be a configuration dict "
+                "or a list of 'WorkflowTestConfiguration' instances")
+
+        for worlflow in worflow_tests_config:
             workflows[worlflow.name] = worlflow.to_json()
         with open(filename, "w") as f:
-            _yaml_dump(config, f)
+            _yaml_dump(config, f) \
+                if FILE_FORMATS.is_yaml(file_format) \
+                else f.write(_json_dumps(config, indent=2))
         return config
 
 
@@ -1093,10 +1119,16 @@ def _get_galaxy_instance(galaxy_url=None, galaxy_api_key=None):
 
 def _load_configuration(config_filename):
     with open(config_filename) as config_file:
-        workflows_conf = _yaml_load(config_file)
-        for wf_name, wf in workflows_conf["workflows"].items():
-            wf["inputs"] = _parse_dict(wf["inputs"])
-            wf["expected"] = _parse_dict(wf["expected"])
+        workflows_conf = None
+        try:
+            workflows_conf = _yaml_load(config_file)
+        except ValueError, e:
+            _logger.error("Configuration file '%s' is not a valid YAML or JSON file", config_filename)
+            raise ValueError("Not valid format for the configuration file '%s'.", config_filename)
+    # update inputs/expected fields
+    for wf_name, wf in workflows_conf["workflows"].items():
+        wf["inputs"] = _parse_dict(wf["inputs"])
+        wf["expected"] = _parse_dict(wf["expected"])
     return workflows_conf
 
 
