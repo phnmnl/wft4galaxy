@@ -1104,7 +1104,7 @@ def _parse_dict(elements):
     results = {}
     for name, value in elements.items():
         result = value
-        if isinstance(value, str):
+        if isinstance(value, str) or isinstance(value, unicode):
             result = {"name": name, "file": value}
         elif isinstance(value, dict):
             result["name"] = name
