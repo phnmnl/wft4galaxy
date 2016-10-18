@@ -274,8 +274,8 @@ class WorkflowTestConfiguration:
         return dict({
             "name": self.name,
             "file": self.filename,
-            "inputs": self.inputs,
-            "outputs": self.expected_outputs
+            "inputs": {name: input["file"][0] for name, input in self.inputs.items()},
+            "expected": self.expected_outputs
         })
 
     @staticmethod
