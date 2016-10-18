@@ -10,7 +10,7 @@ from uuid import uuid1 as  _uuid1
 from sys import exc_info as _exc_info
 from difflib import unified_diff as _unified_diff
 from yaml import load as _yaml_load, dump as _yaml_dump
-from json import load as _json_load, dump as _json_dump
+from json import load as _json_load, dumps as _json_dumps
 
 from bioblend.galaxy.objects import GalaxyInstance as _GalaxyInstance
 from bioblend.galaxy.workflows import WorkflowClient as _WorkflowClient
