@@ -528,14 +528,6 @@ class WorkflowTestSuite:
     def configuration(self):
         return self._workflow_test_suite_configuration
 
-    # def get_workflows(self):
-    #     """
-    #
-    #     :rtype: list
-    #     :return: list of :class:`bioblend:Workflow
-    #     """
-    #     return self.galaxy_instance.workflows.list()
-
     def get_workflow_test_results(self, workflow_id=None):
         """
         Return the list of :class:`WorkflowTestResult` instances resulting by the executed workflow tests.
