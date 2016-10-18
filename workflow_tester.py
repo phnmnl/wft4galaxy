@@ -104,12 +104,13 @@ class WorkflowTestConfiguration:
         self._expected_outputs = {}
 
         # set parameters
-        self.name = name
+        self.name = _uuid1() if not name else name
         self.set_base_path(base_path)
         self.set_filename(filename)
         self.set_inputs(inputs)
         self.set_expected_outputs(expected_outputs)
-        self.output_folder = output_folder
+        self.output_folder = _os.path.join(self.DEFAULT_OUTPUT_FOLDER, self.name) \
+            if output_folder is None else output_folder
         self.disable_cleanup = disable_cleanup
         self.disable_assertions = disable_assertions
 
