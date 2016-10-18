@@ -61,7 +61,7 @@ class WorkflowTestConfiguration:
     }
 
     def __init__(self, name=None, base_path=".", filename="workflow.ga", inputs={}, expected_outputs={},
-                 output_folder=None, disable_cleanup=True, disable_assertions=True):
+                 output_folder=None, disable_cleanup=False, disable_assertions=True):
         """
         Create a new class instance and initialize its initial properties.
 
@@ -647,6 +647,7 @@ class WorkflowTestSuite:
         suite_config = workflow_tests_config or self._workflow_test_suite_configuration
         self._suite_setup(suite_config, enable_logger, enable_debug, disable_cleanup, disable_assertions)
         for test_config in suite_config["workflows"].values():
+            test_config.disable_assertions = False
             runner = self._create_test_runner(test_config)
             suite.addTest(runner)
         _RUNNER = _unittest.TextTestRunner(verbosity=2)
