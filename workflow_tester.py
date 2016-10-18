@@ -775,7 +775,8 @@ class WorkflowTestRunner(_unittest.TestCase):
         return self._galaxy_workflow
 
     def run_test(self, base_path=None, inputs=None, expected_outputs=None,
-                 output_folder=None, disable_assertions=None, disable_cleanup=None):
+                 output_folder=None, disable_assertions=None, disable_cleanup=None,
+                 enable_logger=None, enable_debug=None):
         """
         Run the test with the given inputs and expected_outputs.
 
@@ -819,9 +820,19 @@ class WorkflowTestRunner(_unittest.TestCase):
         :param disable_assertions: ``True`` to disable assertions during the workflow test execution;
                            ``False`` (default) otherwise.
 
+        :type enable_logger: bool
+        :param enable_logger: 'True' to enable the logger (with INFO level); 'False' otherwise.
+
+        :type enable_debug: bool
+        :param enable_debug: 'True' to enable the logger with DEBUG level; 'False' otherwise.
+
         :rtype: :class:``WorkflowTestResult``
         :return: workflow test result
         """
+        # update logger
+        if enable_logger or enable_debug:
+            _logger.setLevel(_logging.DEBUG if enable_debug else _logging.INFO)
+
         # set basepath
         base_path = self._base_path if not base_path else base_path
 
