@@ -45,8 +45,8 @@ class WorkflowTestConfiguration:
         }
     }
 
-    def __init__(self, base_path=".", filename="workflow.ga", name=None, inputs={}, expected_outputs={},
-                 output_folder=DEFAULT_OUTPUT_FOLDER, disable_cleanup=True, disable_assertions=True):
+    def __init__(self, name=None, base_path=".", filename="workflow.ga", inputs={}, expected_outputs={},
+                 output_folder=None, disable_cleanup=True, disable_assertions=True):
         """
         Create a new class instance and initialize its initial properties.
 
@@ -308,7 +308,7 @@ class WorkflowTestConfiguration:
                     wf_config["output_folder"] = _os.path.join(config["output_folder"],
                                                                wf_config.get("output_folder", wf_name))
                     # add the workflow
-                    w = WorkflowTestConfiguration(base_path=base_path, filename=wf_config["file"], name=wf_name,
+                    w = WorkflowTestConfiguration(name=wf_name, base_path=base_path, filename=wf_config["file"],
                                                   inputs=wf_config["inputs"], expected_outputs=wf_config["outputs"],
                                                   output_folder=wf_config["output_folder"])
                     config["workflows"][wf_name] = w
@@ -341,7 +341,7 @@ class WorkflowTestConfiguration:
         workflows = {}
         config = {"workflows": workflows}
         worflow_test_list = worflow_test_list.values() if isinstance(worflow_test_list, dict) else worflow_test_list
-        print worflow_test_list
+
         for worlflow in worflow_test_list:
             workflows[worlflow.name] = worlflow.to_json()
         with open(filename, "w") as f:
@@ -681,6 +681,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         self._galaxy_history_client = _HistoryClient(galaxy_instance.gi)
         self._disable_cleanup = workflow_test_config.disable_cleanup
         self._disable_assertions = workflow_test_config.disable_assertions
+        self._output_folder = workflow_test_config.output_folder
         self._base_path = workflow_test_config.base_path
         self._test_cases = {}
         self._test_uuid = None
@@ -830,6 +831,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         # update config options
         disable_cleanup = disable_cleanup if not disable_cleanup is None else self._disable_cleanup
         disable_assertions = disable_assertions if not disable_assertions is None else self._disable_assertions
+        output_folder = output_folder if not output_folder is None else self._output_folder
 
         # uuid of the current test
         test_uuid = self._get_test_uuid(True)
@@ -1202,7 +1204,6 @@ def run_tests(enable_logger=None, enable_debug=None, disable_cleanup=None, disab
                                    or config.get("disable_assertions", False)
 
     for test_config in config["workflows"].values():
-        test_config.output_folder = config["output_folder"]
         test_config.disable_cleanup = config["disable_cleanup"]
         test_config.disable_assertions = config["disable_assertions"]
 
