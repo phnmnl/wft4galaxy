@@ -39,7 +39,7 @@ class WorkflowTestConfiguration:
         "inputs": {
             "Input Dataset": {"name": "Input Dataset", "file": ["input"]}
         },
-        "outputs": {
+        "expected": {
             "output1": {"file": "expected_output", "comparator": "filecmp.cmp", "name": "output1"},
             "output2": {"file": "expected_output", "comparator": "filecmp.cmp", "name": "output2"}
         }
@@ -309,7 +309,7 @@ class WorkflowTestConfiguration:
                                                                wf_config.get("output_folder", wf_name))
                     # add the workflow
                     w = WorkflowTestConfiguration(name=wf_name, base_path=base_path, filename=wf_config["file"],
-                                                  inputs=wf_config["inputs"], expected_outputs=wf_config["outputs"],
+                                                  inputs=wf_config["inputs"], expected_outputs=wf_config["expected"],
                                                   output_folder=wf_config["output_folder"])
                     config["workflows"][wf_name] = w
                     # returns the current workflow test config
