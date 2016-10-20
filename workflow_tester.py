@@ -583,7 +583,7 @@ class WorkflowTestSuite:
         """
         self._workflow_test_results.append(test_result)
 
-    def _create_test_runner(self, workflow_test_config):
+    def _create_test_runner(self, workflow_test_config, suite_config):
         """
         Private method which creates a test runner associated to this suite.
 
@@ -593,6 +593,12 @@ class WorkflowTestSuite:
         :rtype: :class:'WorkflowTestRunner'
         :return: the created :class:'WorkflowTestResult' instance
         """
+        # update test config
+        workflow_test_config.disable_cleanup = suite_config.get("disable_cleanup", False)
+        workflow_test_config.disable_assertions = suite_config.get("disable_assertions", False)
+        workflow_test_config.enable_logger = suite_config.get("enable_logger", False)
+        workflow_test_config.enable_debug = suite_config.get("enable_debug", False)
+        # create a new runner instance
         runner = WorkflowTestRunner(self.galaxy_instance, self.workflow_loader, workflow_test_config, self)
         self._workflow_runners.append(runner)
         return runner
@@ -606,7 +612,7 @@ class WorkflowTestSuite:
         config["disable_assertions"] = disable_assertions \
             if not disable_assertions is None else config.get("disable_assertions", False)
         # update logger level
-        if config.get("enable_logger", True):
+        if config.get("enable_logger", True) or config.get("enable_debug", True):
             config["logger_level"] = _logging.DEBUG if config.get("enable_debug", False) else _logging.INFO
             _logger.setLevel(config["logger_level"])
 
@@ -626,7 +632,7 @@ class WorkflowTestSuite:
         suite_config = workflow_tests_config or self._workflow_test_suite_configuration
         self._suite_setup(suite_config, enable_logger, enable_debug, disable_cleanup, disable_assertions)
         for test_config in suite_config["workflows"].values():
-            runner = self._create_test_runner(test_config)
+            runner = self._create_test_runner(test_config, suite_config)
             result = runner.run_test()
             results.append(result)
         # cleanup
@@ -648,7 +654,7 @@ class WorkflowTestSuite:
         self._suite_setup(suite_config, enable_logger, enable_debug, disable_cleanup, disable_assertions)
         for test_config in suite_config["workflows"].values():
             test_config.disable_assertions = False
-            runner = self._create_test_runner(test_config)
+            runner = self._create_test_runner(test_config, suite_config)
             suite.addTest(runner)
         _RUNNER = _unittest.TextTestRunner(verbosity=2)
         _RUNNER.run((suite))
