@@ -874,6 +874,9 @@ class WorkflowTestRunner(_unittest.TestCase):
         # store the current message
         error_msg = None
 
+        # test restul
+        test_result = None
+
         # check tools
         missing_tools = self.find_missing_tools()
         if len(missing_tools) == 0:
@@ -892,29 +895,35 @@ class WorkflowTestRunner(_unittest.TestCase):
                 for filename in config["file"]:
                     datamap[label].append(history.upload_dataset(_os.path.join(base_path, filename)))
 
-            # run the workflow
-            _logger.info("Workflow '%s' (id: %s) running ...", workflow.name, workflow.id)
-            outputs, output_history = workflow.run(datamap, history, wait=True, polling_interval=0.5)
-            _logger.info("Workflow '%s' (id: %s) executed", workflow.name, workflow.id)
+            try:
+                # run the workflow
+                _logger.info("Workflow '%s' (id: %s) running ...", workflow.name, workflow.id)
+                outputs, output_history = workflow.run(datamap, history, wait=True, polling_interval=0.5)
+                _logger.info("Workflow '%s' (id: %s) executed", workflow.name, workflow.id)
 
-            # check outputs
-            results, output_file_map = self._check_outputs(base_path, outputs, expected_outputs, output_folder)
+                # check outputs
+                results, output_file_map = self._check_outputs(base_path, outputs, expected_outputs, output_folder)
 
-            # instantiate the result object
-            test_result = _WorkflowTestResult(test_uuid, workflow, inputs, outputs, output_history,
-                                              expected_outputs, missing_tools, results, output_file_map,
-                                              output_folder)
-            if test_result.failed():
-                error_msg = "The actual output{0} {2} differ{1} from the expected one{0}." \
-                    .format("" if len(test_result.failed_outputs) == 1 else "s",
-                            "" if len(test_result.failed_outputs) > 1 else "s",
-                            ", ".join(["'{0}'".format(n) for n in test_result.failed_outputs]))
+                # instantiate the result object
+                test_result = _WorkflowTestResult(test_uuid, workflow, inputs, outputs, output_history,
+                                                  expected_outputs, missing_tools, results, output_file_map,
+                                                  output_folder)
+                if test_result.failed():
+                    error_msg = "The actual output{0} {2} differ{1} from the expected one{0}." \
+                        .format("" if len(test_result.failed_outputs) == 1 else "s",
+                                "" if len(test_result.failed_outputs) > 1 else "s",
+                                ", ".join(["'{0}'".format(n) for n in test_result.failed_outputs]))
+            except RuntimeError, e:
+                error_msg = "Runtime error: {0}".format(e.message)
+                _logger.error(error_msg)
 
         else:
-            # instantiate the result object
-            test_result = _WorkflowTestResult(test_uuid, workflow, inputs, [], None,
-                                              expected_outputs, missing_tools, [], {}, output_folder)
             error_msg = "Some workflow tools are not available in Galaxy: {0}".format(", ".join(missing_tools))
+
+        # instantiate the result object
+        if not test_result:
+            test_result = _WorkflowTestResult(test_uuid, workflow, inputs, [], None,
+                                              expected_outputs, missing_tools, {}, {}, output_folder)
 
         # store result
         self._test_cases[test_uuid] = test_result
