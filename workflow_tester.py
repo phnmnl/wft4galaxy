@@ -1014,6 +1014,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         return (results, output_file_map)
 
     def cleanup(self):
+        _logger.debug("Cleanup of workflow test '%s'...", self._test_uuid)
         for test_uuid, test_result in self._test_cases.items():
             if test_result.output_history:
                 self._galaxy_instance.histories.delete(test_result.output_history.id)
@@ -1021,6 +1022,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         if self._galaxy_workflow:
             self._workflow_loader.unload_workflow(self._galaxy_workflow.id)
             self._galaxy_workflow = None
+        _logger.debug("Cleanup of workflow test '%s': DONE", self._test_uuid)
 
     def cleanup_output_folder(self, test_result=None):
         test_results = self._test_cases.values() if not test_result else [test_result]
