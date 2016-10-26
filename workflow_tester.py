@@ -305,6 +305,7 @@ class WorkflowTestConfiguration:
             "name": self.name,
             "file": self.filename,
             "inputs": {name: input["file"][0] for name, input in self.inputs.items()},
+            "params": self.params,
             "expected": self.expected_outputs
         })
 
@@ -338,7 +339,8 @@ class WorkflowTestConfiguration:
                                                            wf_config.get("output_folder", wf_name))
                 # add the workflow
                 w = WorkflowTestConfiguration(name=wf_name, base_path=base_path, filename=wf_config["file"],
-                                              inputs=wf_config["inputs"], expected_outputs=wf_config["expected"],
+                                              inputs=wf_config["inputs"], params=wf_config.get("params", {}),
+                                              expected_outputs=wf_config["expected"],
                                               output_folder=wf_config["output_folder"])
                 config["workflows"][wf_name] = w
                 # returns the current workflow test config
