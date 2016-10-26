@@ -60,8 +60,8 @@ class WorkflowTestConfiguration:
         }
     }
 
-    def __init__(self, name=None, base_path=".", filename="workflow.ga", inputs={}, expected_outputs={},
-                 output_folder=None, disable_cleanup=False, disable_assertions=True):
+    def __init__(self, name=None, base_path=".", filename="workflow.ga", inputs={}, params={},
+                 expected_outputs={}, output_folder=None, disable_cleanup=False, disable_assertions=True):
         """
         Create a new class instance and initialize its initial properties.
 
@@ -76,6 +76,19 @@ class WorkflowTestConfiguration:
 
         :type inputs: dict
         :param inputs: a map <INPUT_NAME>:<INPUT_DATASET_INFO> (e.g., {"input_name" : {"file": ...}}
+
+        :type params: dict
+        :param params: maps each step with the corresponding dict of params
+
+               :Example:
+                         params = {3:
+                                      {
+                                        "orthoI": "NA"
+                                        "predI": "1"
+                                        "respC": "gender"
+                                        "testL": "FALSE"
+                                      }
+                                   }
 
         :type expected_outputs: dict
         :param expected_outputs: maps actual to expected outputs.
@@ -116,6 +129,7 @@ class WorkflowTestConfiguration:
         self._base_path = None
         self._filename = None
         self._inputs = {}
+        self._params = {}
         self._expected_outputs = {}
 
         # set parameters
@@ -123,6 +137,7 @@ class WorkflowTestConfiguration:
         self.set_base_path(base_path)
         self.set_filename(filename)
         self.set_inputs(inputs)
+        self.set_params(params)
         self.set_expected_outputs(expected_outputs)
         self.output_folder = _os.path.join(self.DEFAULT_OUTPUT_FOLDER, self.name) \
             if output_folder is None else output_folder
