@@ -876,7 +876,7 @@ class WorkflowTestRunner(_unittest.TestCase):
             self._galaxy_workflow = self._workflow_loader.load_workflow(self._workflow_test_config)
         return self._galaxy_workflow
 
-    def run_test(self, base_path=None, inputs=None, expected_outputs=None,
+    def run_test(self, base_path=None, inputs=None, params=None, expected_outputs=None,
                  output_folder=None, disable_assertions=None, disable_cleanup=None,
                  enable_logger=None, enable_debug=None):
         """
@@ -951,6 +951,12 @@ class WorkflowTestRunner(_unittest.TestCase):
                 inputs = self._workflow_test_config.inputs
             else:
                 raise ValueError("No input configured !!!")
+
+        # check params
+        if not params:
+            params = self._workflow_test_config.params
+            _logger.debug("Using default params")
+
         # check expected_output_map
         if not expected_outputs:
             if len(self._workflow_test_config.expected_outputs) > 0:
@@ -993,7 +999,7 @@ class WorkflowTestRunner(_unittest.TestCase):
             try:
                 # run the workflow
                 _logger.info("Workflow '%s' (id: %s) running ...", workflow.name, workflow.id)
-                outputs, output_history = workflow.run(datamap, history, wait=True, polling_interval=0.5)
+                outputs, output_history = workflow.run(datamap, history, params=params, wait=True, polling_interval=0.5)
                 _logger.info("Workflow '%s' (id: %s) executed", workflow.name, workflow.id)
 
                 # check outputs
