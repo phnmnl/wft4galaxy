@@ -227,6 +227,84 @@ class WorkflowTestConfiguration:
         return self._inputs.get(name, None)
 
     @property
+    def params(self):
+        """
+        Return the dict of parameters
+
+        :rtype: dict
+        :return: dict of params
+        """
+        return self._params
+
+    def set_params(self, params):
+        """
+        Update the set of parameters of each step
+
+        :type params: dict
+        :param params: dict of params indexed by step id
+        """
+        for step_id, step_params in params.items():
+            for name, value in step_params.items():
+                self.add_param(step_id, name, value)
+
+    def add_param(self, step_id, name, value):
+        """
+        Add a new parameter of the step identified by 'step_id'.
+
+        :type step_id: int
+        :param step_id: step index
+
+        :type name: str
+        :param name: name of the parameter
+
+        :type value: str
+        :param value: the value of the parameter
+        """
+        if not self._params.has_key(step_id):
+            self._params[step_id] = {}
+        self._params[step_id][name] = value
+
+    def remove_param(self, step_id, name):
+        """
+        Remove a parameter of the step 'step_id'.
+
+        :type step_id: int
+        :param step_id: step index
+
+        :type name: str
+        :param name: name of the parameter to be removed
+        """
+        if self._params.has_key(step_id):
+            del self._params[step_id][name]
+
+    def get_params(self, step_id):
+        """
+        Return the dict of parameters related to the step indexed by 'step_id'.
+
+        :type step_id: int
+        :param step_id: the step index
+
+        :rtype: dict
+        :return: the dict of parameters related to the step indexed by 'step_id'
+        """
+        return self._params.get(step_id, None)
+
+    def get_param(self, step_id, name):
+        """
+        Return the value of a specific parameter
+
+        :type step_id: int
+        :param step_id: the index of the step which the parameter is related to
+
+        :type name: str
+        :param name: the name of the parameter to be returned
+
+        :return: the value of the requested parameter
+        """
+        step_params = self._params.get(step_id, None)
+        return step_params.get(name, None) if step_params else None
+
+    @property
     def expected_outputs(self):
         return self._expected_outputs
 
