@@ -1303,7 +1303,7 @@ def base_comparator(actual_output_filename, expected_output_filename):
         diff_filename = _os.path.join(_os.path.dirname(actual_output_filename),
                                       _os.path.basename(actual_output_filename) + ".diff")
         with open(diff_filename, "w") as  out_fp:
-            out_fp.writelines("%s\n" % item for item in ldiff)
+            out_fp.writelines("%r\n"% item.rstrip('\n') for item in ldiff)
         return len(ldiff) == 0
 
 
