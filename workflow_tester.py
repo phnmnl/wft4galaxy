@@ -5,16 +5,20 @@ import os as _os
 import logging as _logging
 import unittest as _unittest
 import optparse as _optparse
+import tarfile as _tarfile
 
+from lxml import etree as _etree
 from uuid import uuid1 as  _uuid1
 from sys import exc_info as _exc_info
 from difflib import unified_diff as _unified_diff
 from yaml import load as _yaml_load, dump as _yaml_dump
-from json import load as _json_load, dumps as _json_dumps
+from ruamel.yaml.comments import CommentedMap as _CommentedMap
+from json import load as _json_load, loads as _json_loads, dumps as _json_dumps
 
 from bioblend.galaxy.objects import GalaxyInstance as _GalaxyInstance
 from bioblend.galaxy.workflows import WorkflowClient as _WorkflowClient
 from bioblend.galaxy.histories import HistoryClient as _HistoryClient
+from bioblend.galaxy.tools import ToolClient as _ToolClient
 
 # Galaxy ENV variable names
 ENV_KEY_GALAXY_URL = "BIOBLEND_GALAXY_URL"
