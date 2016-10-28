@@ -24,6 +24,9 @@ from bioblend.galaxy.tools import ToolClient as _ToolClient
 ENV_KEY_GALAXY_URL = "BIOBLEND_GALAXY_URL"
 ENV_KEY_GALAXY_API_KEY = "BIOBLEND_GALAXY_API_KEY"
 
+# Default folder where tool configuration is downloaded
+DEFAULT_TOOLS_FOLDER = "tools"
+
 # configure module logger
 _logger = _logging.getLogger("WorkflowTest")
 _logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s')
@@ -1215,6 +1218,153 @@ class _WorkflowTestResult():
         return self.results
 
 
+def get_workflow_info(filename, tool_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=None, galaxy_api_key=None):
+    inputs = []
+    params = _CommentedMap()
+    expected_outputs = {}
+
+    # setup galaxy instance
+    galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
+    galaxy_tool_client = _ToolClient(galaxy_instance.gi)
+
+    if not _os.path.exists(DEFAULT_TOOLS_FOLDER):
+        _os.makedirs(DEFAULT_TOOLS_FOLDER)
+
+    with open(filename) as fp:
+        wf_config = _json_load(fp)
+
+    for sid, step in wf_config["steps"].items():
+        # tool = gi.tools.get()
+
+        _logger.debug("Processing step '%s' -- '%s'", sid, step["name"])
+
+        # an input step....
+        if not step["tool_id"] and step["type"] == "data_input":
+            for input in step["inputs"]:
+                _logger.debug("Processing input: '%s' (%s)", input["name"], input["description"])
+                inputs.append(input)
+
+        # a processing step (with outputs) ...
+        if step["tool_id"] and step["type"] == "tool":
+
+            # tool parameters
+            tool_params = _CommentedMap()
+
+            # process tool info to extract parameters
+            tool_id = step["tool_id"]
+            tool = galaxy_instance.tools.get(tool_id)
+            tool_json = _json_loads(tool.to_json())
+            tool_config_xml = _os.path.basename(tool_json["config_file"])
+            _logger.debug("Processing step tool '%s'", tool_id)
+
+            try:
+                _logger.debug("Download TOOL '%s' definition file XML: %s....", tool_id, tool_config_xml)
+                targz_filename = _os.path.join(DEFAULT_TOOLS_FOLDER, tool_id + ".tar.gz")
+                targz_content = galaxy_tool_client._get(_os.path.join(tool_id, "download"), json=False)
+                if targz_content.status_code == 200:
+                    with open(targz_filename, "w") as tfp:
+                        tfp.write(targz_content.content)
+
+                    tar = _tarfile.open(targz_filename)
+                    tar.extractall(path=tool_folder)
+                    tar.close()
+                    _logger.debug("Download TOOL '%s' definition file XML: %s....: DONE", tool_id, tool_config_xml)
+                else:
+                    _logger.debug("Download TOOL '%s' definition file XML: %s....: ERROR %r",
+                                  tool_id, tool_config_xml, targz_content.status_code)
+
+                tool_config_xml = _os.path.join(DEFAULT_TOOLS_FOLDER, tool_config_xml)
+                if _os.path.exists(tool_config_xml):
+                    tree = _etree.parse(tool_config_xml)
+                    root = tree.getroot()
+                    inputs_el = root.find("inputs")
+                    for input_el in inputs_el:
+                        _process_tool_param_element(input_el, tool_params)
+                    if len(tool_params) > 0:
+                        params.insert(int(sid), sid, tool_params)
+
+            except Exception, e:
+                _logger.debug("Download TOOL '%s' definition file XML: %s....: ERROR", tool_id, tool_config_xml)
+                _logger.error(e)
+
+            # process
+            for output in step["workflow_outputs"]:
+                expected_outputs[output["uuid"]] = output
+
+    return wf_config, inputs, params, expected_outputs
+
+
+def _process_tool_param_element(input_el, tool_params):
+    """
+        Parameter types:
+             1) text                    X
+             2) integer and float       X
+             3) boolean                 X
+             4) data                    X (no default option)
+             5) select                  ~ (not with OPTIONS)
+             6) data_column             X (uses the default_value attribute)
+             7) data_collection         X (no default option)
+             8) drill_down              X (no default option)
+             9) color                   X
+
+        Tag <OPTION> is allowed for the following types:
+            1) select                   X
+
+        Tag <OPTIONS> is allowed for the following types of PARAM:
+            1) select
+            2) data
+          ... options can be extracted by :
+            a) from_data_table
+            b) from dataset
+            c) from_file
+            d) from_parameter
+            e) filter
+
+    :param input_el: an XML param element
+    :param tool_params: a CommentMap instance
+    :return:
+    """
+    input_el_type = input_el.get("type")
+    if (input_el.tag == "param" or input_el.tag == "option") \
+            and input_el.get("type") != "data":
+        if input_el_type in ["text", "data", "data_collection", "drill_down"]:
+            tool_params.insert(len(tool_params), input_el.get("name"), "", comment=input_el.get("label"))
+        elif input_el_type in ["integer", "float", "color"]:
+            tool_params.insert(len(tool_params), input_el.get("name"), input_el.get("value"),
+                               comment=input_el.get("label"))
+        elif input_el_type in ["data_column"]:
+            tool_params.insert(len(tool_params), input_el.get("name"), input_el.get("default_value"),
+                               comment=input_el.get("label"))
+        elif input_el_type == "boolean":
+            input_el_value = input_el.get("truevalue", "true") \
+                if input_el.get("checked") else input_el.get("falsevalue", "false")
+            tool_params.insert(len(tool_params), input_el.get("name"), input_el_value, comment=input_el.get("label"))
+        elif input_el_type == "select":
+            selected_option_el = input_el.find("option[@selected]")
+
+            selected_option_el = selected_option_el \
+                if selected_option_el is not None \
+                else input_el.getchildren()[0] if len(input_el.getchildren()) > 0 else None
+            if selected_option_el is not None:
+                tool_params.insert(len(tool_params), input_el.get("name"),
+                                   selected_option_el.get("value"),
+                                   comment=input_el.get("label"))
+    elif input_el.tag == "conditional":
+        conditional_options = _CommentedMap()
+        for conditional_param in input_el.findall("param"):
+            _process_tool_param_element(conditional_param, conditional_options)
+        tool_params.insert(len(tool_params), input_el.get("name"),
+                           conditional_options, comment=input_el.get("label"))
+        for when_el in input_el.findall("when"):
+            when_options = _CommentedMap()
+            for when_option in when_el.findall("param"):
+                _process_tool_param_element(when_option, when_options)
+            if len(when_options) > 0:
+                conditional_options.insert(len(conditional_options),
+                                           when_el.get("value"),
+                                           when_options)
+
+
 def _get_galaxy_instance(galaxy_url=None, galaxy_api_key=None):
     """
     Private utility function to instantiate and configure a :class:`bioblend.GalaxyInstance`
@@ -1307,7 +1457,7 @@ def base_comparator(actual_output_filename, expected_output_filename):
         diff_filename = _os.path.join(_os.path.dirname(actual_output_filename),
                                       _os.path.basename(actual_output_filename) + ".diff")
         with open(diff_filename, "w") as  out_fp:
-            out_fp.writelines("%r\n"% item.rstrip('\n') for item in ldiff)
+            out_fp.writelines("%r\n" % item.rstrip('\n') for item in ldiff)
         return len(ldiff) == 0
 
 
