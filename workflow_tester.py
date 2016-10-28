@@ -47,6 +47,22 @@ class FILE_FORMATS:
                file_format.upper() == FILE_FORMATS.JSON
 
 
+class Workflow:
+    def __init__(self, definition, inputs, params, expected_outputs):
+        self.definition = definition
+        self.inputs = inputs
+        self.params = params
+        self.expected_outputs = expected_outputs
+
+    @staticmethod
+    def load(filename, tools_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=None, galaxy_api_key=None):
+        definition, inputs, params, expected_outputs = get_workflow_info(filename=filename,
+                                                                         tool_folder=tools_folder,
+                                                                         galaxy_url=galaxy_url,
+                                                                         galaxy_api_key=galaxy_api_key)
+        return Workflow(definition, inputs, params, expected_outputs)
+
+
 class WorkflowTestConfiguration:
     """
     Utility class for programmatically handle a workflow test configuration.
