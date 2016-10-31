@@ -1304,8 +1304,9 @@ def get_workflow_info(filename, tool_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=Non
                 _logger.error(e)
 
             # process
+            outputs[str(sid)] = {}
             for output in step["workflow_outputs"]:
-                expected_outputs[output["uuid"]] = output
+                outputs[str(sid)][output["uuid"]] = output
 
     return wf_config, inputs, params, outputs
 
