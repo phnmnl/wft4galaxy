@@ -1,2 +1,6 @@
 .idea
+build
 **/.DS_Store
+**/*.pyc
+.tools
+results
