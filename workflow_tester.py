@@ -26,7 +26,7 @@ ENV_KEY_GALAXY_URL = "BIOBLEND_GALAXY_URL"
 ENV_KEY_GALAXY_API_KEY = "BIOBLEND_GALAXY_API_KEY"
 
 # Default folder where tool configuration is downloaded
-DEFAULT_TOOLS_FOLDER = "tools"
+DEFAULT_TOOLS_FOLDER = ".tools"
 
 # configure module logger
 _logger = _logging.getLogger("WorkflowTest")
@@ -1321,10 +1321,10 @@ def _get_workflow_info(filename, tool_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=No
                 if targz_content.status_code == 200:
                     with open(targz_filename, "w") as tfp:
                         tfp.write(targz_content.content)
-
                     tar = _tarfile.open(targz_filename)
                     tar.extractall(path=tool_folder)
                     tar.close()
+                    _os.remove(targz_filename)
                     _logger.debug("Download TOOL '%s' definition file XML: %s....: DONE", tool_id, tool_config_xml)
                 else:
                     _logger.debug("Download TOOL '%s' definition file XML: %s....: ERROR %r",
