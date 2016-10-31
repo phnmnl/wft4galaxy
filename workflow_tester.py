@@ -806,15 +806,8 @@ class WorkflowTestSuite:
         """
         Perform a cleanup unloading workflows and deleting temporary histories.
         """
-        _logger.debug("Cleaning save histories ...")
-        hslist = self.galaxy_instance.histories.list()
-        for history in [h for h in hslist if WorkflowTestConfiguration.DEFAULT_HISTORY_NAME_PREFIX in h.name]:
-            self.galaxy_instance.histories.delete(history.id)
-        _logger.debug("Cleaning workflow library ...")
-        wflist = self.galaxy_instance.workflows.list()
-        workflows = [w for w in wflist if WorkflowTestConfiguration.DEFAULT_WORKFLOW_NAME_PREFIX in w.name]
-        for wf in workflows:
-            self._workflow_loader.unload_workflow(wf.id)
+        for runner in self._workflow_runners:
+            runner.cleanup()
 
     def load(self, filename=None):
         """
