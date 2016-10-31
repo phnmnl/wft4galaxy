@@ -652,7 +652,7 @@ class WorkflowTestSuite:
         # initialize the galaxy instance
         self._galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
         # initialize the workflow loader
-        self._workflow_loader = WorkflowLoader(self._galaxy_instance)
+        self._workflow_loader = WorkflowLoader.get_instance(self._galaxy_instance)
         # default suite configuration
         self._workflow_test_suite_configuration = WorkflowTestSuite._DEFAULT_SUITE_CONFIGURATION.copy()
 
@@ -873,7 +873,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         """
         # initialize the galaxy instance
         galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
-        workflow_loader = WorkflowLoader(galaxy_instance)
+        workflow_loader = WorkflowLoader.get_instance(galaxy_instance)
         # return the runner instance
         return WorkflowTestRunner(galaxy_instance, workflow_loader, workflow_test_config)
 
