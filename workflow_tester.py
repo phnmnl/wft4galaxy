@@ -48,7 +48,7 @@ class FILE_FORMATS:
 
 
 class Workflow:
-    def __init__(self, definition, inputs, params, expected_outputs):
+    def __init__(self, definition, inputs, params, outputs):
         self.definition = definition
         self.inputs = inputs
         self.params = params
@@ -1237,7 +1237,7 @@ class _WorkflowTestResult():
 def get_workflow_info(filename, tool_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=None, galaxy_api_key=None):
     inputs = []
     params = _CommentedMap()
-    expected_outputs = {}
+    outputs = {}
 
     # setup galaxy instance
     galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
@@ -1307,7 +1307,7 @@ def get_workflow_info(filename, tool_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=Non
             for output in step["workflow_outputs"]:
                 expected_outputs[output["uuid"]] = output
 
-    return wf_config, inputs, params, expected_outputs
+    return wf_config, inputs, params, outputs
 
 
 def _process_tool_param_element(input_el, tool_params):
