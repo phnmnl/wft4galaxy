@@ -420,6 +420,15 @@ class WorkflowTestConfiguration:
             "expected": self.expected_outputs
         })
 
+    def save(self, filename=None, file_format=FILE_FORMATS.YAML):
+        if not filename and not self.filename:
+            filename = _os.path.splitext(self.DEFAULT_CONFIG_FILENAME)[0] + \
+                       "json" if FILE_FORMATS.is_json(file_format) else "yml"
+        if not filename:
+            filename, _ = _os.path.splitext(self.filename)
+            filename += "json" if FILE_FORMATS.is_json(file_format) else "yml"
+        self.dump(filename=filename, worflow_tests_config=self, file_format=file_format)
+
     @staticmethod
     def load(filename=DEFAULT_CONFIG_FILENAME, workflow_test_name=None):
         """
