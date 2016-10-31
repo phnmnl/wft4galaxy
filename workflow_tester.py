@@ -611,7 +611,8 @@ class WorkflowLoader:
         if not self._galaxy_instance:
             raise RuntimeError("WorkflowLodaer not initialized")
         self._galaxy_workflow_client.delete_workflow(workflow_id)
-        # TODO: remove workflow from the list
+        if workflow_id in self._workflows:
+            del self._workflows[workflow_id]
 
     def unload_workflows(self):
         if not self._galaxy_instance:
