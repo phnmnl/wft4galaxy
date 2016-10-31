@@ -573,6 +573,8 @@ class WorkflowLoader:
         :type workflow_name: str
         :param workflow_name: an optional name which overrides the workflow name
         """
+        if not self._galaxy_instance:
+            raise RuntimeError("WorkflowLodaer not initialized")
         workflow_filename = workflow_test_config.filename \
             if not workflow_test_config.base_path \
             else _os.path.join(workflow_test_config.base_path, workflow_test_config.filename)
@@ -589,6 +591,8 @@ class WorkflowLoader:
         :param workflow_name: an optional name which overrides the workflow name
         :return:
         """
+        if not self._galaxy_instance:
+            raise RuntimeError("WorkflowLodaer not initialized")
         with open(workflow_filename) as f:
             wf_json = _json_load(f)
         wf_json["name"] = WorkflowTestConfiguration.DEFAULT_WORKFLOW_NAME_PREFIX \
@@ -604,10 +608,14 @@ class WorkflowLoader:
         :type workflow_id: str
         :param workflow_id: the ID of the workflow to unload.
         """
+        if not self._galaxy_instance:
+            raise RuntimeError("WorkflowLodaer not initialized")
         self._galaxy_workflow_client.delete_workflow(workflow_id)
         # TODO: remove workflow from the list
 
     def unload_workflows(self):
+        if not self._galaxy_instance:
+            raise RuntimeError("WorkflowLodaer not initialized")
         for wf_id, wf in self._workflows.items():
             self.unload_workflow(wf.id)
 
