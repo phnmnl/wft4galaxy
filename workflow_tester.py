@@ -13,6 +13,7 @@ from sys import exc_info as _exc_info
 from difflib import unified_diff as _unified_diff
 from yaml import load as _yaml_load, dump as _yaml_dump
 from ruamel.yaml.comments import CommentedMap as _CommentedMap
+from ruamel.yaml import round_trip_dump as _round_trip_dump
 from json import load as _json_load, loads as _json_loads, dumps as _json_dumps
 
 from bioblend.galaxy.objects import GalaxyInstance as _GalaxyInstance
@@ -52,7 +53,19 @@ class Workflow:
         self.definition = definition
         self.inputs = inputs
         self.params = params
-        self.expected_outputs = expected_outputs
+        self.outputs = outputs
+
+    def show_inputs(self):
+        max_chars = max([len(x["name"]) for x in self.inputs])
+        for i in self.inputs:
+            print "- ", i["name"].ljust(max_chars), "  # " + i["description"] if len(i["description"]) > 0 else ""
+
+    def show_params(self):
+        print(_round_trip_dump(self.params))
+
+    def show_outputs(self):
+        for step_id, step_outputs in self.outputs.items():
+            print "'{0}': {1}".format(step_id, ", ".join([x["label"] for x in step_outputs.values()]))
 
     @staticmethod
     def load(filename, tools_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=None, galaxy_api_key=None):
