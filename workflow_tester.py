@@ -510,7 +510,7 @@ class WorkflowLoader:
     _instance = None
 
     @staticmethod
-    def get_instance():
+    def get_instance(galaxy_instance=None):
         """
         Return the singleton instance of this class.
 
@@ -518,7 +518,11 @@ class WorkflowLoader:
         :return: a workflow loader instance
         """
         if not WorkflowLoader._instance:
-            WorkflowLoader._instance = WorkflowLoader()
+            _logger.debug("Creating a new WorflowLoader instance...")
+            WorkflowLoader._instance = WorkflowLoader(galaxy_instance)
+        elif galaxy_instance:
+            _logger.debug("Initializing the existing WorkflowLoader instance...")
+            WorkflowLoader._instance._initialize(galaxy_instance)
         return WorkflowLoader._instance
 
     def __init__(self, galaxy_instance=None):
@@ -531,12 +535,12 @@ class WorkflowLoader:
         :type galaxy_instance: :class:`bioblend.GalaxyInstance`
         :param galaxy_instance: a galaxy instance object
         """
-        self._galaxy_instance = galaxy_instance
+        self._galaxy_instance = None
         self._galaxy_workflow_client = None
         self._workflows = {}
         # if galaxy_instance exists, complete initialization
         if galaxy_instance:
-            self.initialize()
+            self._initialize(galaxy_instance)
 
     def initialize(self, galaxy_url=None, galaxy_api_key=None):
         """
@@ -550,9 +554,14 @@ class WorkflowLoader:
         """
         if not self._galaxy_instance:
             # initialize the galaxy instance
-            self._galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
-        # initialize the workflow client
-        self._galaxy_workflow_client = _WorkflowClient(self._galaxy_instance.gi)
+            self._initialize(_get_galaxy_instance(galaxy_url, galaxy_api_key))
+
+    def _initialize(self, galaxy_instance):
+        if not self._galaxy_instance:
+            # initialize the galaxy instance
+            self._galaxy_instance = galaxy_instance
+            # initialize the workflow client
+            self._galaxy_workflow_client = _WorkflowClient(self._galaxy_instance.gi)
 
     def load_workflow(self, workflow_test_config, workflow_name=None):
         """
