@@ -582,17 +582,11 @@ class WorkflowLoader:
         """
         with open(workflow_filename) as f:
             wf_json = _json_load(f)
-        # TODO: register workflow by ID (equal to UUID?)
-        if not wf_json["name"] in self._workflows:
-            wf_name = wf_json["name"]
-            wf_json["name"] = WorkflowTestConfiguration.DEFAULT_WORKFLOW_NAME_PREFIX \
-                              + (workflow_name if workflow_name else wf_name)
-            wf_info = self._galaxy_workflow_client.import_workflow_json(wf_json)
-            workflow = self._galaxy_instance.workflows.get(wf_info["id"])
-            self._workflows[wf_name] = workflow
-        else:
-            workflow = self._workflows[wf_json["name"]]
-        return workflow
+        wf_json["name"] = WorkflowTestConfiguration.DEFAULT_WORKFLOW_NAME_PREFIX \
+                          + (workflow_name if workflow_name else wf_json["name"])
+        wf_info = self._galaxy_workflow_client.import_workflow_json(wf_json)
+        self._workflows[wf_info["id"]] = self._galaxy_instance.workflows.get(wf_info["id"])
+        return self._workflows[wf_info["id"]]
 
     def unload_workflow(self, workflow_id):
         """
@@ -605,8 +599,8 @@ class WorkflowLoader:
         # TODO: remove workflow from the list
 
     def unload_workflows(self):
-        for wf_name, wf in self._workflows.items():
-            self.unload_workflow(wf[id])
+        for wf_id, wf in self._workflows.items():
+            self.unload_workflow(wf.id)
 
 
 class WorkflowTestSuite:
