@@ -69,11 +69,8 @@ class Workflow:
 
     @staticmethod
     def load(filename, tools_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=None, galaxy_api_key=None):
-        definition, inputs, params, expected_outputs = get_workflow_info(filename=filename,
-                                                                         tool_folder=tools_folder,
-                                                                         galaxy_url=galaxy_url,
-                                                                         galaxy_api_key=galaxy_api_key)
-        return Workflow(definition, inputs, params, expected_outputs)
+        return get_workflow_info(filename=filename, tools_folder=tools_folder,
+                                 galaxy_url=galaxy_url, galaxy_api_key=galaxy_api_key)
 
 
 class WorkflowTestConfiguration:
@@ -1247,7 +1244,15 @@ class _WorkflowTestResult():
         return self.results
 
 
-def get_workflow_info(filename, tool_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=None, galaxy_api_key=None):
+def get_workflow_info(filename, tools_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=None, galaxy_api_key=None):
+    definition, inputs, params, expected_outputs = _get_workflow_info(filename=filename,
+                                                                      tool_folder=tools_folder,
+                                                                      galaxy_url=galaxy_url,
+                                                                      galaxy_api_key=galaxy_api_key)
+    return Workflow(definition, inputs, params, expected_outputs)
+
+
+def _get_workflow_info(filename, tool_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=None, galaxy_api_key=None):
     inputs = []
     params = _CommentedMap()
     outputs = {}
