@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import os as _os
-
 import logging as _logging
 import unittest as _unittest
 import optparse as _optparse
@@ -49,6 +48,9 @@ class FILE_FORMATS:
 
 
 class Workflow:
+    """
+    Display workflow information which are relevant to configure a workflow test.
+    """
     def __init__(self, definition, inputs, params, outputs):
         self.definition = definition
         self.inputs = inputs
@@ -75,7 +77,7 @@ class Workflow:
 
 class WorkflowTestConfiguration:
     """
-    Utility class for programmatically handle a workflow test configuration.
+    Utility class for programmatic handle a workflow test configuration.
     """
     # Default settings
     DEFAULT_HISTORY_NAME_PREFIX = "_WorkflowTestHistory_"
