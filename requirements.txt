@@ -1,4 +1,0 @@
-bioblend>=0.8.0
-ruamel.yaml
-lxml
-sphinx_rtd_theme
