@@ -569,7 +569,7 @@ class WorkflowTestConfiguration:
                 "or a list of 'WorkflowTestConfiguration' instances")
 
         for worlflow in worflow_tests_config:
-            workflows[worlflow.name] = worlflow.to_json()
+            workflows[worlflow.name] = worlflow.to_dict()
         with open(filename, "w") as f:
             _yaml_dump(config, f) \
                 if FILE_FORMATS.is_yaml(file_format) \
