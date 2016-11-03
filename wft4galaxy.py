@@ -1415,7 +1415,7 @@ def _get_workflow_info(filename, tool_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=No
             # process tool info to extract parameters
             tool_id = step["tool_id"]
             tool = galaxy_instance.tools.get(tool_id)
-            tool_json = _json_loads(tool.to_dict())
+            tool_json = _json_loads(tool.to_json())
             tool_config_xml = _os.path.basename(tool_json["config_file"])
             _logger.debug("Processing step tool '%s'", tool_id)
 
