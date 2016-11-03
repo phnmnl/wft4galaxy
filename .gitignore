@@ -1,4 +1,5 @@
 .idea
+docs/_build
 build
 **/.DS_Store
 **/*.pyc
