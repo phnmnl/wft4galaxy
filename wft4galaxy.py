@@ -1644,21 +1644,21 @@ def run_tests(enable_logger=None, enable_debug=None, disable_cleanup=None, disab
     Run a workflow test suite defined in a configuration file.
 
     :type enable_logger: bool
-    :param enable_logger: enable logger (disabled by default)
+    :param enable_logger: ``True`` to enable INFO messages; ``False`` (default) otherwise.
 
     :type enable_debug: bool
-    :param enable_debug: enable debug messages (disabled by default)
+    :param enable_debug: ``True`` to enable DEBUG messages; ``False`` (default) otherwise.
 
     :type disable_cleanup: bool
-    :param disable_cleanup: ``True`` to skip cleanup (Galaxy workflow, history, datasets)
-                            after the workflow test execution; ``False`` (default) otherwise.
+    :param disable_cleanup: ``True`` to avoid the clean up of the workflow and history created on the Galaxy server;
+        ``False`` (default) otherwise.
 
     :type disable_assertions: bool
-    :param disable_assertions: ``True`` to disable assertions during the workflow test execution;
-           ``False`` (default) otherwise.
+    :param disable_assertions: ``True`` to disable assertions during the execution of the workflow test;
+        ``False`` (default) otherwise.
 
-    :rtype: tuple
-    :return: a tuple (test_suite_instance,suite_configuration)
+    :rtype: :class:`WorkflowTestSuite`
+    :return: the :class:`WorkflowTestSuite` instance representing the executed test suite
     """
     options, args = _parse_cli_options()
     config = WorkflowTestConfiguration.load(options.file)
@@ -1698,7 +1698,7 @@ def run_tests(enable_logger=None, enable_debug=None, disable_cleanup=None, disab
     test_suite = WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
     test_suite.run_test_suite(config)
 
-    return (test_suite, config)
+    return test_suite
 
 
 if __name__ == '__main__':
