@@ -1,0 +1,56 @@
+###########################################################################################
+## Galaxy server settings
+###########################################################################################
+# galaxy_url: "http://192.168.64.8:30700" # default is BIOBLEND_GALAXY_URL
+# galaxy_api_key: "4b86f51252b5f220012b3e259d0877f9" # default is BIOBLEND_GALAXY_API_KEY
+###########################################################################################
+enable_logger: False
+output_folder: "results"
+
+# workflow tests
+workflows:
+  # workflow test "change case"
+  change_case:
+    file: "change_case/workflow.ga"
+    inputs:
+      "Input Dataset": "change_case/input"
+        #file: "change_case/input"
+    expected:
+      output1: "change_case/expected_output_1"
+        #file: "change_case/expected_output_1"
+        #comparator: "filecmp.cmp"
+      output2: "change_case/expected_output_2"
+  # workflow test "multivariate"
+  multivariate:
+    file: "multivariate/workflow.ga"
+    params:
+      3:
+        "orthoI": "NA"
+        "predI": "1"
+        "respC": "gender"
+        "testL": "FALSE"
+    inputs:
+      "DataMatrix": "multivariate/dataMatrix.tsv"
+      "SampleMetadata": "multivariate/sampleMetadata.tsv"
+      "VariableMetadata": "multivariate/variableMetadata.tsv"
+    expected:
+      sampleMetadata_out: "multivariate/sampleMetadata_out"
+      variableMetadata_out: "multivariate/variableMetadata_out"
+  # workflow test "sacurine"
+  sacurine:
+    file: "sacurine/workflow.ga"
+    params:
+      3:
+        "orthoI": "NA"
+        "predI": "1"
+        "respC": "gender"
+        "testL": "FALSE"
+    inputs:
+      "DataMatrix": "sacurine/input/dataMatrix.tsv"
+      "SampleMetadata": "sacurine/input/sampleMetadata.tsv"
+      "VariableMetadata": "sacurine/input/variableMetadata.tsv"
+    expected:
+      Univariate_variableMetadata: "sacurine/expected/Univariate_variableMetadata.tsv"
+      Multivariate_sampleMetadata: "sacurine/expected/Multivariate_sampleMetadata.tsv"
+      Multivariate_variableMetadata: "sacurine/expected/Multivariate_variableMetadata.tsv"
+      Biosigner_variableMetadata: "sacurine/expected/Biosigner_variableMetadata.tsv"

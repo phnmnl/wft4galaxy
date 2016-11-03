@@ -1,0 +1,206 @@
+{
+    "a_galaxy_workflow": "true", 
+    "annotation": "", 
+    "format-version": "0.1", 
+    "name": "Multivariate", 
+    "steps": {
+        "0": {
+            "annotation": "", 
+            "content_id": null, 
+            "id": 0, 
+            "input_connections": {}, 
+            "inputs": [
+                {
+                    "description": "", 
+                    "name": "DataMatrix"
+                }
+            ], 
+            "label": null, 
+            "name": "Input dataset", 
+            "outputs": [], 
+            "position": {
+                "left": 180, 
+                "top": 180.5
+            }, 
+            "tool_errors": null, 
+            "tool_id": null, 
+            "tool_state": "{\"name\": \"DataMatrix\"}", 
+            "tool_version": null, 
+            "type": "data_input", 
+            "uuid": "b71c284a-506c-4bfb-8651-9ea2c0dada7d", 
+            "workflow_outputs": [
+                {
+                    "label": null, 
+                    "output_name": "output", 
+                    "uuid": "80d3fef5-6194-45f5-905b-e4b1da288ee1"
+                }
+            ]
+        }, 
+        "1": {
+            "annotation": "", 
+            "content_id": null, 
+            "id": 1, 
+            "input_connections": {}, 
+            "inputs": [
+                {
+                    "description": "", 
+                    "name": "SampleMetadata"
+                }
+            ], 
+            "label": null, 
+            "name": "Input dataset", 
+            "outputs": [], 
+            "position": {
+                "left": 178, 
+                "top": 281.5
+            }, 
+            "tool_errors": null, 
+            "tool_id": null, 
+            "tool_state": "{\"name\": \"SampleMetadata\"}", 
+            "tool_version": null, 
+            "type": "data_input", 
+            "uuid": "226998dc-8449-47c9-91ea-a64aa86486ff", 
+            "workflow_outputs": [
+                {
+                    "label": null, 
+                    "output_name": "output", 
+                    "uuid": "022a49b0-23ae-4394-b652-8639c2282835"
+                }
+            ]
+        }, 
+        "2": {
+            "annotation": "", 
+            "content_id": null, 
+            "id": 2, 
+            "input_connections": {}, 
+            "inputs": [
+                {
+                    "description": "", 
+                    "name": "VariableMetadata"
+                }
+            ], 
+            "label": null, 
+            "name": "Input dataset", 
+            "outputs": [], 
+            "position": {
+                "left": 173, 
+                "top": 387.5
+            }, 
+            "tool_errors": null, 
+            "tool_id": null, 
+            "tool_state": "{\"name\": \"VariableMetadata\"}", 
+            "tool_version": null, 
+            "type": "data_input", 
+            "uuid": "ef8729a9-922d-4329-a9ae-9566c65550be", 
+            "workflow_outputs": [
+                {
+                    "label": null, 
+                    "output_name": "output", 
+                    "uuid": "e63f4162-4fa5-423d-aa55-2752ebe62c67"
+                }
+            ]
+        }, 
+        "3": {
+            "annotation": "", 
+            "content_id": "Multivariate", 
+            "id": 3, 
+            "input_connections": {
+                "dataMatrix_in": {
+                    "id": 0, 
+                    "output_name": "output"
+                }, 
+                "sampleMetadata_in": {
+                    "id": 1, 
+                    "output_name": "output"
+                }, 
+                "variableMetadata_in": {
+                    "id": 2, 
+                    "output_name": "output"
+                }
+            }, 
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool Multivariate", 
+                    "name": "sampleMetadata_in"
+                }, 
+                {
+                    "description": "runtime parameter for tool Multivariate", 
+                    "name": "variableMetadata_in"
+                }, 
+                {
+                    "description": "runtime parameter for tool Multivariate", 
+                    "name": "dataMatrix_in"
+                }
+            ], 
+            "label": null, 
+            "name": "Multivariate", 
+            "outputs": [
+                {
+                    "name": "sampleMetadata_out", 
+                    "type": "tabular"
+                }, 
+                {
+                    "name": "variableMetadata_out", 
+                    "type": "tabular"
+                }, 
+                {
+                    "name": "figure", 
+                    "type": "pdf"
+                }, 
+                {
+                    "name": "information", 
+                    "type": "txt"
+                }
+            ], 
+            "position": {
+                "left": 577, 
+                "top": 197.5
+            }, 
+            "post_job_actions": {
+                "HideDatasetActionfigure": {
+                    "action_arguments": {}, 
+                    "action_type": "HideDatasetAction", 
+                    "output_name": "figure"
+                }, 
+                "HideDatasetActioninformation": {
+                    "action_arguments": {}, 
+                    "action_type": "HideDatasetAction", 
+                    "output_name": "information"
+                }, 
+                "RenameDatasetActionsampleMetadata_out": {
+                    "action_arguments": {
+                        "newname": "sampleMetadata_out"
+                    }, 
+                    "action_type": "RenameDatasetAction", 
+                    "output_name": "sampleMetadata_out"
+                }, 
+                "RenameDatasetActionvariableMetadata_out": {
+                    "action_arguments": {
+                        "newname": "variableMetadata_out"
+                    }, 
+                    "action_type": "RenameDatasetAction", 
+                    "output_name": "variableMetadata_out"
+                }
+            }, 
+            "tool_errors": null, 
+            "tool_id": "Multivariate", 
+            "tool_state": "{\"advGph\": \"{\\\"__current_case__\\\": 0, \\\"opgC\\\": \\\"default\\\"}\", \"__page__\": 0, \"sampleMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"__rerun_remap_job_id__\": null, \"predI\": \"\\\"1\\\"\", \"respC\": \"\\\"gender\\\"\", \"orthoI\": \"\\\"NA\\\"\", \"advCpt\": \"{\\\"opcC\\\": \\\"default\\\", \\\"__current_case__\\\": 0}\", \"variableMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"dataMatrix_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"testL\": \"\\\"FALSE\\\"\"}", 
+            "tool_version": "2.3.2", 
+            "type": "tool", 
+            "uuid": "d36ba3ad-52ac-4753-a9a1-4bc1fd207eb3", 
+            "workflow_outputs": [
+                {
+                    "label": "variableMetadata_out", 
+                    "output_name": "variableMetadata_out", 
+                    "uuid": "9f9d5f24-7d65-4523-b4c2-09f3bfc970c5"
+                }, 
+                {
+                    "label": "sampleMetadata_out", 
+                    "output_name": "sampleMetadata_out", 
+                    "uuid": "bed6c5f3-1cf3-4455-9235-35bfa4d067b4"
+                }
+            ]
+        }
+    }, 
+    "uuid": "ea0fdf6f-9686-4d32-8f9e-bec7ee488eda"
+}
