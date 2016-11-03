@@ -1316,7 +1316,7 @@ class WorkflowTestResult():
         Assert whether the test is failed.
 
         :rtype: bool
-        :return: ``True`` if the test is failed; ``False``otherwise.
+        :return: ``True`` if the test is failed; ``False`` otherwise.
         """
         return len(self.failed_outputs) > 0
 
@@ -1325,7 +1325,7 @@ class WorkflowTestResult():
         Assert whether the test is passed.
 
         :rtype: bool
-        :return: ``True`` if the test is passed; ``False``otherwise.
+        :return: ``True`` if the test is passed; ``False`` otherwise.
         """
         return not self.failed()
 
@@ -1338,7 +1338,7 @@ class WorkflowTestResult():
         :param output: output name
 
         :rtype: bool
-        :return: ``True`` if the test is passed; ``False``otherwise.
+        :return: ``True`` if the test is passed; ``False`` otherwise.
         """
         return self.results[output if isinstance(output, str) else output.name]
 
