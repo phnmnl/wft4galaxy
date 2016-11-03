@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import os as _os
 import logging as _logging
 import unittest as _unittest
@@ -51,6 +50,7 @@ class Workflow:
     """
     Display workflow information which are relevant to configure a workflow test.
     """
+
     def __init__(self, definition, inputs, params, outputs):
         self.definition = definition
         self.inputs = inputs
@@ -58,26 +58,139 @@ class Workflow:
         self.outputs = outputs
 
     def show_inputs(self):
+        """
+        Print workflow inputs to the standard output.
+        """
         max_chars = max([len(x["name"]) for x in self.inputs])
         for i in self.inputs:
             print "- ", i["name"].ljust(max_chars), "  # " + i["description"] if len(i["description"]) > 0 else ""
 
     def show_params(self):
+        """
+        Print parameters needed by workflow tools to the standard output.
+        """
         print(_round_trip_dump(self.params))
 
     def show_outputs(self):
+        """
+        Print workflow outputs (indexed by workflow step) to the standard output.
+        """
         for step_id, step_outputs in self.outputs.items():
             print "'{0}': {1}".format(step_id, ", ".join([x["label"] for x in step_outputs.values()]))
 
     @staticmethod
     def load(filename, tools_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=None, galaxy_api_key=None):
+        """
+        Return the :class:`Workflow` instance related to the workflow defined in ``filename``
+
+        :type filename: str
+        :param filename: the path of the ``.ga`` workflow definition
+
+        :type tools_folder: str
+        :param tools_folder: optional temp folder where tool definitions are downloaded (``.tools`` by default)
+
+        :type galaxy_url: str
+        :param galaxy_url: url of your Galaxy server instance.  If ``none``, the environment variable
+            ``BIOBLEND_GALAXY_URL`` is used. An error is raised when such a variable cannot be found.
+
+        :type galaxy_api_key: str
+        :param galaxy_api_key: an API key from your Galaxy server instance.  If ``none``, the environment variable
+            ``BIOBLEND_GALAXY_API_KEY`` is used. An error is raised when such a variable cannot be found.
+
+        :rtype: :class:`Workflow`
+        :return: the :class:`Workflow` instance related to the workflow defined in ``filename``
+        """
         return get_workflow_info(filename=filename, tools_folder=tools_folder,
                                  galaxy_url=galaxy_url, galaxy_api_key=galaxy_api_key)
 
 
 class WorkflowTestConfiguration:
     """
-    Utility class for programmatic handle a workflow test configuration.
+    A representation of the configuration of a workflow test.
+
+    :type base_path: str
+    :param base_path: base path for workflow and dataset files (the current working path is assumed as default)
+
+    :type workflow_filename: str
+    :param workflow_filename: the path (relative to ``base_path``) of the file containing
+        the workflow definition (i.e., the ``.ga`` file which can be downloaded from a Galaxy server)
+
+    :type name: str
+    :param name: a name for the workflow test
+
+    :type inputs: dict
+    :param inputs: a dictionary which defines the mapping between a workflow input and a test dataset.
+
+           :Example:
+
+                {"DataMatrix": "dataMatrix.tsv"} where `DataMatrix` is the name of a workflow input
+                and `dataMatrix.tsv` is the file containing the dataset to be used as input for the workflow test.
+
+    :type params: dict
+    :param params: a dictionary which defines the mapping between steps and the set of parameters which has to be
+        used to configure the corresponding tools of each step.
+
+
+           :Example:
+
+            .. code-block:: python
+
+                params = {
+                            3: {
+                                "orthoI": "NA"
+                                "predI": "1"
+                                "respC": "gender"
+                                "testL": "FALSE"
+                               }
+                         }
+
+    :type expected_outputs: dict
+    :param expected_outputs: a dictionary to configure the expected output, i.e., the output which has to be compared
+        to the actual one produced by a workflow execution. Each output of a workflow step is eligible to be compared
+        with an expected output. It is also possible to specify the python function which has to be used
+        to perform the actual comparison. Such a function takes two parameters, i.e., ``actual_output_filename`` and
+        ``expected_output_filename``, and returns ``True`` whether the comparison between the two files succeeds and
+        ``False`` otherwise.
+
+
+        :Example: Skeleton of a user-defined comparator:
+
+            .. code-block:: python
+
+                    def compare_outputs(actual_output_filename, expected_output_filename):
+                        ....
+                        return True | False
+
+
+        :Example: The example below shows an ``expected_outputs`` dictionary that configures
+            the expected output datasets for the two actual workflow outputs ``output1`` and ``output2``.
+            A user defined 'comparator' is also given to compare the expected to the actual ``output2``.
+
+            .. code-block:: python
+
+                {
+                    'output1': 'change_case/expected_output_1',
+                    'output2': {
+                        'comparator': 'filecmp.cmp',
+                        'file': 'change_case_2/expected_output_2'
+                    }
+                }
+
+
+
+    :type output_folder: str
+    :param output_folder: path (relative to ``base_path``) of the folder where workflow outputs are written.
+        By default, it is the folder ``results/<name>`` within the ``base_path``
+        (where ``name`` is the name of the workflow test).
+
+    :type disable_cleanup: bool
+    :param disable_cleanup: ``True`` to avoid the clean up of the workflow and history created on the Galaxy server;
+        ``False`` (default) otherwise.
+
+    :type disable_assertions: bool
+    :param disable_assertions: ``True`` to disable assertions during the execution of the workflow test;
+        ``False`` (default) otherwise.
+
     """
     # Default settings
     DEFAULT_HISTORY_NAME_PREFIX = "_WorkflowTestHistory_"
@@ -95,71 +208,8 @@ class WorkflowTestConfiguration:
         }
     }
 
-    def __init__(self, name=None, base_path=".", filename="workflow.ga", inputs={}, params={},
+    def __init__(self, name=None, base_path=".", workflow_filename="workflow.ga", inputs={}, params={},
                  expected_outputs={}, output_folder=None, disable_cleanup=False, disable_assertions=True):
-        """
-        Create a new class instance and initialize its initial properties.
-
-        :type base_path: str
-        :param base_path: base path for workflow and datasets files; the current path is assumed as default
-
-        :type filename: str
-        :param filename: the path (relative to the basepath) of the file containing the workflow definition
-
-        :type name: str
-        :param name: the name of the workflow test
-
-        :type inputs: dict
-        :param inputs: a map <INPUT_NAME>:<INPUT_DATASET_INFO> (e.g., {"input_name" : {"file": ...}}
-
-        :type params: dict
-        :param params: maps each step with the corresponding dict of params
-
-               :Example:
-                         params = {3:
-                                      {
-                                        "orthoI": "NA"
-                                        "predI": "1"
-                                        "respC": "gender"
-                                        "testL": "FALSE"
-                                      }
-                                   }
-
-        :type expected_outputs: dict
-        :param expected_outputs: maps actual to expected outputs.
-               Each output requires a dict containing the path of the expected output filename
-               and the fully qualified name of a function which will be used to compare the expected
-               to the actual output. Such a function takes ``actual_output_filename`` and ``expected_output_filename``
-               as parameters and returns ``True`` if the comparison succeeds, ``False``otherwise.
-
-               Example of expected_outputs:
-
-                    :Example:
-
-                                {'output1': {'comparator': 'filecmp.cmp',
-                                             'file': 'change_case_1/expected_output_1',
-                                             'name': 'output1'}}
-
-               Comparator function signature:
-
-                    :Example:
-
-                        def compare_outputs(actual_output_filename, expected_output_filename):
-                            ....
-                            return True | False
-
-        :type output_folder: str
-        :param output_folder: absolute path of the folder where output is written
-
-        :type disable_cleanup: bool
-        :param disable_cleanup: ``True`` to skip cleanup (Galaxy workflow, history, datasets)
-                        after the workflow test execution; ``False`` (default) otherwise.
-
-        :type disable_assertions: bool
-        :param disable_assertions: ``True`` to disable assertions during the workflow test execution;
-                           ``False`` (default) otherwise.
-        """
-
         # init properties
         self._base_path = None
         self._filename = None
@@ -170,7 +220,7 @@ class WorkflowTestConfiguration:
         # set parameters
         self.name = _uuid1() if not name else name
         self.set_base_path(base_path)
-        self.set_filename(filename)
+        self.set_filename(workflow_filename)
         self.set_inputs(inputs)
         self.set_params(params)
         self.set_expected_outputs(expected_outputs)
@@ -188,51 +238,60 @@ class WorkflowTestConfiguration:
 
     @property
     def base_path(self):
+        """
+        The base path of the workflow file definition and the input and output datasets.
+        """
         return self._base_path
 
     def set_base_path(self, base_path):
-        """ Set the base path to ``base_path``.
+        """ Set the base path of the workflow file definition and the input and output datasets.
 
-        :type name: str
-        :param base_path: base path for workflow and datasets files; the current path is assumed as default
+        :type base_path: str
+        :param base_path: a path within the local file system
         """
         self._base_path = base_path
 
     @property
     def filename(self):
+        """
+        The filename (relative to ``base_paht``) of the workflow definition.
+        """
         return self._filename
 
     def set_filename(self, filename):
-        """ Set the filename of the workflow definition.
+        """ Set the filename (relative to ``base_path``) containing the workflow definition.
 
         :type filename: str
-        :param filename: the path (relative to the basepath) of the file containing the workflow definition
+        :param filename: the path (relative to the ``base_path``) to the ``.ga`` file
         """
         self._filename = filename
 
     @property
     def inputs(self):
+        """
+        Return the dictionary which defines the mapping between workflow inputs and test datasets.
+        """
         return self._inputs
 
     def set_inputs(self, inputs):
         """
-        Add a set of inputs.
+        Update the mapping between workflow inputs and test datasets.
 
         :param inputs: dict
-        :return: a map <INPUT_NAME>:<INPUT_DATASET_INFO> (e.g., {"input_name" : {"file": ...}}
+        :return: a dictionary of mappings (see :class:`WorkflowTestConfiguration`)
         """
         for name, config in inputs.items():
             self.add_input(name, config["file"])
 
     def add_input(self, name, file):
         """
-        Add a new input.
+        Add a new input mapping.
 
         :type name: str
-        :param name: the Galaxy label of the input
+        :param name: the Galaxy label of an input
 
         :type file: str
-        :param file: the path (relative to the basepath) of the file containing the input dataset
+        :param file: the path (relative to the ``base_path``) of the file containing an input dataset
         """
         if not name:
             raise ValueError("Input name not defined")
@@ -240,10 +299,10 @@ class WorkflowTestConfiguration:
 
     def remove_input(self, name):
         """
-        Remove an input.
+        Remove an input mapping.
 
         :type name: str
-        :param name: the Galaxy label of the input
+        :param name: the Galaxy label of an input
 
         """
         if name in self._inputs:
@@ -251,7 +310,7 @@ class WorkflowTestConfiguration:
 
     def get_input(self, name):
         """
-        Return the input configuration.
+        Return the input mapping for the input labeled as ``name``.
 
         :type name: str
         :param name: the Galaxy label of the input
@@ -264,19 +323,19 @@ class WorkflowTestConfiguration:
     @property
     def params(self):
         """
-        Return the dict of parameters
+        Return the dictionary containing the configured parameters (see :class:`WorkflowTestConfiguration`)
 
         :rtype: dict
-        :return: dict of params
+        :return: a dictionary of configured parameters
         """
         return self._params
 
     def set_params(self, params):
         """
-        Update the set of parameters of each step
+        Add a new set of parameters.
 
         :type params: dict
-        :param params: dict of params indexed by step id
+        :param params: dictionary of parameters indexed by step id (see :class:`WorkflowTestConfiguration`)
         """
         for step_id, step_params in params.items():
             for name, value in step_params.items():
@@ -284,16 +343,16 @@ class WorkflowTestConfiguration:
 
     def add_param(self, step_id, name, value):
         """
-        Add a new parameter of the step identified by 'step_id'.
+        Add a new parameter to the step identified by ``step_id``.
 
         :type step_id: int
         :param step_id: step index
 
         :type name: str
-        :param name: name of the parameter
+        :param name: parameter name
 
         :type value: str
-        :param value: the value of the parameter
+        :param value: parameter value
         """
         if not self._params.has_key(step_id):
             self._params[step_id] = {}
@@ -301,7 +360,7 @@ class WorkflowTestConfiguration:
 
     def remove_param(self, step_id, name):
         """
-        Remove a parameter of the step 'step_id'.
+        Remove the parameter labeled ``name`` from the step identified by ``step_id``.
 
         :type step_id: int
         :param step_id: step index
@@ -314,19 +373,19 @@ class WorkflowTestConfiguration:
 
     def get_params(self, step_id):
         """
-        Return the dict of parameters related to the step indexed by 'step_id'.
+        Return the dictionary of parameters related to the step identified by 'step_id'.
 
         :type step_id: int
         :param step_id: the step index
 
         :rtype: dict
-        :return: the dict of parameters related to the step indexed by 'step_id'
+        :return: the dictionary of parameters related to the step identified by 'step_id'
         """
         return self._params.get(step_id, None)
 
     def get_param(self, step_id, name):
         """
-        Return the value of a specific parameter
+        Return the value of a specific step parameter.
 
         :type step_id: int
         :param step_id: the index of the step which the parameter is related to
@@ -341,22 +400,18 @@ class WorkflowTestConfiguration:
 
     @property
     def expected_outputs(self):
+        """
+        A dictionary to configure the expected output, i.e., the output which has to be compared
+        to the actual one produced by a workflow execution (see :class:`WorkflowTestConfiguration`).
+        """
         return self._expected_outputs
 
     def set_expected_outputs(self, expected_outputs):
         """
-        Add a set of expected outputs which are intended to map actual to expected outputs.
+        Add a new set of expected outputs (see :class:`WorkflowTestConfiguration`).
 
         :type expected_outputs: dict
-        :param expected_outputs: map actual to expected outputs.
-               Each output requires a dict containing the path of the expected output filename
-               and the fully qualified name of a function which will be used to compare the expected
-               to the actual output. Such a function takes ``actual_output_filename`` and ``expected_output_filename``
-               as parameters and returns ``True`` if the comparison succeeds, ``False``otherwise.
-
-               .. example: {'output1': {'comparator': 'filecmp.cmp',
-                                        'file': 'change_case_1/expected_output_1',
-                                        'name': 'output1'}}
+        :param expected_outputs: a dictionary structured as specified in :class:`WorkflowTestConfiguration`
         """
         for name, config in expected_outputs.items():
             self.add_expected_output(name, config["file"], config.get("comparator", None))
@@ -366,20 +421,13 @@ class WorkflowTestConfiguration:
         Add a new expected output to the workflow test configuration.
 
         :type name: str
-        :param name: the Galaxy name of the output which the expected output has to be mapped.
+        :param name: the Galaxy name of the output which the expected dataset has to be mapped.
 
         :type filename: str
-        :param filename: the path (relative to the basepath) of the file containing the expected_output dataset
+        :param filename: the path (relative to the ``base_path``) of the file containing the expected output dataset
 
         :type comparator: str
-        :param comparator: a fully qualified name of a `comparator`function
-
-               :Example:
-
-                        def compare_outputs(actual_output_filename, expected_output_filename):
-                            ....
-                            return True | False
-
+        :param comparator: a fully qualified name of a `comparator`function (see :class:`WorkflowTestConfiguration`)
         """
         if not name:
             raise ValueError("Input name not defined")
@@ -403,13 +451,14 @@ class WorkflowTestConfiguration:
         :param name: the Galaxy name of the output which the expected output has to be mapped.
 
         :rtype: dict
-        :return
+        :return: a dictionary containing the configuration of the expected output as specified
+            in :class:`WorkflowTestConfiguration`
         """
         return self._expected_outputs.get(name, None)
 
-    def to_json(self):
+    def to_dict(self):
         """
-        Return a dict representation of the current class instance.
+        Return a dictionary representation of the current class instance.
 
         :rtype: dict
         :return:
@@ -423,6 +472,15 @@ class WorkflowTestConfiguration:
         })
 
     def save(self, filename=None, file_format=FILE_FORMATS.YAML):
+        """
+        Serialize this workflow test configuration to a file (YAML or JSON).
+
+        :type filename: str
+        :param filename: absolute path of the file
+
+        :type file_format: str
+        :param file_format: ``YAML`` or ``JSON``
+        """
         if not filename and not self.filename:
             filename = _os.path.splitext(self.DEFAULT_CONFIG_FILENAME)[0] + \
                        "json" if FILE_FORMATS.is_json(file_format) else "yml"
@@ -432,18 +490,23 @@ class WorkflowTestConfiguration:
         self.dump(filename=filename, worflow_tests_config=self, file_format=file_format)
 
     @staticmethod
-    def load(filename=DEFAULT_CONFIG_FILENAME, workflow_test_name=None):
+    def load(filename=DEFAULT_CONFIG_FILENAME, workflow_test_name=None, file_format=FILE_FORMATS.YAML):
         """
-        Load the configuration of a workflow test suite or a single workflow test from a YAML file.
+        Load the configuration of a workflow test suite or a single workflow test
+        from a YAML or JSON configuration file.
 
         :type filename: str
         :param filename: the path of the file containing the suite definition
 
         :type workflow_test_name: str
-        :param workflow_test_name: the name of a workflow test name
+        :param workflow_test_name: the optional name of a workflow test
 
-        :rtype: dict
-        :return:
+        :type file_format: str
+        :param file_format: ``YAML`` or ``JSON``
+
+        :rtype: dict or :class:`WorkflowTestConfiguration`
+        :return: a dictionary containing the configuration of a workflow test suite or
+            a single workflow test configuration (i.e., an instance of :class:`WorkflowTestConfiguration`)
         """
 
         config = {}
@@ -460,7 +523,7 @@ class WorkflowTestConfiguration:
                 wf_config["output_folder"] = _os.path.join(config["output_folder"],
                                                            wf_config.get("output_folder", wf_name))
                 # add the workflow
-                w = WorkflowTestConfiguration(name=wf_name, base_path=base_path, filename=wf_config["file"],
+                w = WorkflowTestConfiguration(name=wf_name, base_path=base_path, workflow_filename=wf_config["file"],
                                               inputs=wf_config["inputs"], params=wf_config.get("params", {}),
                                               expected_outputs=wf_config["expected"],
                                               output_folder=wf_config["output_folder"])
@@ -481,17 +544,18 @@ class WorkflowTestConfiguration:
     @staticmethod
     def dump(filename, worflow_tests_config, file_format=FILE_FORMATS.YAML):
         """
-        Write the configuration of a workflow test suite to a YAML file.
+        Write the configuration of a workflow test suite to a YAML or JSON file.
 
         :type filename: str
-        :param filename: the absolute path of the YAML file
+        :param filename: the absolute path of the YAML or JSON configuration file
 
         :type worflow_tests_config: dict or list
         :param worflow_tests_config: a dictionary which maps a workflow test name
                to the corresponding configuration (:class:`WorkflowTestConfiguration`)
+               or a list of :class:`WorkflowTestConfiguration` instances
 
         :type file_format: str
-        :param file_format: 'YAML' or 'JSON'
+        :param file_format: ``YAML`` or ``JSON``
         """
         workflows = {}
         config = worflow_tests_config.copy() if isinstance(worflow_tests_config, dict) else {}
@@ -515,7 +579,7 @@ class WorkflowTestConfiguration:
 
 class WorkflowLoader:
     """
-    Utility class responsible for loading/unloading workflows to a Galaxy server.
+    Utility class responsible for loading (unloading) workflows to (from) a Galaxy server.
     """
 
     _instance = None
@@ -526,7 +590,7 @@ class WorkflowLoader:
         Return the singleton instance of this class.
 
         :rtype: :class:`WorkflowLoader`
-        :return: a workflow loader instance
+        :return: a :class:`WorkflowLoader` instance
         """
         if not WorkflowLoader._instance:
             _logger.debug("Creating a new WorflowLoader instance...")
@@ -555,13 +619,15 @@ class WorkflowLoader:
 
     def initialize(self, galaxy_url=None, galaxy_api_key=None):
         """
-        Initialize the required ``galaxy_instance``.
+        Initialize the connection to a Galaxy server instance.
 
         :type galaxy_url: str
-        :param galaxy_url: the URL of the Galaxy server
+        :param galaxy_url: url of your Galaxy server instance.  If ``none``, the environment variable
+            ``BIOBLEND_GALAXY_URL`` is used. An error is raised when such a variable cannot be found.
 
         :type galaxy_api_key: str
-        :param galaxy_api_key: a registered Galaxy API KEY
+        :param galaxy_api_key: an API key from your Galaxy server instance.  If ``none``, the environment variable
+            ``BIOBLEND_GALAXY_API_KEY`` is used. An error is raised when such a variable cannot be found.
         """
         if not self._galaxy_instance:
             # initialize the galaxy instance
@@ -576,13 +642,15 @@ class WorkflowLoader:
 
     def load_workflow(self, workflow_test_config, workflow_name=None):
         """
-        Load a workflow defined in a :class:`WorkflowTestConfig` instance to the configured Galaxy server.
+        Load the workflow defined in a :class:`WorkflowTestConfig` instance to the configured Galaxy server.
+        ``workflow_name`` overrides the default workflow name.
 
         :type workflow_test_config: :class:`WorkflowTestConfig`
-        :param workflow_test_config: the configuration of the workflow test
+        :param workflow_test_config: the instance of  :class:`WorkflowTestConfiguration`
+            representing the workflow test configuration
 
         :type workflow_name: str
-        :param workflow_name: an optional name which overrides the workflow name
+        :param workflow_name: an optional name which overrides the default workflow name
         """
         if not self._galaxy_instance:
             raise RuntimeError("WorkflowLodaer not initialized")
@@ -593,14 +661,13 @@ class WorkflowLoader:
 
     def load_workflow_by_filename(self, workflow_filename, workflow_name=None):
         """
-        Load a workflow defined within the `workflow_filename` file to the configured Galaxy server.
+        Load the workflow defined within the file named as `workflow_filename` to the connected Galaxy server.
 
         :type workflow_filename: str
         :param workflow_filename: the path of workflow definition file
 
         :type workflow_name: str
-        :param workflow_name: an optional name which overrides the workflow name
-        :return:
+        :param workflow_name: an optional name which overrides the default workflow name
         """
         if not self._galaxy_instance:
             raise RuntimeError("WorkflowLodaer not initialized")
@@ -614,10 +681,10 @@ class WorkflowLoader:
 
     def unload_workflow(self, workflow_id):
         """
-        Unload a workflow from the configured Galaxy server.
+        Unload the workflow identified by ``workflow_id`` from the configured Galaxy server.
 
         :type workflow_id: str
-        :param workflow_id: the ID of the workflow to unload.
+        :param workflow_id: the ID of the workflow to unload from the connected Galaxy server.
         """
         if not self._galaxy_instance:
             raise RuntimeError("WorkflowLodaer not initialized")
@@ -626,6 +693,9 @@ class WorkflowLoader:
             del self._workflows[workflow_id]
 
     def unload_workflows(self):
+        """
+        Unload all workflows loaded by this :class:`WorkflowLoader` instance.
+        """
         if not self._galaxy_instance:
             raise RuntimeError("WorkflowLodaer not initialized")
         for wf_id, wf in self._workflows.items():
@@ -634,7 +704,7 @@ class WorkflowLoader:
 
 class WorkflowTestSuite:
     """
-    Define a test suite.
+    Represent a test suite.
     """
 
     _DEFAULT_SUITE_CONFIGURATION = {
@@ -650,10 +720,12 @@ class WorkflowTestSuite:
         Create an instance of :class:`WorkflowTestSuite`.
 
         :type galaxy_url: str
-        :param galaxy_url: the URL of a Galaxy server (e.g., http://192.168.64.6:30700)
+        :param galaxy_url: url of your Galaxy server instance.  If ``none``, the environment variable
+            ``BIOBLEND_GALAXY_URL`` is used. An error is raised when such a variable cannot be found.
 
         :type galaxy_api_key: str
-        :param galaxy_api_key: the API KEY registered in the Galaxy server.
+        :param galaxy_api_key: an API key from your Galaxy server instance.  If ``none``, the environment variable
+            ``BIOBLEND_GALAXY_API_KEY`` is used. An error is raised when such a variable cannot be found.
         """
         self._workflows = {}
         self._workflow_runners = []
@@ -669,37 +741,36 @@ class WorkflowTestSuite:
 
     @property
     def galaxy_instance(self):
+        """
+        :rtype: :class:`bioblend.galaxy.objects.GalaxyInstance`
+        :return: the :class:`bioblend.galaxy.objects.GalaxyInstance` instance used to communicate with a Galaxy server
+        """
         return self._galaxy_instance
 
     @property
     def workflow_loader(self):
+        """
+        :rtype: :class:`WorkflowTestLoader`
+        :return: the :class:`WorkflowTestLoader` instance used by this suite
+        """
         return self._workflow_loader
 
     @property
     def configuration(self):
+        """
+        :rtype: dict
+        :return: the dictionary containing the configuration of this workflow test suite
+        """
         return self._workflow_test_suite_configuration
-
-    def get_workflow_test_results(self, workflow_id=None):
-        """
-        Return the list of :class:`WorkflowTestResult` instances resulting by the executed workflow tests.
-        Such a list can be filtered by workflow, specified as `workflow_id`.
-
-        :type workflow_id: str
-        :param workflow_id: the optional ID of a workflow
-
-        :rtype: list
-        :return: a list of :class:`WorkflowTestResult`
-        """
-        return list([w for w in self._workflow_test_results if w.id == workflow_id] if workflow_id
-                    else self._workflow_test_results)
 
     @property
     def workflow_tests(self):
         """
-        Return the configurations of the workflows associated to this test suite.
+        Return the configuration of workflow tests associated to this test suite.
 
         :rtype: dict
-        :return: a map <WORKFLOW_TEST_NAME> : <WORKFLOW_TEST_CONFIGURATION>
+        :return: a dictionary which maps a `workflow test name` to the :class:`WorkflowTestConfiguration` instance
+            representing its configuration
         """
         return self._workflow_test_suite_configuration["workflows"].copy()
 
@@ -708,7 +779,8 @@ class WorkflowTestSuite:
         Add a new workflow test to this suite.
 
         :type workflow_test_configuration: :class:"WorkflowTestConfiguration"
-        :param workflow_test_configuration: a workflow test configuration
+        :param workflow_test_configuration: the :class:`WorkflowTestConfiguration` instance
+            representing the workflow test configuration
         """
         self._workflow_test_suite_configuration["workflows"][
             workflow_test_configuration.name] = workflow_test_configuration
@@ -718,7 +790,8 @@ class WorkflowTestSuite:
         Remove a workflow test from this suite.
 
         :type workflow_test: str or :class:"WorkflowTestConfiguration"
-        :param workflow_test: the name of the workflow test to remove or its configuration
+        :param workflow_test: the name of the workflow test to be removed
+            or the :class:`WorkflowTestConfiguration` instance representing the workflow test configuration
         """
         if isinstance(workflow_test, WorkflowTestConfiguration):
             del self._workflow_test_suite_configuration[workflow_test.name]
@@ -776,8 +849,22 @@ class WorkflowTestSuite:
         :param workflow_tests_config: a suite configuration as produced
                by the `WorkflowTestConfiguration.load(...)` method
 
+        :type enable_logger: bool
+        :param enable_logger: ``True`` to enable INFO messages; ``False`` (default) otherwise.
+
+        :type enable_debug: bool
+        :param enable_debug: ``True`` to enable DEBUG messages; ``False`` (default) otherwise.
+
+        :type disable_cleanup: bool
+        :param disable_cleanup: ``True`` to avoid the clean up of the workflow and history created on the Galaxy server;
+            ``False`` (default) otherwise.
+
+        :type disable_assertions: bool
+        :param disable_assertions: ``True`` to disable assertions during the execution of the workflow test;
+            ``False`` (default) otherwise.
+
         :rtype: list
-        :return: the list of :class:'WorkflowTestResult' instances
+        :return: a list of :class:`WorkflowTestResult` instances
         """
         results = []
         suite_config = workflow_tests_config or self._workflow_test_suite_configuration
@@ -799,6 +886,20 @@ class WorkflowTestSuite:
         :type workflow_tests_config: dict
         :param workflow_tests_config: a suite configuration as produced
                by the `WorkflowTestConfiguration.load(...)` method
+
+        :type enable_logger: bool
+        :param enable_logger: ``True`` to enable INFO messages; ``False`` (default) otherwise.
+
+        :type enable_debug: bool
+        :param enable_debug: ``True`` to enable DEBUG messages; ``False`` (default) otherwise.
+
+        :type disable_cleanup: bool
+        :param disable_cleanup: ``True`` to avoid the clean up of the workflow and history created on the Galaxy server;
+            ``False`` (default) otherwise.
+
+        :type disable_assertions: bool
+        :param disable_assertions: ``True`` to disable assertions during the execution of the workflow test;
+            ``False`` (default) otherwise.
         """
         suite = _unittest.TestSuite()
         suite_config = workflow_tests_config or self._workflow_test_suite_configuration
@@ -813,32 +914,53 @@ class WorkflowTestSuite:
         if not suite_config["disable_cleanup"]:
             self.cleanup()
 
+    def get_workflow_test_results(self, workflow_id=None):
+        """
+        Return the list of :class:`WorkflowTestResult` instances representing the results of
+        the workflow tests executed by this suite. Such a list can be filtered by workflow,
+        specified as ``workflow_id``.
+
+        :type workflow_id: str
+        :param workflow_id: the optional ID of a workflow
+
+        :rtype: list
+        :return: a list of :class:`WorkflowTestResult` instances
+        """
+        return list([w for w in self._workflow_test_results if w.id == workflow_id] if workflow_id
+                    else self._workflow_test_results)
+
     def cleanup(self):
         """
-        Perform a cleanup unloading workflows and deleting temporary histories.
+        Perform the clean up of the workflow and history created on the Galaxy server
         """
         for runner in self._workflow_runners:
             runner.cleanup()
 
     def load(self, filename=None):
         """
-        Load a test suite configuration and set it as default suite to run.
+        Load a test suite configuration and set it to this :class:`WorkflowTestSuite` instance.
 
         :type filename: str
-        :param filename: the path of suite configuration file
+        :param filename: the absolute path of suite configuration file
         """
         self._workflow_test_suite_configuration = WorkflowTestSuite._DEFAULT_SUITE_CONFIGURATION.copy()
         self._workflow_test_suite_configuration.update(
             WorkflowTestConfiguration.load(filename or WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME))
 
     def dump(self, filename):
+        """
+        Write a suite configuration to a file.
+
+        :type filename: str
+        :param filename: the absolute path of the file
+        """
         WorkflowTestConfiguration.dump(filename or WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME,
                                        self._workflow_test_suite_configuration)
 
 
 class WorkflowTestRunner(_unittest.TestCase):
     """
-    Class responsible for launching tests.
+    Class responsible for launching a workflow test.
     """
 
     def __init__(self, galaxy_instance, workflow_loader, workflow_test_config, test_suite=None):
@@ -861,16 +983,18 @@ class WorkflowTestRunner(_unittest.TestCase):
     @staticmethod
     def new_instance(workflow_test_config, galaxy_url=None, galaxy_api_key=None):
         """
-        Factory method to create and initialize an instance of :class:`WorkflowTestRunner`.
+        Factory method to create and initialize a new :class:`WorkflowTestRunner` instance.
 
         :type workflow_test_config: :class:`WorkflowTestConfiguration`
         :param workflow_test_config: the configuration of a workflow test
 
         :type galaxy_url: str
-        :param galaxy_url: the URL of the Galaxy server
+        :param galaxy_url: url of your Galaxy server instance.  If ``none``, the environment variable
+            ``BIOBLEND_GALAXY_URL`` is used. An error is raised when such a variable cannot be found.
 
         :type galaxy_api_key: str
-        :param galaxy_api_key: a registered Galaxy API KEY
+        :param galaxy_api_key: an API key from your Galaxy server instance.  If ``none``, the environment variable
+            ``BIOBLEND_GALAXY_API_KEY`` is used. An error is raised when such a variable cannot be found.
 
         :rtype: :class:`WorkflowTestRunner`
         :return: a :class:`WorkflowTestRunner` instance
@@ -883,6 +1007,10 @@ class WorkflowTestRunner(_unittest.TestCase):
 
     @property
     def workflow_test_config(self):
+        """
+        :rtype: :class:`WorkflowTestConfiguration`
+        :return: the :class:`WorkflowTestConfiguration` instance associated to this runner
+        """
         return self._workflow_test_config
 
     @property
@@ -916,10 +1044,10 @@ class WorkflowTestRunner(_unittest.TestCase):
 
     def get_galaxy_workflow(self):
         """
-        Return the bioblend workflow instance associated to this runner.
+        Return the :class:`bioblend.galaxy.objects.wrappers.Workflow` instance associated to this runner.
 
         :rtype: :class:`bioblend.galaxy.objects.wrappers.Workflow`
-        :return: bioblend workflow instance
+        :return: a :class:`bioblend.galaxy.objects.wrappers.Workflow` instance
         """
         if not self._galaxy_workflow:
             self._galaxy_workflow = self._workflow_loader.load_workflow(self._workflow_test_config)
@@ -929,56 +1057,14 @@ class WorkflowTestRunner(_unittest.TestCase):
                  output_folder=None, disable_assertions=None, disable_cleanup=None,
                  enable_logger=None, enable_debug=None):
         """
-        Run the test with the given inputs and expected_outputs.
+        Run the workflow test which this runner is associated to.
+        The parameters ``base_path``, ``inputs``, ``outputs``, ``expected_outputs``
+        ``output_folder``, ``disable_assertions``, ``disable_cleanup``, ``enable_logger``, ``enable_debug``
+        can be provided to override the corresponding defined in the :class:`WorkflowTestConfiguration` instance
+        which this runner is related to (see :class:`WorkflowTestConfiguration` for more details).
 
-        :type base_path: str
-        :param base_path: base path for workflow and datasets files; the current path is assumed as default
-
-        :type inputs: dict
-        :param inputs: a map <INPUT_NAME>:<INPUT_DATASET_INFO> (e.g., {"input_name" : {"file": ...}}
-
-        :type expected_outputs: dict
-        :param expected_outputs: maps actual to expected outputs.
-               Each output requires a dict containing the path of the expected output filename
-               and the fully qualified name of a function which will be used to compare the expected
-               to the actual output. Such a function takes ``actual_output_filename`` and ``expected_output_filename``
-               as parameters and returns ``True`` if the comparison succeeds, ``False``otherwise.
-
-               Example of expected_outputs:
-
-                    :Example:
-
-                                {'output1': {'comparator': 'filecmp.cmp',
-                                             'file': 'change_case_1/expected_output_1',
-                                             'name': 'output1'}}
-
-               Comparator function signature:
-
-                    :Example:
-
-                        def compare_outputs(actual_output_filename, expected_output_filename):
-                            ....
-                            return True | False
-
-        :type output_folder: str
-        :param output_folder: the path of folder to temporary store intermediate results
-
-        :type disable_cleanup: bool
-        :param disable_cleanup: ``True`` to skip cleanup (Galaxy workflow, history, datasets)
-                        after the workflow test execution; ``False`` (default) otherwise.
-
-        :type disable_assertions: bool
-        :param disable_assertions: ``True`` to disable assertions during the workflow test execution;
-                           ``False`` (default) otherwise.
-
-        :type enable_logger: bool
-        :param enable_logger: 'True' to enable the logger (with INFO level); 'False' otherwise.
-
-        :type enable_debug: bool
-        :param enable_debug: 'True' to enable the logger with DEBUG level; 'False' otherwise.
-
-        :rtype: :class:``WorkflowTestResult``
-        :return: workflow test result
+        :rtype: :class:`WorkflowTestResult`
+        :return: the :class:`WorkflowTestResult` instance which represents the test result
         """
         # update logger
         if enable_logger or enable_debug:
@@ -1055,9 +1141,9 @@ class WorkflowTestRunner(_unittest.TestCase):
                 results, output_file_map = self._check_outputs(base_path, outputs, expected_outputs, output_folder)
 
                 # instantiate the result object
-                test_result = _WorkflowTestResult(test_uuid, workflow, inputs, outputs, output_history,
-                                                  expected_outputs, missing_tools, results, output_file_map,
-                                                  output_folder)
+                test_result = WorkflowTestResult(test_uuid, workflow, inputs, outputs, output_history,
+                                                 expected_outputs, missing_tools, results, output_file_map,
+                                                 output_folder)
                 if test_result.failed():
                     error_msg = "The actual output{0} {2} differ{1} from the expected one{0}." \
                         .format("" if len(test_result.failed_outputs) == 1 else "s",
@@ -1072,8 +1158,8 @@ class WorkflowTestRunner(_unittest.TestCase):
 
         # instantiate the result object
         if not test_result:
-            test_result = _WorkflowTestResult(test_uuid, workflow, inputs, [], None,
-                                              expected_outputs, missing_tools, {}, {}, output_folder)
+            test_result = WorkflowTestResult(test_uuid, workflow, inputs, [], None,
+                                             expected_outputs, missing_tools, {}, {}, output_folder)
 
         # store result
         self._test_cases[test_uuid] = test_result
@@ -1094,7 +1180,7 @@ class WorkflowTestRunner(_unittest.TestCase):
 
     def find_missing_tools(self, workflow=None):
         """
-        Find tools required by the workflow to test and not installed in the configured Galaxy server.
+        Find tools required by the workflow to test and not installed on the configured Galaxy server.
 
         :type workflow: :class:`bioblend.galaxy.objects.wrappers.Workflow`
         :param workflow: an optional instance of :class:`bioblend.galaxy.objects.wrappers.Workflow`
@@ -1164,6 +1250,11 @@ class WorkflowTestRunner(_unittest.TestCase):
         return (results, output_file_map)
 
     def cleanup(self):
+        """
+        Perform a complete clean up of the data produced during the execution of a workflow test,
+        i.e., the uploaded workflow and the created history are removed from Galaxy and the actual
+        output datasets (downloaded from Galaxy) are deleted from the output path of the local file system.
+        """
         _logger.debug("Cleanup of workflow test '%s'...", self._test_uuid)
         for test_uuid, test_result in self._test_cases.items():
             if test_result.output_history:
@@ -1175,6 +1266,9 @@ class WorkflowTestRunner(_unittest.TestCase):
         _logger.debug("Cleanup of workflow test '%s': DONE", self._test_uuid)
 
     def cleanup_output_folder(self, test_result=None):
+        """
+        Perform a clean up of the temporary files produced during the workflow test execution.
+        """
         test_results = self._test_cases.values() if not test_result else [test_result]
         for _test in test_results:
             for output_name, output_map in _test.output_file_map.items():
@@ -1184,7 +1278,7 @@ class WorkflowTestRunner(_unittest.TestCase):
                     _logger.debug("Deleted output file '%s'.", output_map["filename"])
 
 
-class _WorkflowTestResult():
+class WorkflowTestResult():
     """
     Class for representing the result of a workflow test.
     """
@@ -1321,7 +1415,7 @@ def _get_workflow_info(filename, tool_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=No
             # process tool info to extract parameters
             tool_id = step["tool_id"]
             tool = galaxy_instance.tools.get(tool_id)
-            tool_json = _json_loads(tool.to_json())
+            tool_json = _json_loads(tool.to_dict())
             tool_config_xml = _os.path.basename(tool_json["config_file"])
             _logger.debug("Processing step tool '%s'", tool_id)
 
