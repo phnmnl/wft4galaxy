@@ -3,20 +3,16 @@
 Welcome to wft4galaxy's documentation!
 ======================================
 
-Contents:
+.. toctree::
+    :maxdepth: 2
 
-#. :doc:`wft4galaxy API`
+    wft4galaxy API <api>
+    Notes <_tutorial/notes>
+
 
 Indices and tables
 ==================
 
-* :ref:`api`
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
-
-.. toctree::
-   :maxdepth: 2
-
-   Python API <api>
