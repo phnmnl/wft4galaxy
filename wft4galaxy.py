@@ -199,6 +199,7 @@ class WorkflowTestConfiguration:
     DEFAULT_CONFIG_FILENAME = "workflows.yml"
     DEFAULT_WORKFLOW_CONFIG = {
         "file": "workflow.ga",
+        "output_folder": DEFAULT_OUTPUT_FOLDER,
         "inputs": {
             "Input Dataset": {"name": "Input Dataset", "file": ["input"]}
         },
@@ -537,8 +538,15 @@ class WorkflowTestConfiguration:
             if workflow_test_name:
                 raise KeyError("WorkflowTest with name '%s' not found" % workflow_test_name)
         else:
-            config["workflows"] = {"unknown": WorkflowTestConfiguration.DEFAULT_WORKFLOW_CONFIG.copy()}
-        config["output_folder"] = WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
+            wf_config = WorkflowTestConfiguration.DEFAULT_WORKFLOW_CONFIG
+            config["workflows"] = {"unknown": WorkflowTestConfiguration(name="unknown", base_path=".",
+                                                                        workflow_filename=wf_config["file"],
+                                                                        inputs=wf_config["inputs"],
+                                                                        params=wf_config.get("params", {}),
+                                                                        expected_outputs=wf_config["expected"],
+                                                                        output_folder=wf_config["output_folder"])}
+            config["output_folder"] = WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
+
         return config
 
     @staticmethod
