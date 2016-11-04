@@ -1,17 +1,11 @@
-.. Prova documentation master file, created by
-   sphinx-quickstart on Tue Nov  1 17:50:34 2016.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. wft4galaxy documentation index
 
 Welcome to wft4galaxy's documentation!
-=================================
+======================================
 
 Contents:
 
-.. toctree::
-   :maxdepth: 2
-
-
+#. :doc:`wft4galaxy API`
 
 Indices and tables
 ==================
@@ -21,3 +15,8 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+
+.. toctree::
+   :maxdepth: 2
+
+   Python API <api>
