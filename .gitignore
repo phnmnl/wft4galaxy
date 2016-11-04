@@ -1,7 +1,11 @@
-.idea
-docs/_build
-build
 **/.DS_Store
 **/*.pyc
+**/.ipynb_checkpoints/
+.idea
 .tools
+docs/_build
+build
+dist
 results
+wft4galaxy.egg-info
+
