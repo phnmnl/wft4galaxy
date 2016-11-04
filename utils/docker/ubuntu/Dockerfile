@@ -19,7 +19,7 @@ RUN apt-get update && \
 # install ipython
 RUN pip install --upgrade pip && pip install ipython jupyter
 
-# update PS1
+# setup bash custom prompt (PS1)
 RUN echo "parse_git_branch() {" >> ${HOME}/.bashrc
 RUN echo "git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'" >> ${HOME}/.bashrc
 RUN echo "}" >> ${HOME}/.bashrc
