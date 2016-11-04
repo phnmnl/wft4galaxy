@@ -2,7 +2,7 @@
 
 echo "Converting ipython notebooks to .rst"
 
-TUTORIAL_IPYNB="../tutorial/"
+TUTORIAL_IPYNB="tutorial/"
 TUTORIAL_RST="../docs/_tutorial/"
 
 notebooks=($(ls ${TUTORIAL_IPYNB}))
