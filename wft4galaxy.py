@@ -512,8 +512,8 @@ class WorkflowTestConfiguration:
 
         config = {}
         if _os.path.exists(filename):
-            base_path = _os.path.dirname(_os.path.abspath(filename))
             workflows_conf = _load_configuration(filename)
+            base_path = workflows_conf.get("base_path", _os.path.dirname(_os.path.abspath(filename)))
             config["galaxy_url"] = workflows_conf.get("galaxy_url", None)
             config["galaxy_api_key"] = workflows_conf.get("galaxy_api_key", None)
             config["enable_logger"] = workflows_conf.get("enable_logger", False)
@@ -521,10 +521,11 @@ class WorkflowTestConfiguration:
                                                          WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER)
             config["workflows"] = {}
             for wf_name, wf_config in workflows_conf.get("workflows").items():
+                wf_base_path = _os.path.join(base_path, wf_config.get("base_path", ""))
                 wf_config["output_folder"] = _os.path.join(config["output_folder"],
                                                            wf_config.get("output_folder", wf_name))
                 # add the workflow
-                w = WorkflowTestConfiguration(name=wf_name, base_path=base_path, workflow_filename=wf_config["file"],
+                w = WorkflowTestConfiguration(name=wf_name, base_path=wf_base_path, workflow_filename=wf_config["file"],
                                               inputs=wf_config["inputs"], params=wf_config.get("params", {}),
                                               expected_outputs=wf_config["expected"],
                                               output_folder=wf_config["output_folder"])
