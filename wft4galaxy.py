@@ -664,7 +664,7 @@ class WorkflowLoader:
         if not self._galaxy_instance:
             raise RuntimeError("WorkflowLodaer not initialized")
         workflow_filename = workflow_test_config.filename \
-            if not workflow_test_config.base_path \
+            if not workflow_test_config.base_path or _os.path.isabs(workflow_test_config.filename) \
             else _os.path.join(workflow_test_config.base_path, workflow_test_config.filename)
         return self.load_workflow_by_filename(workflow_filename, workflow_name)
 
@@ -1138,8 +1138,8 @@ class WorkflowTestRunner(_unittest.TestCase):
             for label, config in inputs.items():
                 datamap[label] = []
                 for filename in config["file"]:
-                    datamap[label].append(history.upload_dataset(_os.path.join(base_path, filename)))
-
+                    datamap[label].append(history.upload_dataset(filename if _os.path.isabs(filename)
+                                                                 else _os.path.join(base_path, filename)))
             try:
                 # run the workflow
                 _logger.info("Workflow '%s' (id: %s) running ...", workflow.name, workflow.id)
@@ -1247,7 +1247,8 @@ class WorkflowTestRunner(_unittest.TestCase):
                 _logger.debug("Configured comparator function: %s", comparator_fn)
                 comparator = _load_comparator(comparator_fn) if comparator_fn else base_comparator
                 if comparator:
-                    expected_output_filename = _os.path.join(base_path, config["file"])
+                    expected_output_filename = config["file"] if _os.path.isabs(config["file"]) \
+                        else _os.path.join(base_path, config["file"])
                     result = comparator(output_filename, expected_output_filename)
                     _logger.debug(
                         "Output '{0}' {1} the expected: dataset '{2}', actual-output '{3}', expected-output '{4}'"
