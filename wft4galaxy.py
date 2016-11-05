@@ -491,7 +491,8 @@ class WorkflowTestConfiguration:
         self.dump(filename=filename, worflow_tests_config=self, file_format=file_format)
 
     @staticmethod
-    def load(filename=DEFAULT_CONFIG_FILENAME, workflow_test_name=None, file_format=FILE_FORMATS.YAML):
+    def load(filename=DEFAULT_CONFIG_FILENAME, workflow_test_name=None,
+             file_format=FILE_FORMATS.YAML, output_folder=None):
         """
         Load the configuration of a workflow test suite or a single workflow test
         from a YAML or JSON configuration file.
@@ -517,8 +518,8 @@ class WorkflowTestConfiguration:
             config["galaxy_url"] = workflows_conf.get("galaxy_url", None)
             config["galaxy_api_key"] = workflows_conf.get("galaxy_api_key", None)
             config["enable_logger"] = workflows_conf.get("enable_logger", False)
-            config["output_folder"] = workflows_conf.get("output_folder",
-                                                         WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER)
+            config["output_folder"] = output_folder if output_folder \
+                else workflows_conf.get("output_folder", WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER)
             config["workflows"] = {}
             for wf_name, wf_config in workflows_conf.get("workflows").items():
                 wf_base_path = _os.path.join(base_path, wf_config.get("base_path", ""))
@@ -1671,7 +1672,7 @@ def run_tests(enable_logger=None, enable_debug=None, disable_cleanup=None, disab
     :return: the :class:`WorkflowTestSuite` instance representing the executed test suite
     """
     options, args = _parse_cli_options()
-    config = WorkflowTestConfiguration.load(options.file)
+    config = WorkflowTestConfiguration.load(options.file, output_folder=options.output)
 
     config["galaxy_url"] = options.server \
         if options.server \
