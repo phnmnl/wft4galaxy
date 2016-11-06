@@ -1,30 +1,25 @@
 .. wft4galaxy documentation index
 
+======================================
 Welcome to wft4galaxy's documentation!
-######################################
+======================================
 
-:ref:`tutorial/notes.ipynb`
+**wft4galaxy** is a Python module which allows to automate the running of Galaxy workflow tests. It can be used either as local Python library or a Docker image running inside a Docker container.
 
+
+Table of Contents (TOC)
+=======================
 
 .. toctree::
     :maxdepth: 2
+    :glob:
 
+    Getting started <getting-started>
+    Configuration file <config-file>
+    Programmatic Usage <tutorial/notes.ipynb>
     wft4galaxy API <api>
-
-
-Base path
-=========
-
-The notes above hold for every file specified in a workflow test configuration file (i.e., .ga files, input datasets, expected_output datasets). The only exception deals with the actual output which is put within a folder whose path can be either relative to the ``base path`` or to the current folder.
-
-We consider two path levels:
-
-1. **global base_path**: specifies the base path for all workflow tests;
-2. **wofkflow test base_path**: specifies the base path for all files defined within the workflow test
-
-.. note:: If you provide file name starting with ``/`` its path is considered absolute and possible ``base_path`` will be ignored.
-
-
+    Dockerized wft4galaxy <docker>
+    Integration with CI tools <ci-integration>
 
 
 Indices and tables
