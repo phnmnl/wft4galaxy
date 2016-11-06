@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # set the target script
+BASE_SCRIPT="https://bitbucket.org/kikkomep/workflowtester/raw/docker-tools/utils/docker/wft4galaxy-docker.sh"
+#BASE_SCRIPT="https://raw.githubusercontent.com/phnmnl/wft4galaxy/docker-tools/utils/docker/wft4galaxy-docker.sh"
 TARGET_SCRIPT="/usr/local/bin/wft4galaxy-docker"
 
 # set version
@@ -10,6 +12,6 @@ if [[ (${VERSION} != "wft4galaxy-dev:alpine") && (${VERSION} == "wft4galaxy-dev:
 fi
 
 # set the proper Docker image
-curl -s https://bitbucket.org/kikkomep/workflowtester/raw/2f135c777ccc9a20c52fdd7da97d4708a36db2f8/utils/docker/wft4galaxy-docker.sh \
+curl -s ${BASE_SCRIPT} \
 	| sudo sed "s/DOCKER_IMAGE=\"wft4galaxy\"/DOCKER_IMAGE='${VERSION}'/g" > ${TARGET_SCRIPT} \
 	&& sudo chmod +x ${TARGET_SCRIPT}
