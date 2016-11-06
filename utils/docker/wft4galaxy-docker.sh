@@ -107,7 +107,7 @@ done
 
 # check required parameters
 if [[ (-z ${CONFIG_FILE}) && (-z ${OUTPUT_FOLDER}) ]]; then
-	echo "missing operands"
+	echo "Missing parameter !!!\n"
 	print_usage
 	exit
 fi
