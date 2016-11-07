@@ -11,7 +11,13 @@ RUN apk update && apk add \
     && rm -rf /var/cache/apk/*
 
 # install ipython
-RUN pip install --upgrade pip && pip install ipython jupyter
+RUN pip install --upgrade pip && pip install ipython jupyter bash_kernel
+
+# install jupyter bash kernel
+RUN python -m bash_kernel.install
+
+# expose jupyter port
+EXPOSE 8888
 
 # update entrypoint script
 COPY entrypoint.sh /bin/entrypoint.sh

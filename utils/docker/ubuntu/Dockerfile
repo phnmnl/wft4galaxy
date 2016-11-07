@@ -17,7 +17,10 @@ RUN apt-get update && \
     apt-get -y clean && apt-get -y autoremove && rm -rf /var/lib/{cache,log}/ /tmp/* /var/tmp/*
 
 # install ipython
-RUN pip install --upgrade pip && pip install ipython jupyter
+RUN pip install --upgrade pip && pip install ipython jupyter bash_kernel
+
+# install jupyter bash kernel
+RUN python -m bash_kernel.install
 
 # setup bash custom prompt (PS1)
 RUN echo "parse_git_branch() {" >> ${HOME}/.bashrc
@@ -40,6 +43,9 @@ WORKDIR /root
 
 # add container entrypoint
 COPY entrypoint.sh /bin/entrypoint.sh
+
+# expose port
+EXPOSE 8888
 
 # set the entrypoint
 ENTRYPOINT ["entrypoint.sh"]
