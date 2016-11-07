@@ -46,6 +46,7 @@ WORKDIR /root
 
 # add container entrypoint
 COPY entrypoint.sh /bin/entrypoint.sh
+COPY set-bioblend-env.sh /usr/local/bin/set-bioblend-env.sh
 
 # set the entrypoint
 ENTRYPOINT ["entrypoint.sh"]

@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
+
+source set-bioblend-env.sh "$@"
+
 if [[ ${1} == "wft4galaxy" ]]; then
     shift
     wft4galaxy "$@"
 elif [[ ${1} == "ipython" ]]; then
-		ipython
+		ipython ${WFT4GALAXY_OPTS}
 elif [[ ${1} == "jupyter" ]]; then
-		shift
-		ipython notebook --ip=$(hostname) --no-browser --port 8888 "$@"
+		ipython notebook --ip=$(hostname) --no-browser --port 8888 ${WFT4GALAXY_OPTS}
 elif [[ ${1} == "bash" ]]; then
-    shift
-    /bin/bash "$@"
+    /bin/bash ${WFT4GALAXY_OPTS}
 else
-	  /bin/bash "$@"
+	  /bin/bash ${WFT4GALAXY_OPTS}
 fi

@@ -227,7 +227,9 @@ if [[ ${MODE_ENTRYPOINT} == "wft4galaxy" ]]; then
               -f ${DATA_CONFIG_FILE} \
               -o /data_output ${ENABLE_LOGGER} ${DISABLE_CLEANUP} ${ENABLE_DEBUG}
 elif [[ ${MODE_ENTRYPOINT} == "jupyter" ]]; then
-  docker run -it --rm -p ${JUPYTER_PORT}:8888 ${DOCKER_OPTS} ${DOCKER_IMAGE} ${MODE_ENTRYPOINT}
+  docker run -it --rm -p ${JUPYTER_PORT}:8888 ${DOCKER_OPTS} ${DOCKER_IMAGE} \
+    ${MODE_ENTRYPOINT} --server ${GALAXY_SERVER} --api-key ${GALAXY_API_KEY}
 else
-  docker run -it --rm ${DOCKER_OPTS} ${DOCKER_IMAGE} ${MODE_ENTRYPOINT}
+  docker run -it --rm ${DOCKER_OPTS} ${DOCKER_IMAGE} \
+    ${MODE_ENTRYPOINT} --server ${GALAXY_SERVER} --api-key ${GALAXY_API_KEY}
 fi

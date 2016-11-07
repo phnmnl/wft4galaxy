@@ -43,8 +43,9 @@ WORKDIR /root
 
 # add container entrypoint
 COPY entrypoint.sh /bin/entrypoint.sh
+COPY set-bioblend-env.sh /usr/local/bin/set-bioblend-env.sh
 
-# expose port
+# expose jupyter port
 EXPOSE 8888
 
 # set the entrypoint
