@@ -7,6 +7,9 @@ elif [[ ${1} == "ipython" ]]; then
 elif [[ ${1} == "jupyter" ]]; then
 		shift
 		ipython notebook --ip=$(hostname) --no-browser --port 8888 "$@"
+elif [[ ${1} == "bash" ]]; then
+    shift
+    /bin/bash "$@"
 else
-	/bin/bash "$@"
+	  /bin/bash "$@"
 fi
