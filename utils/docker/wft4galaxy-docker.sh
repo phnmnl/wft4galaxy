@@ -1,26 +1,42 @@
 #!/bin/bash
 
+# print usage
+function print_usage(){
+    echo -e "\nUsage: wft4galaxy-docker [-m|--mode <MODE>] [-e|--entrypoint <MODE_ENTRYPOINT>] [ENTRYPOINT_OPTIONS] [DOCKER_OPTIONS]"
+    echo -e "       e.g.: wft4galaxy-docker -m production -e wft4galaxy [wft4galaxy_OPTIONS] (default)"
+    echo -e "       e.g.: wft4galaxy-docker [wft4galaxy_OPTIONS] (default)\n"
+
+    echo -e "    Modes: "
+    echo -e "\t  1) production (default)"
+    echo -e "\t  2) develop\n"
+
+    echo -e "    Mode Entrypoints:"
+    echo -e "\t  * PRODUCTION MODE: bash, wft4galaxy (default)"
+    echo -e "\t  * DEVELOP MODE:    bash (default), ipython, jupyter, wft4galaxy\n"
+
+    echo -e "   Entrypoint options:"
+    echo -e "\n\t  *) jupyter options:"
+    echo -e "\t\t  -p, --port            jupyter port (default: 9876)"
+    echo -e "\n\t  *) wft4galaxy options:"
+    echo -e "\t\t  -h, --help            show this help message and exit"
+    echo -e "\t\t  --server=SERVER       Galaxy server URL"
+    echo -e "\t\t  --api-key=API_KEY     Galaxy server API KEY"
+    echo -e "\t\t  --enable-logger       Enable log messages"
+    echo -e "\t\t  --debug               Enable debug mode"
+    echo -e "\t\t  --disable-cleanup     Disable cleanup"
+    echo -e "\t\t  -o OUTPUT, --output=OUTPUT"
+    echo -e "\t\t                        absolute path of the folder where output is written"
+    echo -e "\t\t  -f FILE, --file=FILE  YAML configuration file of workflow tests"
+}
+
 # set Docker image
 DOCKER_IMAGE="wft4galaxy"
 
 # set defaults
 GALAXY_SERVER=${BIOBLEND_GALAXY_URL}
 GALAXY_API_KEY=${BIOBLEND_GALAXY_API_KEY}
-
-# print usage
-function print_usage(){
-    echo -e "Usage: wft4galaxy-docker [options]\n"
-    echo -e "    Options:"
-    echo -e "\t  -h, --help            show this help message and exit"
-    echo -e "\t  --server=SERVER       Galaxy server URL"
-    echo -e "\t  --api-key=API_KEY     Galaxy server API KEY"
-    echo -e "\t  --enable-logger       Enable log messages"
-    echo -e "\t  --debug               Enable debug mode"
-    echo -e "\t  --disable-cleanup     Disable cleanup"
-    echo -e "\t  -o OUTPUT, --output=OUTPUT"
-    echo -e "\t                        absolute path of the folder where output is written"
-    echo -e "\t  -f FILE, --file=FILE  YAML configuration file of workflow tests"
-}
+JUPYTER_PORT=9876
+MODE="production"
 
 # parse arguments
 while [ -n "$1" ]; do
@@ -30,19 +46,45 @@ while [ -n "$1" ]; do
         if [ x"$OPT" = x"--" ]; then
                 shift
                 for OPT ; do
-                        REMAINS="$REMAINS \"$OPT\""
+                        DOCKER_OPTS="$DOCKER_OPTS \"$OPT\""
                 done
                 break
         fi
         # Parse current opt
         while [ x"$OPT" != x"-" ] ; do
                 case "$OPT" in
-                        # Handle --flag=value opts like this
+                        # update MODE
+                        -m=* | --mode=* )
+                                MODE="${OPT#*=}"
+                                shift
+                                ;;
+                        -m* | --mode )
+                                MODE="$2"
+                                shift
+                                ;;
+                        # update MODE
+                        -e=* | --entrypoint=* )
+                                MODE_ENTRYPOINT="${OPT#*=}"
+                                shift
+                                ;;
+                        -e* | --entrypoint )
+                                MODE_ENTRYPOINT="$2"
+                                shift
+                                ;;
+                        # update JUPYTER_PORT
+                        -p=* | --port=* )
+                                JUPYTER_PORT="${OPT#*=}"
+                                shift
+                                ;;
+                        -p* | --port )
+                                JUPYTER_PORT="$2"
+                                shift
+                                ;;
+                        # set CONFIG_FILE
                         -c=* | --config=* )
                                 CONFIG_FILE="${OPT#*=}"
                                 shift
                                 ;;
-                        # and --flag value opts like this
                         -c* | --config )
                                 CONFIG_FILE="$2"
                                 shift
@@ -87,7 +129,7 @@ while [ -n "$1" ]; do
 
                         # Anything unknown is recorded for later
                         * )
-                                REMAINS="$REMAINS \"$OPT\""
+                                DOCKER_OPTS="$DOCKER_OPTS $OPT"
                                 break
                                 ;;
                 esac
@@ -104,18 +146,40 @@ while [ -n "$1" ]; do
         shift
 done
 
-
-# check required parameters
-if [[ (-z ${CONFIG_FILE}) && (-z ${OUTPUT_FOLDER}) ]]; then
-	echo "Missing parameter !!!\n"
-	print_usage
-	exit
+# check MODE
+if [[ ! ${MODE} =~ ^(production|develop)$ ]]; then
+  echo -e "\nInvalid mode parameter: ${MODE} !!!"
+  print_usage
+  exit
 fi
 
-# set data paths
-DATA_INPUT=$(realpath $(dirname ${CONFIG_FILE}))
-DATA_OUTPUT=$(realpath ${OUTPUT_FOLDER})
-DATA_CONFIG_FILE=/data_input/$(basename ${CONFIG_FILE})
+# set default MODE_ENTRYPOINT
+if [[ -z ${MODE_ENTRYPOINT} ]]; then
+  if [[ ${MODE} == "production" ]]; then
+    MODE_ENTRYPOINT="wft4galaxy"
+  else
+    MODE_ENTRYPOINT="bash"
+  fi
+else
+  if [[ ((${MODE} == "production") && (! ${MODE_ENTRYPOINT} =~ ^(bash|wft4galaxy)$ )) || \
+        ((${MODE} == "develop") && (! ${MODE_ENTRYPOINT} =~ ^(bash|wft4galaxy|ipython|jupyter)$ )) ]]
+  then
+    echo -e "\nInvalid MODE_ENTRYPOINT: '${MODE_ENTRYPOINT}' for MODE '${MODE}'"
+    print_usage
+    exit
+  fi
+fi
+
+# udpate DOCKER image
+if [[ ${MODE} == "production" ]]; then
+  DOCKER_IMAGE="wft4galaxy"
+else
+  DOCKER_IMAGE="wft4galaxy-dev"
+fi
+
+# set BIOBLEND
+#export BIOBLEND_GALAXY_URL=${GALAXY_SERVER}
+#export BIOBLEND_GALAXY_API_KEY=${GALAXY_API_KEY}
 
 # print debug message
 if [[ ${ENABLE_DEBUG} == "--debug" ]]; then
@@ -129,13 +193,39 @@ if [[ ${ENABLE_DEBUG} == "--debug" ]]; then
     echo "DATA INPUT:       $DATA_INPUT"
     echo "DATA OUTPUT:      $DATA_OUTPUT"
     echo "DATA CONFIG FILE: $DATA_CONFIG_FILE"
+    echo "DOCKER IMAGE:     $DOCKER_IMAGE"
+    echo "DOCKER OPTIONS:   $DOCKER_OPTS"
+    echo "JUPYTER PORT:     $JUPYTER_PORT"
 fi
 
-# run wft4galaxy tests within a docker container
-docker run -it --rm \
-            -v ${DATA_INPUT}:/data_input \
-            -v ${DATA_OUTPUT}:/data_output \
-            ${DOCKER_IMAGE} \
-            --server ${GALAXY_SERVER} --api-key ${GALAXY_API_KEY} \
-            -f ${DATA_CONFIG_FILE} \
-            -o /data_output ${ENABLE_LOGGER} ${DISABLE_CLEANUP} ${ENABLE_DEBUG}
+if [[ ${MODE_ENTRYPOINT} == "wft4galaxy" ]]; then
+  # check required parameters
+  if [[ -z ${CONFIG_FILE} ]]; then
+  	echo -e "Missing parameter: [-f|--file] "
+  fi
+  if [[ -z ${OUTPUT_FOLDER} ]]; then
+  	echo -e "Missing parameter: [-o|--output]"
+  fi
+  if [[ (-z ${CONFIG_FILE}) || (-z ${OUTPUT_FOLDER}) ]]; then
+  	print_usage
+  	exit
+  fi
+
+  # set data paths
+  DATA_INPUT=$(realpath $(dirname ${CONFIG_FILE}))
+  DATA_OUTPUT=$(realpath ${OUTPUT_FOLDER})
+  DATA_CONFIG_FILE=/data_input/$(basename ${CONFIG_FILE})
+
+  # run wft4galaxy tests within a docker container
+  docker run -it --rm ${DOCKER_OPTS} \
+              -v ${DATA_INPUT}:/data_input \
+              -v ${DATA_OUTPUT}:/data_output \
+              ${DOCKER_IMAGE} \
+              --server ${GALAXY_SERVER} --api-key ${GALAXY_API_KEY} \
+              -f ${DATA_CONFIG_FILE} \
+              -o /data_output ${ENABLE_LOGGER} ${DISABLE_CLEANUP} ${ENABLE_DEBUG}
+elif [[ ${MODE_ENTRYPOINT} == "jupyter" ]]; then
+  docker run -it --rm -p ${JUPYTER_PORT}:8888 ${DOCKER_OPTS} ${DOCKER_IMAGE} ${MODE_ENTRYPOINT}
+else
+  docker run -it --rm ${DOCKER_OPTS} ${DOCKER_IMAGE} ${MODE_ENTRYPOINT}
+fi
