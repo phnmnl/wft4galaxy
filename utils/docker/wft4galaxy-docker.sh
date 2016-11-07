@@ -39,6 +39,7 @@ GALAXY_API_KEY=${BIOBLEND_GALAXY_API_KEY}
 JUPYTER_PORT=9876
 MODE="production"
 BASE_OS="alpine"
+OUTPUT_FOLDER="results"
 
 # parse arguments
 while [ -n "$1" ]; do
