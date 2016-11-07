@@ -12,15 +12,11 @@ ENV WFT4GALAXY_PATH /opt/wft4galaxy
 # install base packages
 RUN apt-get update && \
     apt-get install -y python python-dev python-pip git \
-                       python-lxml libyaml-dev \
-                       inetutils-ping nano vim && \
+                       python-lxml libyaml-dev && \
     apt-get -y clean && apt-get -y autoremove && rm -rf /var/lib/{cache,log}/ /tmp/* /var/tmp/*
 
 # install ipython
-RUN pip install --upgrade pip && pip install ipython jupyter bash_kernel
-
-# install jupyter bash kernel
-RUN python -m bash_kernel.install
+RUN pip install --upgrade pip
 
 # setup bash custom prompt (PS1)
 RUN echo "parse_git_branch() {" >> ${HOME}/.bashrc
@@ -44,9 +40,6 @@ WORKDIR /root
 # add container entrypoint
 COPY entrypoint.sh /bin/entrypoint.sh
 COPY set-bioblend-env.sh /usr/local/bin/set-bioblend-env.sh
-
-# expose jupyter port
-EXPOSE 8888
 
 # set the entrypoint
 ENTRYPOINT ["entrypoint.sh"]
