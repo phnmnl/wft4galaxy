@@ -37,6 +37,7 @@ GALAXY_SERVER=${BIOBLEND_GALAXY_URL}
 GALAXY_API_KEY=${BIOBLEND_GALAXY_API_KEY}
 JUPYTER_PORT=9876
 MODE="production"
+BASE_OS="alpine"
 
 # parse arguments
 while [ -n "$1" ]; do
@@ -172,9 +173,9 @@ fi
 
 # udpate DOCKER image
 if [[ ${MODE} == "production" ]]; then
-  DOCKER_IMAGE="wft4galaxy"
+  DOCKER_IMAGE="wft4galaxy:${BASE_OS}"
 else
-  DOCKER_IMAGE="wft4galaxy-dev"
+  DOCKER_IMAGE="wft4galaxy-dev:${BASE_OS}"
 fi
 
 # set BIOBLEND
