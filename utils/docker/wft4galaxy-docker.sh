@@ -82,11 +82,11 @@ while [ -n "$1" ]; do
                                 shift
                                 ;;
                         # set CONFIG_FILE
-                        -c=* | --config=* )
+                        -f=* | --file=* )
                                 CONFIG_FILE="${OPT#*=}"
                                 shift
                                 ;;
-                        -c* | --config )
+                        -f* | --file )
                                 CONFIG_FILE="$2"
                                 shift
                                 ;;
