@@ -183,6 +183,8 @@ fi
 
 # print debug message
 if [[ ${ENABLE_DEBUG} == "--debug" ]]; then
+    echo "MODE:             ${MODE}"
+    echo "MODE ENTRYPOINT:  ${MODE_ENTRYPOINT}"
     echo "GALAXY SERVER:    $GALAXY_SERVER"
     echo "GALAXY API KEY:   $GALAXY_API_KEY"
     echo "CONFIG FILE:      $CONFIG_FILE"
