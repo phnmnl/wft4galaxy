@@ -220,7 +220,7 @@ if [[ ${MODE_ENTRYPOINT} == "wft4galaxy" ]]; then
   docker run -it --rm ${DOCKER_OPTS} \
               -v ${DATA_INPUT}:/data_input \
               -v ${DATA_OUTPUT}:/data_output \
-              ${DOCKER_IMAGE} \
+              ${DOCKER_IMAGE} ${MODE_ENTRYPOINT} \
               --server ${GALAXY_SERVER} --api-key ${GALAXY_API_KEY} \
               -f ${DATA_CONFIG_FILE} \
               -o /data_output ${ENABLE_LOGGER} ${DISABLE_CLEANUP} ${ENABLE_DEBUG}
