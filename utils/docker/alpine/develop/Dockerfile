@@ -1,4 +1,4 @@
-FROM wft4galaxy
+FROM wft4galaxy:alpine
 
 # metadata
 MAINTAINER PhenoMeNal-H2020 Project ( phenomenal-h2020-users@googlegroups.com )
