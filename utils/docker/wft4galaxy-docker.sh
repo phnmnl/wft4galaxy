@@ -178,9 +178,6 @@ else
   DOCKER_IMAGE="wft4galaxy-dev:${BASE_OS}"
 fi
 
-# set BIOBLEND
-#export BIOBLEND_GALAXY_URL=${GALAXY_SERVER}
-#export BIOBLEND_GALAXY_API_KEY=${GALAXY_API_KEY}
 
 # print debug message
 if [[ ${ENABLE_DEBUG} == "--debug" ]]; then
