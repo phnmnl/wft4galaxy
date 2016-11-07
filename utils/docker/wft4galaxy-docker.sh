@@ -25,7 +25,7 @@ function print_usage(){
     echo -e "\t\t  --debug               Enable debug mode"
     echo -e "\t\t  --disable-cleanup     Disable cleanup"
     echo -e "\t\t  -o OUTPUT, --output=OUTPUT"
-    echo -e "\t\t                        absolute path of the folder where output is written"
+    echo -e "\t\t                        absolute path of the output folder"
     echo -e "\t\t  -f FILE, --file=FILE  YAML configuration file of workflow tests"
 }
 
