@@ -30,6 +30,7 @@ function print_usage(){
 }
 
 # set Docker image
+DOCKER_REGISTRY="crs4"
 DOCKER_IMAGE="wft4galaxy"
 
 # set defaults
@@ -173,9 +174,9 @@ fi
 
 # udpate DOCKER image
 if [[ ${MODE} == "production" ]]; then
-  DOCKER_IMAGE="wft4galaxy:${BASE_OS}"
+  DOCKER_IMAGE="${DOCKER_REGISTRY}/wft4galaxy:${BASE_OS}"
 else
-  DOCKER_IMAGE="wft4galaxy-dev:${BASE_OS}"
+  DOCKER_IMAGE="${DOCKER_REGISTRY}/wft4galaxy-dev:${BASE_OS}"
 fi
 
 
