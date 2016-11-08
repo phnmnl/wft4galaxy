@@ -219,7 +219,7 @@ class WorkflowTestConfiguration:
         self._expected_outputs = {}
 
         # set parameters
-        self.name = _uuid1() if not name else name
+        self.name = str(_uuid1()) if not name else name
         self.set_base_path(base_path)
         self.set_filename(workflow_filename)
         self.set_inputs(inputs)
