@@ -2,25 +2,31 @@
 
 # print usage
 function print_usage(){
-    echo -e "\nUsage: wft4galaxy-docker [-m|--mode <MODE>] [-e|--entrypoint <MODE_ENTRYPOINT>] [ENTRYPOINT_OPTIONS] [DOCKER_OPTIONS]"
+    echo -e "\nUsage: wft4galaxy-docker [-m|--mode <MODE>] [-e|--entrypoint <MODE_ENTRYPOINT>] [GLOBAL_OPTIONS] [ENTRYPOINT_OPTIONS] [DOCKER_OPTIONS]"
     echo -e "       e.g.: wft4galaxy-docker -m production -e wft4galaxy [wft4galaxy_OPTIONS] (default)"
     echo -e "       e.g.: wft4galaxy-docker [wft4galaxy_OPTIONS] (default)\n"
 
-    echo -e "    Modes: "
+    echo -e "    MODEs: "
     echo -e "\t  1) production (default)"
     echo -e "\t  2) develop\n"
 
-    echo -e "    Mode Entrypoints:"
+    echo -e "    MODE ENTRYPOINT_OPTIONs:"
     echo -e "\t  * PRODUCTION MODE: bash, wft4galaxy (default)"
     echo -e "\t  * DEVELOP MODE:    bash (default), ipython, jupyter, wft4galaxy\n"
 
-    echo -e "   Entrypoint options:"
-    echo -e "\n\t  *) jupyter options:"
+    echo -e "    GLOBAL OPTIONs:"
+    echo -e "\t  -h, --help            show this help message and exit"
+    echo -e "\t  --server=SERVER       Galaxy server URL"
+    echo -e "\t  --api-key=API_KEY     Galaxy server API KEY\n"
+
+    echo -e "    DOCKER OPTIONs:"
+    echo -e "\t  every additional option to pass to the Docker Engine when it starts a wft4galaxy container"
+    echo -e "\t  e.g., -v myhost-folder:/container-host-folder\n"
+
+    echo -e "    ENTRYPOINT OPTIONs:"
+    echo -e "\t  *) jupyter options:"
     echo -e "\t\t  -p, --port            jupyter port (default: 9876)"
     echo -e "\n\t  *) wft4galaxy options:"
-    echo -e "\t\t  -h, --help            show this help message and exit"
-    echo -e "\t\t  --server=SERVER       Galaxy server URL"
-    echo -e "\t\t  --api-key=API_KEY     Galaxy server API KEY"
     echo -e "\t\t  --enable-logger       Enable log messages"
     echo -e "\t\t  --debug               Enable debug mode"
     echo -e "\t\t  --disable-cleanup     Disable cleanup"
