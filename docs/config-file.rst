@@ -1,8 +1,8 @@
 .. _config_file:
 
-##################
-Configuration file
-##################
+######################
+Test Definition File
+######################
 
 wft4galaxy support both YAML and JSON formats.
 
