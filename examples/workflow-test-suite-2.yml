@@ -9,17 +9,15 @@ output_folder: "results"
 
 # workflow tests
 workflows:
+
   # workflow test "change case"
   change_case:
     file: "change_case/workflow.ga"
     inputs:
-      "Input Dataset": "change_case/input"
-        #file: "change_case/input"
+      InputText: "change_case/input"
     expected:
-      output1: "change_case/expected_output_1"
-        #file: "change_case/expected_output_1"
-        #comparator: "filecmp.cmp"
-      output2: "change_case/expected_output_2"
+      OutputText: "change_case/expected_output"
+
   # workflow test "multivariate"
   multivariate:
     file: "multivariate/workflow.ga"
@@ -36,6 +34,7 @@ workflows:
     expected:
       sampleMetadata_out: "multivariate/sampleMetadata_out"
       variableMetadata_out: "multivariate/variableMetadata_out"
+
   # workflow test "sacurine"
   sacurine:
     file: "sacurine/workflow.ga"
