@@ -16,7 +16,6 @@ Table of Contents (TOC)
     :glob:
 
     Installation <installation>
-    Dockerized wft4galaxy <docker>
 
 
 .. toctree::
@@ -26,6 +25,7 @@ Table of Contents (TOC)
 
     Run a test suite from CLI <notebooks/1_run_suite_from_cli.ipynb>
     Programmatic Usage <programmatic-usage>
+    Dockerized Usage <docker>
 
 
 .. toctree::
