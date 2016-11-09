@@ -1667,9 +1667,6 @@ def run_tests(enable_logger=None, enable_debug=None, disable_cleanup=None, disab
     :type disable_assertions: bool
     :param disable_assertions: ``True`` to disable assertions during the execution of the workflow test;
         ``False`` (default) otherwise.
-
-    :rtype: :class:`WorkflowTestSuite`
-    :return: the :class:`WorkflowTestSuite` instance representing the executed test suite
     """
     options, args = _parse_cli_options()
     config = WorkflowTestConfiguration.load(options.file, output_folder=options.output)
@@ -1708,8 +1705,6 @@ def run_tests(enable_logger=None, enable_debug=None, disable_cleanup=None, disab
     # create and run the configured test suite
     test_suite = WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
     test_suite.run_test_suite(config)
-
-    return test_suite
 
 
 if __name__ == '__main__':
