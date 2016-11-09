@@ -22,7 +22,7 @@ In this section we will see how to use **wft4galaxy** programmatically, which  c
     :caption: Examples
     :glob:
 
-    Run a test suite <tutorial/2_run_test_suite.ipynb>
-    Run a single test <tutorial/3_run_single_workflow_test.ipynb>
-    Configure a single test <tutorial/4_config_single_workflow_test.ipynb>
-    Configure a test suite    <tutorial/5_config_workflow_test_suite.ipynb>
+    Run a test suite <notebooks/2_run_test_suite.ipynb>
+    Run a single test <notebooks/3_run_single_workflow_test.ipynb>
+    Configure a single test <notebooks/4_config_single_workflow_test.ipynb>
+    Configure a test suite    <notebooks/5_config_workflow_test_suite.ipynb>

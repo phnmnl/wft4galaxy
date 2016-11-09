@@ -24,7 +24,7 @@ Table of Contents (TOC)
     :caption: Tutorial
     :glob:
 
-    Run a test suite from CLI <tutorial/1_run_suite_from_cli.ipynb>
+    Run a test suite from CLI <notebooks/1_run_suite_from_cli.ipynb>
     Programmatic Usage <programmatic-usage>
 
 
