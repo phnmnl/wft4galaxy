@@ -540,15 +540,7 @@ class WorkflowTestConfiguration:
             if workflow_test_name:
                 raise KeyError("WorkflowTest with name '%s' not found" % workflow_test_name)
         else:
-            wf_config = WorkflowTestConfiguration.DEFAULT_WORKFLOW_CONFIG
-            config["workflows"] = {"unknown": WorkflowTestConfiguration(name="unknown", base_path=".",
-                                                                        workflow_filename=wf_config["file"],
-                                                                        inputs=wf_config["inputs"],
-                                                                        params=wf_config.get("params", {}),
-                                                                        expected_outputs=wf_config["expected"],
-                                                                        output_folder=wf_config["output_folder"])}
-            config["output_folder"] = WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
-
+            raise ValueError("Filename '{0}' not found".format(filename))
         return config
 
     @staticmethod
