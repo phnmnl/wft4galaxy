@@ -1620,10 +1620,10 @@ def base_comparator(actual_output_filename, expected_output_filename):
         ldiff = list(diff)
         if len(ldiff) > 0:
             print "\n{0}\n...\n".format("".join(ldiff[:20]))
-        diff_filename = _os.path.join(_os.path.dirname(actual_output_filename),
-                                      _os.path.basename(actual_output_filename) + ".diff")
-        with open(diff_filename, "w") as  out_fp:
-            out_fp.writelines("%r\n" % item.rstrip('\n') for item in ldiff)
+            diff_filename = _os.path.join(_os.path.dirname(actual_output_filename),
+                                          _os.path.basename(actual_output_filename) + ".diff")
+            with open(diff_filename, "w") as  out_fp:
+                out_fp.writelines("%r\n" % item.rstrip('\n') for item in ldiff)
         return len(ldiff) == 0
 
 
