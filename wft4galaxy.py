@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os as _os
+import shutil as _shutil
 import logging as _logging
 import unittest as _unittest
 import optparse as _optparse
@@ -877,7 +878,7 @@ class WorkflowTestSuite:
             results.append(result)
         # cleanup
         if not suite_config["disable_cleanup"]:
-            self.cleanup()
+            self.cleanup(suite_config.get("output_folder", None))
         return results
 
     def run_test_suite(self, workflow_tests_config=None, enable_logger=None,
@@ -914,7 +915,7 @@ class WorkflowTestSuite:
         _RUNNER.run((suite))
         # cleanup
         if not suite_config["disable_cleanup"]:
-            self.cleanup()
+            self.cleanup(suite_config.get("output_folder", None))
 
     def get_workflow_test_results(self, workflow_id=None):
         """
@@ -931,12 +932,17 @@ class WorkflowTestSuite:
         return list([w for w in self._workflow_test_results if w.id == workflow_id] if workflow_id
                     else self._workflow_test_results)
 
-    def cleanup(self):
+    def cleanup(self, output_folder=None):
         """
         Perform the clean up of the workflow and history created on the Galaxy server
         """
         for runner in self._workflow_runners:
             runner.cleanup()
+        # remove output folder if empty
+        if output_folder and _os.path.exists(output_folder) and \
+                _os.path.isdir(output_folder) and len(_os.listdir(output_folder)) == 0:
+            _os.rmdir(output_folder)
+            _logger.debug("Deleted empty output folder: '%s'", output_folder)
 
     def load(self, filename=None):
         """
@@ -1170,7 +1176,7 @@ class WorkflowTestRunner(_unittest.TestCase):
 
         # cleanup
         if not disable_cleanup:
-            self.cleanup()
+            self.cleanup(output_folder)
 
         # raise error message
         if error_msg:
@@ -1252,7 +1258,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         _logger.info("Checking test output: DONE")
         return (results, output_file_map)
 
-    def cleanup(self):
+    def cleanup(self, output_folder=None):
         """
         Perform a complete clean up of the data produced during the execution of a workflow test,
         i.e., the uploaded workflow and the created history are removed from Galaxy and the actual
@@ -1267,6 +1273,9 @@ class WorkflowTestRunner(_unittest.TestCase):
             self._workflow_loader.unload_workflow(self._galaxy_workflow.id)
             self._galaxy_workflow = None
         _logger.debug("Cleanup of workflow test '%s': DONE", self._test_uuid)
+        if output_folder:
+            _shutil.rmtree(output_folder)
+            _logger.debug("Deleted WF output folder '%s': DONE", output_folder)
 
     def cleanup_output_folder(self, test_result=None):
         """
