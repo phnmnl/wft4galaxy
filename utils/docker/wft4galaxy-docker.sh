@@ -220,8 +220,12 @@ if [[ ${MODE_ENTRYPOINT} == "wft4galaxy" ]]; then
   fi
 
   # set data paths
-  DATA_INPUT=$(realpath $(dirname ${CONFIG_FILE}))
-  DATA_OUTPUT=$(realpath ${OUTPUT_FOLDER})
+  realpath_cmd="realpath"
+  if [[ $(uname) != "Darwin" ]]; then
+    realpath_cmd="readlink -f"
+  fi
+  DATA_INPUT=$($realpath_cmd $(dirname ${CONFIG_FILE}))
+  DATA_OUTPUT=$($realpath_cmd ${OUTPUT_FOLDER})
   DATA_CONFIG_FILE=/data_input/$(basename ${CONFIG_FILE})
 
   # run wft4galaxy tests within a docker container
