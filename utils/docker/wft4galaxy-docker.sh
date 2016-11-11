@@ -230,7 +230,7 @@ if [[ ${MODE_ENTRYPOINT} == "wft4galaxy" ]]; then
   DATA_CONFIG_FILE=/data_input/$(basename ${CONFIG_FILE})
 
   # run wft4galaxy tests within a docker container
-  docker run -it --rm ${DOCKER_OPTS} \
+  docker run -i --rm ${DOCKER_OPTS} \
               -v ${DATA_INPUT}:/data_input \
               -v ${DATA_OUTPUT}:/data_output \
               ${DOCKER_IMAGE} ${MODE_ENTRYPOINT} \
