@@ -244,7 +244,7 @@ if [[ ${MODE_ENTRYPOINT} == "wft4galaxy" ]]; then
 
   # update docker image
   # TODO: make it optional from CLI
-  #docker pull ${DOCKER_IMAGE}
+  docker pull ${DOCKER_IMAGE}
 
   # run wft4galaxy tests within a docker container
   docker run -i --rm ${DOCKER_OPTS} \
