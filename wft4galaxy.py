@@ -941,8 +941,11 @@ class WorkflowTestSuite:
         # remove output folder if empty
         if output_folder and _os.path.exists(output_folder) and \
                 _os.path.isdir(output_folder) and len(_os.listdir(output_folder)) == 0:
-            _os.rmdir(output_folder)
-            _logger.debug("Deleted empty output folder: '%s'", output_folder)
+            try:
+                _os.rmdir(output_folder)
+                _logger.debug("Deleted empty output folder: '%s'", output_folder)
+            except OSError, e:
+                _logger.debug("Deleted empty output folder '%s' failed: ", e.message)
 
     def load(self, filename=None):
         """
