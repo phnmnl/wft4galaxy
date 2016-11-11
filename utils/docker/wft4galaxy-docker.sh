@@ -229,6 +229,10 @@ if [[ ${MODE_ENTRYPOINT} == "wft4galaxy" ]]; then
   DATA_OUTPUT=$(${realpath_cmd} ${OUTPUT_FOLDER})
   DATA_CONFIG_FILE=/data_input/$(basename ${CONFIG_FILE})
 
+  # update docker image
+  # TODO: make it optional from CLI
+  docker pull ${DOCKER_IMAGE}
+
   # run wft4galaxy tests within a docker container
   docker run -i --rm ${DOCKER_OPTS} \
               -v ${DATA_INPUT}:/data_input \
