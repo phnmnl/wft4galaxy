@@ -2,7 +2,9 @@
 
 # print usage
 function print_usage(){
-    echo -e "\nUsage: wft4galaxy-docker [-m|--mode <MODE>] [-e|--entrypoint <MODE_ENTRYPOINT>] [GLOBAL_OPTIONS] [ENTRYPOINT_OPTIONS] [DOCKER_OPTIONS]"
+    echo -e "\nUsage: wft4galaxy-docker [-m|--mode <MODE>] [-e|--entrypoint <MODE_ENTRYPOINT>]
+                                        [GLOBAL_OPTIONS] [ENTRYPOINT_OPTIONS] [DOCKER_OPTIONS]
+                                        [test [test ...]]"
     echo -e "       e.g.: wft4galaxy-docker -m production -e wft4galaxy [wft4galaxy_OPTIONS] (default)"
     echo -e "       e.g.: wft4galaxy-docker [wft4galaxy_OPTIONS] (default)\n"
 
@@ -55,7 +57,7 @@ while [ -n "$1" ]; do
         if [ x"$OPT" = x"--" ]; then
                 shift
                 for OPT ; do
-                        DOCKER_OPTS="$DOCKER_OPTS \"$OPT\""
+                        OTHER_OPTS="$OTHER_OPTS \"$OPT\""
                 done
                 break
         fi
@@ -135,10 +137,18 @@ while [ -n "$1" ]; do
                                 print_usage
                                 exit
                                 ;;
+                        -[a-zA-Z0-9]=* )
+                                DOCKER_OPTS="$DOCKER_OPTS $OPT"
+                                shift
+                                ;;
+                        -[a-zA-Z0-9] )
+                                DOCKER_OPTS="$DOCKER_OPTS $1 $2"
+                                shift
+                                ;;
 
                         # Anything unknown is recorded for later
                         * )
-                                DOCKER_OPTS="$DOCKER_OPTS $OPT"
+                                OTHER_OPTS="$OTHER_OPTS $OPT"
                                 break
                                 ;;
                 esac
@@ -154,6 +164,9 @@ while [ -n "$1" ]; do
         # move to the next param
         shift
 done
+
+echo "DOCKER OPTS: $DOCKER_OPTS"
+echo "OTHER: $OTHER_OPTS"
 
 # check MODE
 if [[ ! ${MODE} =~ ^(production|develop)$ ]]; then
@@ -231,13 +244,13 @@ if [[ ${MODE_ENTRYPOINT} == "wft4galaxy" ]]; then
 
   # update docker image
   # TODO: make it optional from CLI
-  docker pull ${DOCKER_IMAGE}
+  #docker pull ${DOCKER_IMAGE}
 
   # run wft4galaxy tests within a docker container
   docker run -i --rm ${DOCKER_OPTS} \
               -v ${DATA_INPUT}:/data_input \
               -v ${DATA_OUTPUT}:/data_output \
-              ${DOCKER_IMAGE} ${MODE_ENTRYPOINT} \
+              ${DOCKER_IMAGE} ${MODE_ENTRYPOINT} ${OTHER_OPTS}\
               --server ${GALAXY_SERVER} --api-key ${GALAXY_API_KEY} \
               -f ${DATA_CONFIG_FILE} \
               -o /data_output ${ENABLE_LOGGER} ${DISABLE_CLEANUP} ${ENABLE_DEBUG}
