@@ -3,7 +3,7 @@ import os as _os
 import shutil as _shutil
 import logging as _logging
 import unittest as _unittest
-import optparse as _optparse
+import argparse as _argparse
 import tarfile as _tarfile
 
 from lxml import etree as _etree
@@ -197,7 +197,7 @@ class WorkflowTestConfiguration:
     DEFAULT_HISTORY_NAME_PREFIX = "_WorkflowTestHistory_"
     DEFAULT_WORKFLOW_NAME_PREFIX = "_WorkflowTest_"
     DEFAULT_OUTPUT_FOLDER = "results"
-    DEFAULT_CONFIG_FILENAME = "workflows.yml"
+    DEFAULT_CONFIG_FILENAME = "workflow-test-suite.yml"
     DEFAULT_WORKFLOW_CONFIG = {
         "file": "workflow.ga",
         "output_folder": DEFAULT_OUTPUT_FOLDER,
@@ -843,7 +843,7 @@ class WorkflowTestSuite:
             config["logger_level"] = _logging.DEBUG if config.get("enable_debug", False) else _logging.INFO
             _logger.setLevel(config["logger_level"])
 
-    def run_tests(self, workflow_tests_config=None, enable_logger=None,
+    def run_tests(self, workflow_tests_config=None, tests=None, enable_logger=None,
                   enable_debug=None, disable_cleanup=None, disable_assertions=None):
         """
         Execute tests associated to this suite and return the corresponding results.
@@ -851,6 +851,9 @@ class WorkflowTestSuite:
         :type workflow_tests_config: dict
         :param workflow_tests_config: a suite configuration as produced
                by the `WorkflowTestConfiguration.load(...)` method
+
+        :type tests: list
+        :param tests: optional list of test names to filter tests defined in ``workflow_tests_config``
 
         :type enable_logger: bool
         :param enable_logger: ``True`` to enable INFO messages; ``False`` (default) otherwise.
@@ -873,15 +876,16 @@ class WorkflowTestSuite:
         suite_config = workflow_tests_config or self._workflow_test_suite_configuration
         self._suite_setup(suite_config, enable_logger, enable_debug, disable_cleanup, disable_assertions)
         for test_config in suite_config["workflows"].values():
-            runner = self._create_test_runner(test_config, suite_config)
-            result = runner.run_test()
-            results.append(result)
+            if not tests or len(tests) == 0 or test_config.name in tests:
+                runner = self._create_test_runner(test_config, suite_config)
+                result = runner.run_test()
+                results.append(result)
         # cleanup
         if not suite_config["disable_cleanup"]:
             self.cleanup(suite_config.get("output_folder", None))
         return results
 
-    def run_test_suite(self, workflow_tests_config=None, enable_logger=None,
+    def run_test_suite(self, workflow_tests_config=None, tests=None, enable_logger=None,
                        enable_debug=None, disable_cleanup=None, disable_assertions=None):
         """
         Execute tests associated to this suite using the unittest framework.
@@ -889,6 +893,9 @@ class WorkflowTestSuite:
         :type workflow_tests_config: dict
         :param workflow_tests_config: a suite configuration as produced
                by the `WorkflowTestConfiguration.load(...)` method
+
+        :type tests: list
+        :param tests: optional list of test names to filter tests defined in ``workflow_tests_config``
 
         :type enable_logger: bool
         :param enable_logger: ``True`` to enable INFO messages; ``False`` (default) otherwise.
@@ -909,8 +916,9 @@ class WorkflowTestSuite:
         self._suite_setup(suite_config, enable_logger, enable_debug, disable_cleanup, disable_assertions)
         for test_config in suite_config["workflows"].values():
             test_config.disable_assertions = False
-            runner = self._create_test_runner(test_config, suite_config)
-            suite.addTest(runner)
+            if not tests or len(tests) == 0 or test_config.name in tests:
+                runner = self._create_test_runner(test_config, suite_config)
+                suite.addTest(runner)
         _RUNNER = _unittest.TextTestRunner(verbosity=2)
         _RUNNER.run((suite))
         # cleanup
@@ -1639,19 +1647,23 @@ def base_comparator(actual_output_filename, expected_output_filename):
         return len(ldiff) == 0
 
 
-def _parse_cli_options():
-    parser = _optparse.OptionParser()
-    parser.add_option('--server', help='Galaxy server URL')
-    parser.add_option('--api-key', help='Galaxy server API KEY')
-    parser.add_option('--enable-logger', help='Enable log messages', action='store_true')
-    parser.add_option('--debug', help='Enable debug mode', action='store_true')
-    parser.add_option('--disable-cleanup', help='Disable cleanup', action='store_true')
-    parser.add_option('--disable-assertions', help='Disable assertions', action='store_true')
-    parser.add_option('-o', '--output', help='absolute path of the output folder')
-    parser.add_option('-f', '--file', default=WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME,
-                      help='YAML configuration file of workflow tests')
-    (options, args) = parser.parse_args()
-    return (options, args)
+def _parse_cli_arguments():
+    parser = _argparse.ArgumentParser()
+    parser.add_argument("test", help="Workflow Test Name", nargs="*")
+    parser.add_argument('--server', help='Galaxy server URL')
+    parser.add_argument('--api-key', help='Galaxy server API KEY')
+    parser.add_argument('--enable-logger', help='Enable log messages', action='store_true')
+    parser.add_argument('--debug', help='Enable debug mode', action='store_true')
+    parser.add_argument('--disable-cleanup', help='Disable cleanup', action='store_true')
+    parser.add_argument('--disable-assertions', help='Disable assertions', action='store_true')
+    parser.add_argument('-o', '--output', help='absolute path of the output folder')
+    parser.add_argument('-f', '--file', default=WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME,
+                        help='YAML configuration file of workflow tests (default is {0})'.format(
+                            WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME))
+    args = parser.parse_args()
+    _logger.debug("Parsed arguments %r", args)
+    print args.test
+    return args
 
 
 def run_tests(enable_logger=None, enable_debug=None, disable_cleanup=None, disable_assertions=None):
@@ -1672,7 +1684,7 @@ def run_tests(enable_logger=None, enable_debug=None, disable_cleanup=None, disab
     :param disable_assertions: ``True`` to disable assertions during the execution of the workflow test;
         ``False`` (default) otherwise.
     """
-    options, args = _parse_cli_options()
+    options = _parse_cli_arguments()
     config = WorkflowTestConfiguration.load(options.file, output_folder=options.output)
 
     config["galaxy_url"] = options.server \
@@ -1708,7 +1720,7 @@ def run_tests(enable_logger=None, enable_debug=None, disable_cleanup=None, disab
 
     # create and run the configured test suite
     test_suite = WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
-    test_suite.run_test_suite(config)
+    test_suite.run_test_suite(config, tests=options.test)
 
 
 if __name__ == '__main__':
