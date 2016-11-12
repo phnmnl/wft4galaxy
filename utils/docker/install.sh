@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # set the target script
-BASE_SCRIPT="https://bitbucket.org/kikkomep/workflowtester/raw/develop/utils/docker/wft4galaxy-docker.sh"
-#BASE_SCRIPT="https://raw.githubusercontent.com/phnmnl/wft4galaxy/develop/utils/docker/wft4galaxy-docker.sh"
+BASE_SCRIPT="https://raw.githubusercontent.com/phnmnl/wft4galaxy/develop/utils/docker/wft4galaxy-docker"
 TARGET_SCRIPT="/usr/local/bin/wft4galaxy-docker"
 
 # set base os

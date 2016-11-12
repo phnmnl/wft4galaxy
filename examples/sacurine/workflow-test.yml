@@ -1,0 +1,30 @@
+##########################################################################################
+#  Global settings
+##########################################################################################
+# galaxy_url: "http://192.168.64.8:30700" # default is GALAXY_URL
+# galaxy_api_key: "4b86f51252b5f220012b3e259d0877f9" # default is GALAXY_API_KEY
+enable_logger: True
+# enable_debug: True
+# output_folder: "results"
+
+##########################################################################################
+#  Workflow tests
+##########################################################################################
+workflows:
+  sacurine:
+    file: "workflow.ga"
+    params:
+      3:
+        "orthoI": "NA"
+        "predI": "1"
+        "respC": "gender"
+        "testL": "FALSE"
+    inputs:
+      "DataMatrix": "input/dataMatrix.tsv"
+      "SampleMetadata": "input/sampleMetadata.tsv"
+      "VariableMetadata": "input/variableMetadata.tsv"
+    expected:
+      Univariate_variableMetadata: "expected/Univariate_variableMetadata.tsv"
+      Multivariate_sampleMetadata: "expected/Multivariate_sampleMetadata.tsv"
+      Multivariate_variableMetadata: "expected/Multivariate_variableMetadata.tsv"
+      Biosigner_variableMetadata: "expected/Biosigner_variableMetadata.tsv"

@@ -9,6 +9,9 @@ ENV TERM xterm-256color
 # wft4galaxy path
 ENV WFT4GALAXY_PATH /opt/wft4galaxy
 
+# wft4galaxy branch
+ENV WFT4GALAXY_BRANCH develop
+
 # install base packages
 RUN apk update && apk add \
     build-base \
@@ -34,12 +37,15 @@ RUN echo "export CLICOLOR=1" >> ${HOME}/.bashrc
 RUN echo "export LSCOLORS=ExFxBxDxCxegedabagacad" >> ${HOME}/.bashrc
 
 # install wft4galaxy
-RUN git clone https://github.com/phnmnl/wft4galaxy ${WFT4GALAXY_PATH} \
+RUN git clone -b ${WFT4GALAXY_BRANCH} https://github.com/phnmnl/wft4galaxy ${WFT4GALAXY_PATH} \
     && cd ${WFT4GALAXY_PATH} \
     && python setup.py install
 
-# link the example folder to the user's home
-RUN ln -s ${WFT4GALAXY_PATH}/examples ${HOME}/wft4galaxy-examples
+# build a tutorial folder within the user's home
+RUN mkdir ${HOME}/tutorial && \
+    ln -s ${WFT4GALAXY_PATH}/examples ${HOME}/tutorial/examples && \
+    ln -s ${WFT4GALAXY_PATH}/docs/notebooks ${HOME}/tutorial/notebooks && \
+    ln -s ${WFT4GALAXY_PATH}/docs/images ${HOME}/tutorial/images
 
 # update the working dir
 WORKDIR /root

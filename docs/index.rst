@@ -1,23 +1,46 @@
-.. Prova documentation master file, created by
-   sphinx-quickstart on Tue Nov  1 17:50:34 2016.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. wft4galaxy documentation index
 
+======================================
 Welcome to wft4galaxy's documentation!
-=================================
+======================================
 
-Contents:
+**wft4galaxy** is a Python module which allows to automate the running of Galaxy workflow tests. It can be used either as local Python library or a Docker image running inside a Docker container.
+
+
+Table of Contents (TOC)
+=======================
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
+    :caption: Getting started
+    :glob:
 
+    Installation <installation>
+
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Tutorial
+    :glob:
+
+    First example <notebooks/1_run_suite_from_cli.ipynb>
+    Programmatic Usage <programmatic-usage>
+    Dockerized Usage <docker>
+
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Resources
+    :glob:
+
+    wft4galaxy API <api>
+    Configuration file <config-file>
+    Integration with CI tools <ci-tools-integration>
 
 
 Indices and tables
 ==================
 
-* :ref:`api`
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

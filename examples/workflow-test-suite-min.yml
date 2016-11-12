@@ -1,0 +1,38 @@
+##########################################################################################
+#  Global settings
+##########################################################################################
+# galaxy_url: "http://192.168.64.8:30700" # default is GALAXY_URL
+# galaxy_api_key: "4b86f51252b5f220012b3e259d0877f9" # default is GALAXY_API_KEY
+enable_logger: True
+# enable_debug: True
+# output_folder: "results"
+
+##########################################################################################
+#  Workflow tests
+##########################################################################################
+workflows:
+
+  # workflow test "change case"
+  change_case:
+    file: "change_case/workflow.ga"
+    inputs:
+      InputText: "change_case/input"
+    expected:
+      OutputText: "change_case/expected_output"
+
+  # workflow test "multivariate"
+  multivariate:
+    file: "multivariate/workflow.ga"
+    params:
+      3:
+        "orthoI": "NA"
+        "predI": "1"
+        "respC": "gender"
+        "testL": "FALSE"
+    inputs:
+      "DataMatrix": "multivariate/dataMatrix.tsv"
+      "SampleMetadata": "multivariate/sampleMetadata.tsv"
+      "VariableMetadata": "multivariate/variableMetadata.tsv"
+    expected:
+      sampleMetadata_out: "multivariate/sampleMetadata_out"
+      variableMetadata_out: "multivariate/variableMetadata_out"

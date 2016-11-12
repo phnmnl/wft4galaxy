@@ -2,25 +2,33 @@
 
 # print usage
 function print_usage(){
-    echo -e "\nUsage: wft4galaxy-docker [-m|--mode <MODE>] [-e|--entrypoint <MODE_ENTRYPOINT>] [ENTRYPOINT_OPTIONS] [DOCKER_OPTIONS]"
+    echo -e "\nUsage: wft4galaxy-docker [-m|--mode <MODE>] [-e|--entrypoint <MODE_ENTRYPOINT>]
+                                        [GLOBAL_OPTIONS] [ENTRYPOINT_OPTIONS] [DOCKER_OPTIONS]
+                                        [test [test ...]]"
     echo -e "       e.g.: wft4galaxy-docker -m production -e wft4galaxy [wft4galaxy_OPTIONS] (default)"
     echo -e "       e.g.: wft4galaxy-docker [wft4galaxy_OPTIONS] (default)\n"
 
-    echo -e "    Modes: "
+    echo -e "    MODEs: "
     echo -e "\t  1) production (default)"
     echo -e "\t  2) develop\n"
 
-    echo -e "    Mode Entrypoints:"
+    echo -e "    MODE ENTRYPOINT_OPTIONs:"
     echo -e "\t  * PRODUCTION MODE: bash, wft4galaxy (default)"
     echo -e "\t  * DEVELOP MODE:    bash (default), ipython, jupyter, wft4galaxy\n"
 
-    echo -e "   Entrypoint options:"
-    echo -e "\n\t  *) jupyter options:"
+    echo -e "    GLOBAL OPTIONs:"
+    echo -e "\t  -h, --help            show this help message and exit"
+    echo -e "\t  --server=SERVER       Galaxy server URL"
+    echo -e "\t  --api-key=API_KEY     Galaxy server API KEY\n"
+
+    echo -e "    DOCKER OPTIONs:"
+    echo -e "\t  every additional option to pass to the Docker Engine when it starts a wft4galaxy container"
+    echo -e "\t  e.g., -v myhost-folder:/container-host-folder\n"
+
+    echo -e "    ENTRYPOINT OPTIONs:"
+    echo -e "\t  *) jupyter options:"
     echo -e "\t\t  -p, --port            jupyter port (default: 9876)"
     echo -e "\n\t  *) wft4galaxy options:"
-    echo -e "\t\t  -h, --help            show this help message and exit"
-    echo -e "\t\t  --server=SERVER       Galaxy server URL"
-    echo -e "\t\t  --api-key=API_KEY     Galaxy server API KEY"
     echo -e "\t\t  --enable-logger       Enable log messages"
     echo -e "\t\t  --debug               Enable debug mode"
     echo -e "\t\t  --disable-cleanup     Disable cleanup"
@@ -34,8 +42,8 @@ DOCKER_REGISTRY="crs4"
 DOCKER_IMAGE="wft4galaxy"
 
 # set defaults
-GALAXY_SERVER=${BIOBLEND_GALAXY_URL}
-GALAXY_API_KEY=${BIOBLEND_GALAXY_API_KEY}
+GALAXY_SERVER=${GALAXY_URL}
+GALAXY_API_KEY=${GALAXY_API_KEY}
 JUPYTER_PORT=9876
 MODE="production"
 BASE_OS="alpine"
@@ -49,7 +57,7 @@ while [ -n "$1" ]; do
         if [ x"$OPT" = x"--" ]; then
                 shift
                 for OPT ; do
-                        DOCKER_OPTS="$DOCKER_OPTS \"$OPT\""
+                        OTHER_OPTS="$OTHER_OPTS \"$OPT\""
                 done
                 break
         fi
@@ -129,10 +137,18 @@ while [ -n "$1" ]; do
                                 print_usage
                                 exit
                                 ;;
+                        -[a-zA-Z0-9]=* )
+                                DOCKER_OPTS="$DOCKER_OPTS $OPT"
+                                shift
+                                ;;
+                        -[a-zA-Z0-9] )
+                                DOCKER_OPTS="$DOCKER_OPTS $1 $2"
+                                shift
+                                ;;
 
                         # Anything unknown is recorded for later
                         * )
-                                DOCKER_OPTS="$DOCKER_OPTS $OPT"
+                                OTHER_OPTS="$OTHER_OPTS $OPT"
                                 break
                                 ;;
                 esac
@@ -195,6 +211,7 @@ if [[ ${ENABLE_DEBUG} == "--debug" ]]; then
     echo "DATA INPUT:       $DATA_INPUT"
     echo "DATA OUTPUT:      $DATA_OUTPUT"
     echo "DATA CONFIG FILE: $DATA_CONFIG_FILE"
+    echo "TESTS             $OTHER_OPTS"
     echo "DOCKER IMAGE:     $DOCKER_IMAGE"
     echo "DOCKER OPTIONS:   $DOCKER_OPTS"
     echo "JUPYTER PORT:     $JUPYTER_PORT"
@@ -214,15 +231,24 @@ if [[ ${MODE_ENTRYPOINT} == "wft4galaxy" ]]; then
   fi
 
   # set data paths
-  DATA_INPUT=$(realpath $(dirname ${CONFIG_FILE}))
-  DATA_OUTPUT=$(realpath ${OUTPUT_FOLDER})
+  realpath_cmd="/usr/local/bin/realpath"
+  if [[ $(uname) != "Darwin" ]]; then
+    realpath_cmd=$(type -p readlink)
+    realpath_cmd="${realpath_cmd} -f"
+  fi
+  DATA_INPUT=$(${realpath_cmd} $(dirname ${CONFIG_FILE}))
+  DATA_OUTPUT=$(${realpath_cmd} ${OUTPUT_FOLDER})
   DATA_CONFIG_FILE=/data_input/$(basename ${CONFIG_FILE})
 
+  # update docker image
+  # TODO: make it optional from CLI
+  docker pull ${DOCKER_IMAGE}
+
   # run wft4galaxy tests within a docker container
-  docker run -it --rm ${DOCKER_OPTS} \
+  docker run -i --rm ${DOCKER_OPTS} \
               -v ${DATA_INPUT}:/data_input \
               -v ${DATA_OUTPUT}:/data_output \
-              ${DOCKER_IMAGE} ${MODE_ENTRYPOINT} \
+              ${DOCKER_IMAGE} ${MODE_ENTRYPOINT} ${OTHER_OPTS}\
               --server ${GALAXY_SERVER} --api-key ${GALAXY_API_KEY} \
               -f ${DATA_CONFIG_FILE} \
               -o /data_output ${ENABLE_LOGGER} ${DISABLE_CLEANUP} ${ENABLE_DEBUG}
