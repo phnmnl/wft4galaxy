@@ -25,7 +25,7 @@ Basically, to install **wft4galaxy** as a local Python library, you need to foll
 > **Notice**. If you are using a Linux based system, like *Ubuntu*, you probably need to install the two libraries **`python-lxml`** and **`libyaml-dev`** as a further *prerequisite*.
 
 
-Alternatively, you can use **wft4galaxy** with Docker (see [Docker-base Installation](http://wft4galaxy.readthedocs.io/en/develop/installation.html#id2)).
+Alternatively, you can use **wft4galaxy** with Docker (see [Docker-based Installation](http://wft4galaxy.readthedocs.io/en/develop/installation.html#id2)).
 
 ## Usage Instructions
 
