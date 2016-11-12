@@ -110,4 +110,10 @@ For a direct Docker usage the following syntax holds:
 
 .. note:: When using ``docker`` directly you will need to explicitly mount the volumes that are required to read the configuration file of your suite and to write results.
 
-You can find an example :ref:`here <notebooks/6_direct_docker_usage.ipynb>`.
+
+.. toctree::
+    :hidden:
+
+    Example <notebooks/6_direct_docker_usage.ipynb>
+
+You can find an example `here <notebooks/6_direct_docker_usage.ipynb>`_.
