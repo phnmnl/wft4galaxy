@@ -14,6 +14,6 @@ setup(
         'sphinx_rtd_theme': ['sphinx_rtd_theme']
     },
     py_modules=['wft4galaxy'],
-    scripts=['utils/docker/wft4galaxy-docker.sh'],
+    scripts=['utils/docker/wft4galaxy-docker'],
     entry_points={'console_scripts': ['wft4galaxy = wft4galaxy:run_tests']},
 )

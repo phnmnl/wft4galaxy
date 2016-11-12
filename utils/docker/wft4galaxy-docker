@@ -165,9 +165,6 @@ while [ -n "$1" ]; do
         shift
 done
 
-echo "DOCKER OPTS: $DOCKER_OPTS"
-echo "OTHER: $OTHER_OPTS"
-
 # check MODE
 if [[ ! ${MODE} =~ ^(production|develop)$ ]]; then
   echo -e "\nInvalid mode parameter: ${MODE} !!!"
@@ -214,6 +211,7 @@ if [[ ${ENABLE_DEBUG} == "--debug" ]]; then
     echo "DATA INPUT:       $DATA_INPUT"
     echo "DATA OUTPUT:      $DATA_OUTPUT"
     echo "DATA CONFIG FILE: $DATA_CONFIG_FILE"
+    echo "TESTS             $OTHER_OPTS"
     echo "DOCKER IMAGE:     $DOCKER_IMAGE"
     echo "DOCKER OPTIONS:   $DOCKER_OPTS"
     echo "JUPYTER PORT:     $JUPYTER_PORT"
