@@ -10,7 +10,7 @@ ENV TERM xterm-256color
 ENV WFT4GALAXY_PATH /opt/wft4galaxy
 
 # wft4galaxy branch
-ENV WFT4GALAXY_BRANCH docs
+ENV WFT4GALAXY_BRANCH develop
 
 # install base packages
 RUN apk update && apk add \
