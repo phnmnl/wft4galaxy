@@ -34,7 +34,7 @@ RUN echo "export CLICOLOR=1" >> ${HOME}/.bashrc
 RUN echo "export LSCOLORS=ExFxBxDxCxegedabagacad" >> ${HOME}/.bashrc
 
 # install wft4galaxy
-RUN git clone https://github.com/phnmnl/wft4galaxy ${WFT4GALAXY_PATH} \
+RUN git clone -b docs https://github.com/phnmnl/wft4galaxy ${WFT4GALAXY_PATH} \
     && cd ${WFT4GALAXY_PATH} \
     && python setup.py install
 
