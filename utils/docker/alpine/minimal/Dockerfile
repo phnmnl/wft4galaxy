@@ -9,6 +9,9 @@ ENV TERM xterm-256color
 # wft4galaxy path
 ENV WFT4GALAXY_PATH /opt/wft4galaxy
 
+# wft4galaxy branch
+ENV WFT4GALAXY_BRANCH docs
+
 # install base packages
 RUN apk update && apk add \
     build-base \
@@ -34,7 +37,7 @@ RUN echo "export CLICOLOR=1" >> ${HOME}/.bashrc
 RUN echo "export LSCOLORS=ExFxBxDxCxegedabagacad" >> ${HOME}/.bashrc
 
 # install wft4galaxy
-RUN git clone -b docs https://github.com/phnmnl/wft4galaxy ${WFT4GALAXY_PATH} \
+RUN git clone -b ${WFT4GALAXY_BRANCH} https://github.com/phnmnl/wft4galaxy ${WFT4GALAXY_PATH} \
     && cd ${WFT4GALAXY_PATH} \
     && python setup.py install
 
