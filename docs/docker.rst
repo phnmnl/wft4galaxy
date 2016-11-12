@@ -116,4 +116,4 @@ For a direct Docker usage the following syntax holds:
 
     Example <notebooks/6_direct_docker_usage.ipynb>
 
-You can find an example `here <notebooks/6_direct_docker_usage.ipynb>`_.
+You can find an example :ref:`here <notebooks/6_direct_docker_usage.ipynb>`.
