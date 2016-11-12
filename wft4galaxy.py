@@ -1284,7 +1284,7 @@ class WorkflowTestRunner(_unittest.TestCase):
             self._workflow_loader.unload_workflow(self._galaxy_workflow.id)
             self._galaxy_workflow = None
         _logger.debug("Cleanup of workflow test '%s': DONE", self._test_uuid)
-        if output_folder:
+        if output_folder and _os.path.exists(output_folder):
             _shutil.rmtree(output_folder)
             _logger.debug("Deleted WF output folder '%s': DONE", output_folder)
 
