@@ -53,8 +53,8 @@ while [ -n "$1" ]; do
 done
 
 # set BIOBLEND
-export BIOBLEND_GALAXY_URL=${GALAXY_SERVER}
-export BIOBLEND_GALAXY_API_KEY=${GALAXY_API_KEY}
+export GALAXY_URL=${GALAXY_SERVER}
+export GALAXY_API_KEY=${GALAXY_API_KEY}
 
 # export wft4galaxy arguments
 export WFT4GALAXY_ENTRYPOINT=${WFT4GALAXY_ENTRYPOINT}

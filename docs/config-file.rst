@@ -13,8 +13,8 @@ As an example, consider the following YAML test definition file:
 
   ## Galaxy server settings
   ###########################################################################################
-  # galaxy_url: "http://192.168.64.8:30700" # default is BIOBLEND_GALAXY_URL
-  # galaxy_api_key: "4b86f51252b5f220012b3e259d0877f9" # default is BIOBLEND_GALAXY_API_KEY
+  # galaxy_url: "http://192.168.64.8:30700" # default is GALAXY_URL
+  # galaxy_api_key: "4b86f51252b5f220012b3e259d0877f9" # default is GALAXY_API_KEY
   ###########################################################################################
   enable_logger: False
   output_folder: "results"

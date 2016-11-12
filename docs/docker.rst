@@ -22,8 +22,8 @@ Which Galaxy?
 You specify which Galaxy instance ``wft4galaxy-docker`` should use by setting these two environment variables::
 
 
-    BIOBLEND_GALAXY_URL          Galaxy URL
-    BIOBLEND_GALAXY_API_KEY      User API key
+    GALAXY_URL                   Galaxy URL
+    GALAXY_API_KEY               User API key
 
 You can override this behaviour from the command line with these switches:
 

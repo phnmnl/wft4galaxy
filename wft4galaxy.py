@@ -21,8 +21,8 @@ from bioblend.galaxy.histories import HistoryClient as _HistoryClient
 from bioblend.galaxy.tools import ToolClient as _ToolClient
 
 # Galaxy ENV variable names
-ENV_KEY_GALAXY_URL = "BIOBLEND_GALAXY_URL"
-ENV_KEY_GALAXY_API_KEY = "BIOBLEND_GALAXY_API_KEY"
+ENV_KEY_GALAXY_URL = "GALAXY_URL"
+ENV_KEY_GALAXY_API_KEY = "GALAXY_API_KEY"
 
 # Default folder where tool configuration is downloaded
 DEFAULT_TOOLS_FOLDER = ".tools"
@@ -92,11 +92,11 @@ class Workflow:
 
         :type galaxy_url: str
         :param galaxy_url: url of your Galaxy server instance.  If ``none``, the environment variable
-            ``BIOBLEND_GALAXY_URL`` is used. An error is raised when such a variable cannot be found.
+            ``GALAXY_URL`` is used. An error is raised when such a variable cannot be found.
 
         :type galaxy_api_key: str
         :param galaxy_api_key: an API key from your Galaxy server instance.  If ``none``, the environment variable
-            ``BIOBLEND_GALAXY_API_KEY`` is used. An error is raised when such a variable cannot be found.
+            ``GALAXY_API_KEY`` is used. An error is raised when such a variable cannot be found.
 
         :rtype: :class:`Workflow`
         :return: the :class:`Workflow` instance related to the workflow defined in ``filename``
@@ -626,11 +626,11 @@ class WorkflowLoader:
 
         :type galaxy_url: str
         :param galaxy_url: url of your Galaxy server instance.  If ``none``, the environment variable
-            ``BIOBLEND_GALAXY_URL`` is used. An error is raised when such a variable cannot be found.
+            ``GALAXY_URL`` is used. An error is raised when such a variable cannot be found.
 
         :type galaxy_api_key: str
         :param galaxy_api_key: an API key from your Galaxy server instance.  If ``none``, the environment variable
-            ``BIOBLEND_GALAXY_API_KEY`` is used. An error is raised when such a variable cannot be found.
+            ``GALAXY_API_KEY`` is used. An error is raised when such a variable cannot be found.
         """
         if not self._galaxy_instance:
             # initialize the galaxy instance
@@ -724,11 +724,11 @@ class WorkflowTestSuite:
 
         :type galaxy_url: str
         :param galaxy_url: url of your Galaxy server instance.  If ``none``, the environment variable
-            ``BIOBLEND_GALAXY_URL`` is used. An error is raised when such a variable cannot be found.
+            ``GALAXY_URL`` is used. An error is raised when such a variable cannot be found.
 
         :type galaxy_api_key: str
         :param galaxy_api_key: an API key from your Galaxy server instance.  If ``none``, the environment variable
-            ``BIOBLEND_GALAXY_API_KEY`` is used. An error is raised when such a variable cannot be found.
+            ``GALAXY_API_KEY`` is used. An error is raised when such a variable cannot be found.
         """
         self._workflows = {}
         self._workflow_runners = []
@@ -1009,11 +1009,11 @@ class WorkflowTestRunner(_unittest.TestCase):
 
         :type galaxy_url: str
         :param galaxy_url: url of your Galaxy server instance.  If ``none``, the environment variable
-            ``BIOBLEND_GALAXY_URL`` is used. An error is raised when such a variable cannot be found.
+            ``GALAXY_URL`` is used. An error is raised when such a variable cannot be found.
 
         :type galaxy_api_key: str
         :param galaxy_api_key: an API key from your Galaxy server instance.  If ``none``, the environment variable
-            ``BIOBLEND_GALAXY_API_KEY`` is used. An error is raised when such a variable cannot be found.
+            ``GALAXY_API_KEY`` is used. An error is raised when such a variable cannot be found.
 
         :rtype: :class:`WorkflowTestRunner`
         :return: a :class:`WorkflowTestRunner` instance

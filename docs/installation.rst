@@ -28,8 +28,8 @@ As a final step, you need to get an **API KEY** from your Galaxy instance, which
 
 .. code-block:: bash
 
-  export BIOBLEND_GALAXY_URL="<YOUR_GALAXY_SERVER_URL>"
-  export BIOBLEND_GALAXY_API_KEY="<YOUR_GALAXY_API_KEY>"
+  export GALAXY_URL="<YOUR_GALAXY_SERVER_URL>"
+  export GALAXY_API_KEY="<YOUR_GALAXY_API_KEY>"
 
 
 Docker-based Installation
