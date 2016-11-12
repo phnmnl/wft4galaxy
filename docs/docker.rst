@@ -109,3 +109,5 @@ For a direct Docker usage the following syntax holds:
 .. note:: The Docker images are ``crs4/wft4galaxy`` for the *production* mode and ``crs4/wft4galaxy-dev`` for the *develop* mode. An optional tag can be used to specify the base OS used to build the image: only ``alpine`` and ``ubuntu`` are supported.
 
 .. note:: When using ``docker`` directly you will need to explicitly mount the volumes that are required to read the configuration file of your suite and to write results.
+
+You can find an example :ref:`here <notebooks/6_direct_docker_usage.ipynb>`.
