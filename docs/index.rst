@@ -35,7 +35,7 @@ Table of Contents (TOC)
 
     wft4galaxy API <api>
     Configuration file <config-file>
-    Integration with CI tools <ci-integration>
+    Integration with CI tools <ci-tools-integration>
 
 
 Indices and tables

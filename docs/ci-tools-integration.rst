@@ -1,4 +1,4 @@
-.. _ci_integration:
+.. _ci_tools_integration:
 
 =========================
 Integration with CI tools
