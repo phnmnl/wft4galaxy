@@ -4,39 +4,39 @@
 Integration with CI tools
 =========================
 
-``wft4galaxy`` can be easly integrated with `Continous Integration (CI) tools` like `Jenkins <https://jenkins.io/>`_.
+``wft4galaxy`` can be easily integrated with `Continous Integration` (CI) tools like `Jenkins <https://jenkins.io/>`_.
 
-As a workflow developer, you could create a repository (e.g., Git) for hosting your workflow as well as its tests, which can be defined as ``wft4galaxy`` tests.
+A typical approach is to create a repository (e.g., Git) to host your workflow and its tests, which can be defined as ``wft4galaxy`` tests.  
+More specifically, ,the repository needs to include:
 
-Thus, you should enrich your repository with:
+  1. the `test definition file`, containing the definition all workflow tests (see :ref:`config_file` for more information);
+  2. every resource referenced in the definition file above, such as input and expected output datasets.
 
-  1. `definition test file`, which will contain the definition all worflow tests (see :ref:`config_file` for more information);
-  2. every resource refenced in the definition file above, such as input and expected output datasets.
+Finally, for proper continuous integration you should configure your CI tool:
 
-Finally, you should configure your CI tool:
+  (a) to be notified every time a changes are committed to your workflow repository;
+  (b) to start wft4galaxy tests automatically.
 
-  (a) to be notified every time a changes happens in your wofkflow repository;
-  (b) to start wft4galaxy tests.
+How do this in practice depends on the specific CI tool you choose. However, in principle you'll need to configure your tool to launch ``wft4galaxy`` to run the tests defined for your workflows.
 
-How to pratically put in place points (a) and (b) strictly depends on the CI tool you choose. But, in principle, you should configure your tool to launch wft4galaxy for running tests in the definition files you have stored in your workflow repository.
+.. note::  Remember that to run wft4galaxy from your CI tool you have three alternatives:
 
-.. note::  Rember that to actually launch **wft4galaxy** from your CI tool you have three alternatives:
-
-  1. **wft4galaxy** script, if wft4galaxy is installed and accessible from execution environment of your CI tool or you install it as a step of your CI tool project;
-  2. **wft4galaxy-docker** script,  which can be downloaded on the fly and used to run wft4galaxy tests within a Docker container (in such a case, your CI tool must support Docker);
-  3. **direct docker usage** (see :ref:`notebooks/6_direct_docker_usage.ipynb` as example).
+  1. **wft4galaxy** script, if wft4galaxy is installed and accessible from your CI tool's execution environment or if you install wft4galaxy as a step in your CI testing script;
+  2. **wft4galaxy-docker** script,  which can be downloaded on the fly and used to run wft4galaxy tests within a Docker container (in this case, your CI tool must support Docker);
+  3. **direct docker usage** (see :ref:`notebooks/6_direct_docker_usage.ipynb` for an example).
 
 
 Jenkins Integration
 ===================
 
-An example of procedure for configuring a Jenkins project to work with wft4galaxy:
+To configure a Jenkins project to use `wft4galaxy` to test workflows hosted on
+Github, follow this procedure.
 
-  1. create a new `free style software project`;
-  2. set your Git repository in the project box;
-  3. set Git as your `Source Code Management` and then the URL of your Git repository;
-  4. check the box `Build when a change is pushed to Github`;
-  5. add a new `Execute Shell` build step;
-  6. in the box of `Execute Shell` step call the ``wft4galaxy`` tool to run your workflow tests (see note above);
-  7. save the configuration of your Jenkins project;
-  8. set the proper `Webhook` in your GitHub repository to allow your Jenkins instance to be notified when a change happens (i.e., in `Webhooks & Services > Jenkins plugin` put the URL of your Jenkins instance).
+  1. Create a new `free style software project`;
+  2. Set your Git repository in the project box;
+  3. Set Git as your `Source Code Management` and then the URL of your Git repository;
+  4. Check the box `Build when a change is pushed to Github`;
+  5. Add a new `Execute Shell` build step;
+  6. From the `Execute Shell` box  call the ``wft4galaxy`` tool to run your workflow tests (see note above);
+  7. Save the configuration of your Jenkins project;
+  8. Set the proper `Webhook` in your GitHub repository to notify the Jenkins instance when a change happens (i.e., in `Webhooks & Services > Jenkins plugin` put the URL of your Jenkins instance).
