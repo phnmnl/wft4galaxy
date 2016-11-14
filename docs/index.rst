@@ -4,8 +4,12 @@
 Welcome to wft4galaxy's documentation!
 ======================================
 
-**wft4galaxy** is a Python module which allows to automate the running of Galaxy workflow tests. It can be used either as local Python library or a Docker image running inside a Docker container.
+**wft4galaxy** is a Python module to automatically run Galaxy workflow tests.
 
+* Run it as a command-line tool or use it programmatically as a Python module.
+* Install it locally or in a Docker container -- Docker image and helper scripts already provided.
+
+Continue reading to find installation and usage instructions.
 
 Table of Contents (TOC)
 =======================
