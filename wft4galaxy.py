@@ -1133,24 +1133,27 @@ class WorkflowTestRunner(_unittest.TestCase):
         test_result = None
 
         # check tools
+        errors = []
         missing_tools = self.find_missing_tools()
         if len(missing_tools) == 0:
 
-            # create a new history for the current test
-            history_info = self._galaxy_history_client.create_history(
-                WorkflowTestConfiguration.DEFAULT_HISTORY_NAME_PREFIX + test_uuid)
-            history = self._galaxy_instance.histories.get(history_info["id"])
-            _logger.info("Create a history '%s' (id: %r)", history.name, history.id)
-
-            # upload input data to the current history
-            # and generate the datamap INPUT --> DATASET
-            datamap = {}
-            for label, config in inputs.items():
-                datamap[label] = []
-                for filename in config["file"]:
-                    datamap[label].append(history.upload_dataset(filename if _os.path.isabs(filename)
-                                                                 else _os.path.join(base_path, filename)))
             try:
+
+                # create a new history for the current test
+                history_info = self._galaxy_history_client.create_history(
+                    WorkflowTestConfiguration.DEFAULT_HISTORY_NAME_PREFIX + test_uuid)
+                history = self._galaxy_instance.histories.get(history_info["id"])
+                _logger.info("Create a history '%s' (id: %r)", history.name, history.id)
+
+                # upload input data to the current history
+                # and generate the datamap INPUT --> DATASET
+                datamap = {}
+                for label, config in inputs.items():
+                    datamap[label] = []
+                    for filename in config["file"]:
+                        datamap[label].append(history.upload_dataset(filename if _os.path.isabs(filename)
+                                                                     else _os.path.join(base_path, filename)))
+
                 # run the workflow
                 _logger.info("Workflow '%s' (id: %s) running ...", workflow.name, workflow.id)
                 outputs, output_history = workflow.run(datamap, history, params=params, wait=True, polling_interval=0.5)
@@ -1168,17 +1171,20 @@ class WorkflowTestRunner(_unittest.TestCase):
                         .format("" if len(test_result.failed_outputs) == 1 else "s",
                                 "" if len(test_result.failed_outputs) > 1 else "s",
                                 ", ".join(["'{0}'".format(n) for n in test_result.failed_outputs]))
+
             except RuntimeError, e:
                 error_msg = "Runtime error: {0}".format(e.message)
+                errors.append(error_msg)
                 _logger.error(error_msg)
 
         else:
             error_msg = "Some workflow tools are not available in Galaxy: {0}".format(", ".join(missing_tools))
+            errors.append(error_msg)
 
         # instantiate the result object
         if not test_result:
             test_result = WorkflowTestResult(test_uuid, workflow, inputs, [], None,
-                                             expected_outputs, missing_tools, {}, {}, output_folder)
+                                             expected_outputs, missing_tools, {}, {}, output_folder, errors)
 
         # store result
         self._test_cases[test_uuid] = test_result
@@ -1308,11 +1314,12 @@ class WorkflowTestResult():
 
     def __init__(self, test_id, workflow, inputs, outputs, output_history, expected_outputs,
                  missing_tools, results, output_file_map,
-                 output_folder=WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER):
+                 output_folder=WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER, errors=[]):
         self.test_id = test_id
         self.workflow = workflow
         self.inputs = inputs
         self.outputs = outputs
+        self.errors = errors
         self.output_history = output_history
         self.expected_outputs = expected_outputs
         self.output_folder = output_folder
@@ -1341,7 +1348,7 @@ class WorkflowTestResult():
         :rtype: bool
         :return: ``True`` if the test is failed; ``False`` otherwise.
         """
-        return len(self.failed_outputs) > 0
+        return len(self.failed_outputs) > 0 or len(self.errors) > 0
 
     def passed(self):
         """
