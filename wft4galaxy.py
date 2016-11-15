@@ -1722,6 +1722,11 @@ def run_tests(enable_logger=None, enable_debug=None, disable_cleanup=None, disab
     test_suite = WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
     test_suite.run_test_suite(config, tests=options.test)
 
+    # sys exit
+    exit_code = len([r for r in test_suite.get_workflow_test_results() if r.failed()])
+    _logger.debug("wft4galaxy exiting with code: %s", exit_code)
+    exit(exit_code)
+
 
 if __name__ == '__main__':
     run_tests()
