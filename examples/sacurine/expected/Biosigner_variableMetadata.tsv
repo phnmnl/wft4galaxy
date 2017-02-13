@@ -1,4 +1,4 @@
-variableMetadata	msiLevel	hmdb	chemicalClass	gender_ttest_M-F_dif	gender_ttest_M-F_fdr	gender_ttest_M-F_sig	gender_OPLSDA_XLOAD-h1	gender_OPLSDA_XLOAD-o1	gender_OPLSDA_VIP_pred	gender_OPLSDA_VIP_ortho	gender_OPLSDA_COEFF	gender_tier_S
+variableMetadata	msiLevel	hmdb	chemicalClass	gender_ttest_M.F_dif	gender_ttest_M.F_fdr	gender_ttest_M.F_sig	gender_OPLSDA_XLOAD-h1	gender_OPLSDA_XLOAD-o1	gender_OPLSDA_VIP_pred	gender_OPLSDA_VIP_ortho	gender_OPLSDA_COEFF	gender_tier_S
 (2-methoxyethoxy)propanoic acid isomer	2		Organi	-0.155000269394578	0.323764778788649	0	-0.0629231482333729	-0.0106578681921491	0.644176403894964	0.199659454473129	-0.0179477929812287	
 (gamma)Glu-Leu/Ile	2		AA-pep	0.133545985543373	0.00175885260227822	1	0.119757449196811	-0.114197591390804	1.22601816865736	1.11501833480893	0.052902303671276	
 1-Methyluric acid	1	HMDB03099	AroHeP:Xenobi	0.026049678345422	0.727167328693187	0	0.0580401884855163	-0.18668459107107	0.59418705118375	1.29909060235335	0.00706012193066922	
