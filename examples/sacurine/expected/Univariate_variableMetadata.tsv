@@ -1,4 +1,4 @@
-variableMetadata	msiLevel	hmdb	chemicalClass	gender_ttest_M-F_dif	gender_ttest_M-F_fdr	gender_ttest_M-F_sig
+variableMetadata	msiLevel	hmdb	chemicalClass	gender_ttest_M.F_dif	gender_ttest_M.F_fdr	gender_ttest_M.F_sig
 (2-methoxyethoxy)propanoic acid isomer	2		Organi	-0.155000269394578	0.323764778788649	0
 (gamma)Glu-Leu/Ile	2		AA-pep	0.133545985543373	0.00175885260227822	1
 1-Methyluric acid	1	HMDB03099	AroHeP:Xenobi	0.026049678345422	0.727167328693187	0
