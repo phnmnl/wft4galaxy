@@ -37,6 +37,15 @@ function print_usage(){
     echo -e "\t\t  -f FILE, --file=FILE  YAML configuration file of workflow tests"
 }
 
+function get_path(){
+    local path=$1;
+    if [[ -d "${path}" ]]; then
+        echo "$( cd "${path}" && pwd )";
+    else
+        echo "$( cd "$( dirname "${path}" )" && pwd )";
+    fi
+}
+
 # set Docker image
 DOCKER_REGISTRY="crs4"
 DOCKER_IMAGE="wft4galaxy"
