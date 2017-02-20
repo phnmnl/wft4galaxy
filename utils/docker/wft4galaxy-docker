@@ -209,6 +209,25 @@ fi
 # TODO: make it optional from CLI
 docker pull ${DOCKER_IMAGE}
 
+if [[ ${MODE_ENTRYPOINT} == "wft4galaxy" ]]; then
+  # check required parameters
+  if [[ -z ${CONFIG_FILE} ]]; then
+  	echo -e "Missing parameter: [-f|--file] "
+  fi
+  if [[ -z ${OUTPUT_FOLDER} ]]; then
+  	echo -e "Missing parameter: [-o|--output]"
+  fi
+  if [[ (-z ${CONFIG_FILE}) || (-z ${OUTPUT_FOLDER}) ]]; then
+  	print_usage
+  	exit
+  fi
+
+  # set data paths
+  DATA_INPUT=$(get_path $(dirname ${CONFIG_FILE}))
+  DATA_OUTPUT=$(get_path ${OUTPUT_FOLDER})
+  DATA_CONFIG_FILE=/data_input/$(basename ${CONFIG_FILE})
+fi
+
 # print debug message
 if [[ ${ENABLE_DEBUG} == "--debug" ]]; then
     echo "MODE:             ${MODE}"
@@ -229,29 +248,8 @@ if [[ ${ENABLE_DEBUG} == "--debug" ]]; then
     echo "JUPYTER PORT:     $JUPYTER_PORT"
 fi
 
+# start Docker container
 if [[ ${MODE_ENTRYPOINT} == "wft4galaxy" ]]; then
-  # check required parameters
-  if [[ -z ${CONFIG_FILE} ]]; then
-  	echo -e "Missing parameter: [-f|--file] "
-  fi
-  if [[ -z ${OUTPUT_FOLDER} ]]; then
-  	echo -e "Missing parameter: [-o|--output]"
-  fi
-  if [[ (-z ${CONFIG_FILE}) || (-z ${OUTPUT_FOLDER}) ]]; then
-  	print_usage
-  	exit
-  fi
-
-  # set data paths
-  realpath_cmd="/usr/local/bin/realpath"
-  if [[ $(uname) != "Darwin" ]]; then
-    realpath_cmd=$(type -p readlink)
-    realpath_cmd="${realpath_cmd} -f"
-  fi
-  DATA_INPUT=$(${realpath_cmd} $(dirname ${CONFIG_FILE}))
-  DATA_OUTPUT=$(${realpath_cmd} ${OUTPUT_FOLDER})
-  DATA_CONFIG_FILE=/data_input/$(basename ${CONFIG_FILE})
-
   # run wft4galaxy tests within a docker container
   docker run -i --rm ${DOCKER_OPTS} \
               -v ${DATA_INPUT}:/data_input \
