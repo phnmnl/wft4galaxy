@@ -176,33 +176,33 @@ done
 
 # check MODE
 if [[ ! ${MODE} =~ ^(production|develop)$ ]]; then
-  echo -e "\nInvalid mode parameter: ${MODE} !!!"
-  print_usage
-  exit
+    echo -e "\nInvalid mode parameter: ${MODE} !!!"
+    print_usage
+    exit
 fi
 
 # set default MODE_ENTRYPOINT
 if [[ -z ${MODE_ENTRYPOINT} ]]; then
-  if [[ ${MODE} == "production" ]]; then
-    MODE_ENTRYPOINT="wft4galaxy"
-  else
-    MODE_ENTRYPOINT="bash"
-  fi
+    if [[ ${MODE} == "production" ]]; then
+        MODE_ENTRYPOINT="wft4galaxy"
+    else
+        MODE_ENTRYPOINT="bash"
+    fi
 else
-  if [[ ((${MODE} == "production") && (! ${MODE_ENTRYPOINT} =~ ^(bash|wft4galaxy)$ )) || \
-        ((${MODE} == "develop") && (! ${MODE_ENTRYPOINT} =~ ^(bash|wft4galaxy|ipython|jupyter)$ )) ]]
-  then
-    echo -e "\nInvalid MODE_ENTRYPOINT: '${MODE_ENTRYPOINT}' for MODE '${MODE}'"
-    print_usage
-    exit
-  fi
+    if [[ ((${MODE} == "production") && (! ${MODE_ENTRYPOINT} =~ ^(bash|wft4galaxy)$ )) || \
+          ((${MODE} == "develop") && (! ${MODE_ENTRYPOINT} =~ ^(bash|wft4galaxy|ipython|jupyter)$ )) ]]
+    then
+        echo -e "\nInvalid MODE_ENTRYPOINT: '${MODE_ENTRYPOINT}' for MODE '${MODE}'"
+        print_usage
+        exit
+    fi
 fi
 
 # udpate DOCKER image
 if [[ ${MODE} == "production" ]]; then
-  DOCKER_IMAGE="${DOCKER_REGISTRY}/wft4galaxy:${BASE_OS}"
+    DOCKER_IMAGE="${DOCKER_REGISTRY}/wft4galaxy:${BASE_OS}"
 else
-  DOCKER_IMAGE="${DOCKER_REGISTRY}/wft4galaxy-dev:${BASE_OS}"
+    DOCKER_IMAGE="${DOCKER_REGISTRY}/wft4galaxy-dev:${BASE_OS}"
 fi
 
 # update docker image
@@ -210,22 +210,22 @@ fi
 docker pull ${DOCKER_IMAGE}
 
 if [[ ${MODE_ENTRYPOINT} == "wft4galaxy" ]]; then
-  # check required parameters
-  if [[ -z ${CONFIG_FILE} ]]; then
-  	echo -e "Missing parameter: [-f|--file] "
-  fi
-  if [[ -z ${OUTPUT_FOLDER} ]]; then
-  	echo -e "Missing parameter: [-o|--output]"
-  fi
-  if [[ (-z ${CONFIG_FILE}) || (-z ${OUTPUT_FOLDER}) ]]; then
-  	print_usage
-  	exit
-  fi
+    # check required parameters
+    if [[ -z ${CONFIG_FILE} ]]; then
+        echo -e "Missing parameter: [-f|--file] "
+    fi
+    if [[ -z ${OUTPUT_FOLDER} ]]; then
+        echo -e "Missing parameter: [-o|--output]"
+    fi
+    if [[ (-z ${CONFIG_FILE}) || (-z ${OUTPUT_FOLDER}) ]]; then
+        print_usage
+        exit
+    fi
 
-  # set data paths
-  DATA_INPUT=$(get_path $(dirname ${CONFIG_FILE}))
-  DATA_OUTPUT=$(get_path ${OUTPUT_FOLDER})
-  DATA_CONFIG_FILE=/data_input/$(basename ${CONFIG_FILE})
+    # set data paths
+    DATA_INPUT=$(get_path $(dirname ${CONFIG_FILE}))
+    DATA_OUTPUT=$(get_path ${OUTPUT_FOLDER})
+    DATA_CONFIG_FILE=/data_input/$(basename ${CONFIG_FILE})
 fi
 
 # print debug message
@@ -250,18 +250,19 @@ fi
 
 # start Docker container
 if [[ ${MODE_ENTRYPOINT} == "wft4galaxy" ]]; then
-  # run wft4galaxy tests within a docker container
-  docker run -i --rm ${DOCKER_OPTS} \
-              -v ${DATA_INPUT}:/data_input \
-              -v ${DATA_OUTPUT}:/data_output \
-              ${DOCKER_IMAGE} ${MODE_ENTRYPOINT} ${OTHER_OPTS}\
-              --server ${GALAXY_SERVER} --api-key ${GALAXY_API_KEY} \
-              -f ${DATA_CONFIG_FILE} \
-              -o /data_output ${ENABLE_LOGGER} ${DISABLE_CLEANUP} ${ENABLE_DEBUG}
+
+    # run wft4galaxy tests within a docker container
+    docker run -i --rm ${DOCKER_OPTS} \
+           -v ${DATA_INPUT}:/data_input \
+           -v ${DATA_OUTPUT}:/data_output ${DOCKER_IMAGE} ${MODE_ENTRYPOINT} ${OTHER_OPTS} \
+           --server ${GALAXY_SERVER} --api-key ${GALAXY_API_KEY} \
+           -f ${DATA_CONFIG_FILE} \
+           -o /data_output ${ENABLE_LOGGER} ${DISABLE_CLEANUP} ${ENABLE_DEBUG}
+
 elif [[ ${MODE_ENTRYPOINT} == "jupyter" ]]; then
-  docker run -it --rm -p ${JUPYTER_PORT}:8888 ${DOCKER_OPTS} ${DOCKER_IMAGE} \
-    ${MODE_ENTRYPOINT} --server ${GALAXY_SERVER} --api-key ${GALAXY_API_KEY}
+    docker run -it --rm -p ${JUPYTER_PORT}:8888 ${DOCKER_OPTS} ${DOCKER_IMAGE} \
+                           ${MODE_ENTRYPOINT} --server ${GALAXY_SERVER} --api-key ${GALAXY_API_KEY}
 else
-  docker run -it --rm ${DOCKER_OPTS} ${DOCKER_IMAGE} \
-    ${MODE_ENTRYPOINT} --server ${GALAXY_SERVER} --api-key ${GALAXY_API_KEY}
+    docker run -it --rm ${DOCKER_OPTS} ${DOCKER_IMAGE} \
+                        ${MODE_ENTRYPOINT} --server ${GALAXY_SERVER} --api-key ${GALAXY_API_KEY}
 fi
