@@ -20,5 +20,9 @@ workflows:
       "SBMLmodel": "sbml_model.sbml"
       "constraints": "constraints.csv"
     expected:
-      best_fit_fluxes: "expected_best_fit_fluxes.csv"
-      best_fit_label: "expected_best_fit_label.csv"
+      best_fit_fluxes:
+        file: "expected_best_fit_fluxes.csv"
+        comparator: "comparators.csv_same_row_and_col_lengths"
+      best_fit_label:
+        file: "expected_best_fit_label.csv"
+        comparator: "comparators.csv_same_row_and_col_lengths"
