@@ -22,7 +22,7 @@ class TestCSVSameRowAndColLengthsComp(unittest.TestCase):
         self.assertFalse(csv_same_row_and_col_lengths(path_actual, path_expected),
                         "Actual and expected file have different number of cols")
 
-    def test_run_fail_num_cols(self):
+    def test_run_fail_num_rows(self):
         path_actual = self.__get_resource_path('csv_test_file_actual.csv')
         path_expected = self.__get_resource_path('csv_test_file_expected_fail_2.csv')
         self.assertFalse(csv_same_row_and_col_lengths(path_actual, path_expected),
@@ -33,11 +33,6 @@ class TestCSVSameRowAndColLengthsComp(unittest.TestCase):
     def __get_resource_path(file_name_in_test_dir):
         resource_path = os.path.join(file_name_in_test_dir)
         return pkg_resources.resource_filename(__name__, resource_path)
-
-
-
-
-
 
 if __name__ == '__main__':
     unittest.main()
