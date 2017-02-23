@@ -36,13 +36,11 @@ class FILE_FORMATS:
 
     @staticmethod
     def is_yaml(file_format):
-        return file_format and (isinstance(file_format, str) or isinstance(file_format, unicode)) and \
-               file_format.upper() == FILE_FORMATS.YAML
+        return isinstance(file_format, basestring) and file_format.upper() == FILE_FORMATS.YAML
 
     @staticmethod
     def is_json(file_format):
-        return file_format and (isinstance(file_format, str) or isinstance(file_format, unicode)) and \
-               file_format.upper() == FILE_FORMATS.JSON
+        return isinstance(file_format, basestring) and file_format.upper() == FILE_FORMATS.JSON
 
 
 class Workflow:
@@ -794,7 +792,7 @@ class WorkflowTestSuite:
         """
         if isinstance(workflow_test, WorkflowTestConfiguration):
             del self._workflow_test_suite_configuration[workflow_test.name]
-        elif isinstance(workflow_test, str):
+        elif isinstance(workflow_test, basestring):
             del self._workflow_test_suite_configuration[workflow_test]
 
     def _add_test_result(self, test_result):
@@ -1368,7 +1366,7 @@ class WorkflowTestResult():
         :rtype: bool
         :return: ``True`` if the test is passed; ``False`` otherwise.
         """
-        return self.results[output if isinstance(output, str) else output.name]
+        return self.results[output if isinstance(output, basestring) else output.name]
 
     def check_outputs(self):
         """
@@ -1612,7 +1610,7 @@ def _parse_dict(elements):
     results = {}
     for name, value in elements.items():
         result = value
-        if isinstance(value, str) or isinstance(value, unicode):
+        if isinstance(value, basestring):
             result = {"name": name, "file": value}
         elif isinstance(value, dict):
             result["name"] = name
