@@ -4,7 +4,7 @@ import pkg_resources
 __author__ = 'pmoreno'
 
 import sys
-sys.path.append('../../')
+sys.path.append( os.path.join(os.path.dirname(__file__), '../../') )
 
 from comparators import csv_same_row_and_col_lengths
 
