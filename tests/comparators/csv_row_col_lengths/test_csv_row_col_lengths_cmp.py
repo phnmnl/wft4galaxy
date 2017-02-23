@@ -7,7 +7,7 @@ import sys
 import unittest
 import pkg_resources
 
-sys.path.append('../../../')
+sys.path.append( os.path.join(os.path.dirname(__file__), '../../') )
 
 from wft4galaxy.comparators import csv_same_row_and_col_lengths
 
