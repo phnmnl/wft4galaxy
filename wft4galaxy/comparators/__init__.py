@@ -1,5 +1,3 @@
-
-
 def csv_same_row_and_col_lengths(actual_output_filename, expected_output_filename):
     import csv
 
@@ -17,4 +15,3 @@ def csv_same_row_and_col_lengths(actual_output_filename, expected_output_filenam
         if colsActual and colsExpected:
             return cmp(colsActual, colsExpected) == 0
         return False
-
