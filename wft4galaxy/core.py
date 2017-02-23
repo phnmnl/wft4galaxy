@@ -15,9 +15,7 @@ from ruamel.yaml.comments import CommentedMap as _CommentedMap
 from ruamel.yaml import round_trip_dump as _round_trip_dump
 from json import load as _json_load, loads as _json_loads, dumps as _json_dumps
 
-from bioblend.galaxy.objects import GalaxyInstance as _GalaxyInstance
-from bioblend.galaxy.workflows import WorkflowClient as _WorkflowClient
-from bioblend.galaxy.histories import HistoryClient as _HistoryClient
+from bioblend.galaxy.objects import GalaxyInstance as ObjGalaxyInstance
 from bioblend.galaxy.tools import ToolClient as _ToolClient
 
 # Galaxy ENV variable names
@@ -640,8 +638,6 @@ class WorkflowLoader:
         if not self._galaxy_instance:
             # initialize the galaxy instance
             self._galaxy_instance = galaxy_instance
-            # initialize the workflow client
-            self._galaxy_workflow_client = _WorkflowClient(self._galaxy_instance.gi)
 
     def load_workflow(self, workflow_test_config, workflow_name=None):
         """
@@ -678,9 +674,9 @@ class WorkflowLoader:
             wf_json = _json_load(f)
         wf_json["name"] = WorkflowTestConfiguration.DEFAULT_WORKFLOW_NAME_PREFIX \
                           + (workflow_name if workflow_name else wf_json["name"])
-        wf_info = self._galaxy_workflow_client.import_workflow_json(wf_json)
-        self._workflows[wf_info["id"]] = self._galaxy_instance.workflows.get(wf_info["id"])
-        return self._workflows[wf_info["id"]]
+        wf = self._galaxy_instance.workflows.import_new(wf_json)
+        self._workflows[wf.id] = wf
+        return wf
 
     def unload_workflow(self, workflow_id):
         """
@@ -691,7 +687,7 @@ class WorkflowLoader:
         """
         if not self._galaxy_instance:
             raise RuntimeError("WorkflowLodaer not initialized")
-        self._galaxy_workflow_client.delete_workflow(workflow_id)
+        self._galaxy_instance.workflows.delete(workflow_id)
         if workflow_id in self._workflows:
             del self._workflows[workflow_id]
 
@@ -987,7 +983,6 @@ class WorkflowTestRunner(_unittest.TestCase):
         self._workflow_loader = workflow_loader
         self._workflow_test_config = workflow_test_config
         self._test_suite = test_suite
-        self._galaxy_history_client = _HistoryClient(galaxy_instance.gi)
         self._disable_cleanup = workflow_test_config.disable_cleanup
         self._disable_assertions = workflow_test_config.disable_assertions
         self._output_folder = workflow_test_config.output_folder
@@ -1140,9 +1135,8 @@ class WorkflowTestRunner(_unittest.TestCase):
             try:
 
                 # create a new history for the current test
-                history_info = self._galaxy_history_client.create_history(
+                history = self._galaxy_instance.histories.create(
                     WorkflowTestConfiguration.DEFAULT_HISTORY_NAME_PREFIX + test_uuid)
-                history = self._galaxy_instance.histories.get(history_info["id"])
                 _logger.info("Create a history '%s' (id: %r)", history.name, history.id)
 
                 # upload input data to the current history
@@ -1421,7 +1415,7 @@ def _get_workflow_info(filename, tool_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=No
 
     # setup galaxy instance
     galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
-    galaxy_tool_client = _ToolClient(galaxy_instance.gi)
+    galaxy_tool_client = _ToolClient(galaxy_instance.gi) # get the non-object version of the GI
 
     if not _os.path.exists(DEFAULT_TOOLS_FOLDER):
         _os.makedirs(DEFAULT_TOOLS_FOLDER)
@@ -1449,8 +1443,9 @@ def _get_workflow_info(filename, tool_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=No
             # process tool info to extract parameters
             tool_id = step["tool_id"]
             tool = galaxy_instance.tools.get(tool_id)
-            tool_json = _json_loads(tool.to_json())
-            tool_config_xml = _os.path.basename(tool_json["config_file"])
+            ## LP:  re-write this using the bioblend.objects API to fetch the tool
+            # inputs.  See the comment above `def _process_tool_param_element`
+            tool_config_xml = _os.path.basename(tool.wrapped["config_file"])
             _logger.debug("Processing step tool '%s'", tool_id)
 
             try:
@@ -1491,6 +1486,14 @@ def _get_workflow_info(filename, tool_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=No
     return wf_config, inputs, params, outputs
 
 
+# XXX:  TODO
+# This can be replaced by using the object oriented bioblend API to fetch
+# the tool inputs directly through the API.
+#
+# Try something like:
+#   t = gi.tools.get("ChangeCase", io_details=True)
+# The process t.wrapped['inputs'] to get this information.
+#
 def _process_tool_param_element(input_el, tool_params):
     """
         Parameter types:
@@ -1587,7 +1590,7 @@ def _get_galaxy_instance(galaxy_url=None, galaxy_api_key=None):
         else:
             raise ValueError("GALAXY API KEY not defined!!!")
     # initialize the galaxy instance
-    return _GalaxyInstance(galaxy_url, galaxy_api_key)
+    return ObjGalaxyInstance(galaxy_url, galaxy_api_key)
 
 
 def _load_configuration(config_filename):
