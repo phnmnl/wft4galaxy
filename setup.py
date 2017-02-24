@@ -15,5 +15,5 @@ setup(
     },
     packages=["wft4galaxy", "wft4galaxy.comparators"],
     scripts=['utils/docker/wft4galaxy-docker'],
-    entry_points={'console_scripts': ['wft4galaxy = wft4galaxy.core:run_tests']},
+    entry_points={'console_scripts': ['wft4galaxy = wft4galaxy.core:main']},
 )

@@ -1648,7 +1648,7 @@ def base_comparator(actual_output_filename, expected_output_filename):
         return len(ldiff) == 0
 
 
-def _parse_cli_arguments():
+def _parse_cli_arguments(cmd_args):
     parser = _argparse.ArgumentParser()
     parser.add_argument("test", help="Workflow Test Name", nargs="*")
     parser.add_argument('--server', help='Galaxy server URL')
@@ -1661,7 +1661,7 @@ def _parse_cli_arguments():
     parser.add_argument('-f', '--file', default=WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME,
                         help='YAML configuration file of workflow tests (default is {0})'.format(
                             WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME))
-    args = parser.parse_args()
+    args = parser.parse_args(cmd_args)
     _logger.debug("Parsed arguments %r", args)
     print(args.test, file=_sys.stderr)
 
@@ -1672,8 +1672,57 @@ def _parse_cli_arguments():
 
     return args
 
+def _configure_test(options, enable_logger=None, enable_debug=None, disable_cleanup=None, disable_assertions=None):
+    config = WorkflowTestConfiguration.load(options.file, output_folder=options.output)
 
-def run_tests(enable_logger=None, enable_debug=None, disable_cleanup=None, disable_assertions=None):
+    config["galaxy_url"] = options.server or _os.environ.get(ENV_KEY_GALAXY_URL) or config.get("galaxy_url")
+    if not config["galaxy_url"]:
+        raise RuntimeError("Galaxy URL not defined!  Use --server or the environment variable {} "
+                           "or specify it in the test configuration".format(ENV_KEY_GALAXY_URL))
+
+    config["galaxy_api_key"] = options.api_key or _os.environ.get(ENV_KEY_GALAXY_API_KEY) or config.get("galaxy_api_key")
+    if not config["galaxy_api_key"]:
+        raise RuntimeError("Galaxy API key not defined!  Use --api-key or the environment variable {} "
+                           "or specify it in the test configuration".format(ENV_KEY_GALAXY_API_KEY))
+
+    config["output_folder"] = options.output or config.get("output_folder") or WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
+
+    if enable_logger is None:
+        config["enable_logger"] = options.enable_logger or config.get("enable_logger", False)
+    else:
+        config["enable_logger"] = enable_logger
+
+    if enable_debug is None:
+        config["enable_debug"] = options.debug or config.get("enable_debug", False)
+    else:
+        config["enable_debug"] = enable_debug
+
+    if disable_cleanup is None:
+        config["disable_cleanup"] = options.disable_cleanup or config.get("disable_cleanup", False)
+    else:
+        config["disable_cleanup"] = disable_cleanup
+
+    if disable_assertions is None:
+        config["disable_assertions"] = options.disable_assertions or config.get("disable_assertions", False)
+    else:
+        config["disable_assertions"] = disable_assertions
+
+    for test_config in config["workflows"].values():
+        test_config.disable_cleanup = config["disable_cleanup"]
+        test_config.disable_assertions = config["disable_assertions"]
+
+    # enable the logger with the proper detail level
+    if config["enable_logger"] or config["enable_debug"]:
+        config["logger_level"] = _logging.DEBUG if config["enable_debug"] else _logging.INFO
+        _logger.setLevel(config["logger_level"])
+
+    # log the current configuration
+    _logger.info("Configuration: %r", config)
+
+    return config
+
+
+def run_tests(args, enable_logger=None, enable_debug=None, disable_cleanup=None, disable_assertions=None):
     """
     Run a workflow test suite defined in a configuration file.
 
@@ -1691,39 +1740,8 @@ def run_tests(enable_logger=None, enable_debug=None, disable_cleanup=None, disab
     :param disable_assertions: ``True`` to disable assertions during the execution of the workflow test;
         ``False`` (default) otherwise.
     """
-    options = _parse_cli_arguments()
-    config = WorkflowTestConfiguration.load(options.file, output_folder=options.output)
-
-    config["galaxy_url"] = options.server \
-        if options.server \
-        else config["galaxy_url"] if "galaxy_url" in config else None
-
-    config["galaxy_api_key"] = options.api_key \
-        if options.api_key \
-        else config["galaxy_api_key"] if "galaxy_api_key" in config else None
-
-    config["output_folder"] = options.output \
-        if options.output \
-        else config["output_folder"] if "output_folder" in config \
-        else WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
-
-    config["enable_logger"] = enable_logger or options.enable_logger or config.get("enable_logger", False)
-    config["enable_debug"] = enable_debug or options.debug or config.get("enable_debug", False)
-    config["disable_cleanup"] = disable_cleanup or options.disable_cleanup or config.get("disable_cleanup", False)
-    config["disable_assertions"] = disable_assertions or options.disable_assertions \
-                                   or config.get("disable_assertions", False)
-
-    for test_config in config["workflows"].values():
-        test_config.disable_cleanup = config["disable_cleanup"]
-        test_config.disable_assertions = config["disable_assertions"]
-
-    # enable the logger with the proper detail level
-    if config["enable_logger"] or config["enable_debug"]:
-        config["logger_level"] = _logging.DEBUG if config["enable_debug"] else _logging.INFO
-        _logger.setLevel(config["logger_level"])
-
-    # log the current configuration
-    _logger.info("Configuration: %r", config)
+    options = _parse_cli_arguments(args)
+    config = _configure_test(options, enable_logger, enable_debug, disable_cleanup, disable_assertions)
 
     # create and run the configured test suite
     test_suite = WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
@@ -1732,8 +1750,10 @@ def run_tests(enable_logger=None, enable_debug=None, disable_cleanup=None, disab
     # sys exit
     exit_code = len([r for r in test_suite.get_workflow_test_results() if r.failed()])
     _logger.debug("wft4galaxy exiting with code: %s", exit_code)
-    exit(exit_code)
+    _sys.exit(exit_code)
 
+def main():
+    run_tests(_sys.argv[1:])
 
 if __name__ == '__main__':
-    run_tests()
+    main()
