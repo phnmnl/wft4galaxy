@@ -8,10 +8,10 @@ import logging as _logging
 import unittest as _unittest
 import argparse as _argparse
 import tarfile as _tarfile
+import sys as _sys
 
 from lxml import etree as _etree
 from uuid import uuid1 as  _uuid1
-from sys import exc_info as _exc_info
 from difflib import unified_diff as _unified_diff
 from yaml import load as _yaml_load, dump as _yaml_dump
 from ruamel.yaml.comments import CommentedMap as _CommentedMap
@@ -79,23 +79,21 @@ class Workflow(object):
             print("'{0}': {1}".format(step_id, ", ".join([x["label"] for x in step_outputs.values()])), file=stream)
 
     @staticmethod
-    def load(filename, tools_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=None, galaxy_api_key=None):
+    def load(filename, galaxy_url, galaxy_api_key, tools_folder=DEFAULT_TOOLS_FOLDER):
         """
         Return the :class:`Workflow` instance related to the workflow defined in ``filename``
 
         :type filename: str
         :param filename: the path of the ``.ga`` workflow definition
 
-        :type tools_folder: str
-        :param tools_folder: optional temp folder where tool definitions are downloaded (``.tools`` by default)
-
         :type galaxy_url: str
-        :param galaxy_url: url of your Galaxy server instance.  If ``none``, the environment variable
-            ``GALAXY_URL`` is used. An error is raised when such a variable cannot be found.
+        :param galaxy_url: url of your Galaxy server instance.
 
         :type galaxy_api_key: str
-        :param galaxy_api_key: an API key from your Galaxy server instance.  If ``none``, the environment variable
-            ``GALAXY_API_KEY`` is used. An error is raised when such a variable cannot be found.
+        :param galaxy_api_key: an API key from your Galaxy server instance.
+
+        :type tools_folder: str
+        :param tools_folder: optional temp folder where tool definitions are downloaded (``.tools`` by default)
 
         :rtype: :class:`Workflow`
         :return: the :class:`Workflow` instance related to the workflow defined in ``filename``
@@ -621,7 +619,7 @@ class WorkflowLoader(object):
         if galaxy_instance:
             self._initialize(galaxy_instance)
 
-    def initialize(self, galaxy_url=None, galaxy_api_key=None):
+    def initialize(self, galaxy_url, galaxy_api_key):
         """
         Initialize the connection to a Galaxy server instance.
 
@@ -953,7 +951,7 @@ class WorkflowTestSuite(object):
             except OSError, e:
                 _logger.debug("Deleted empty output folder '%s' failed: ", e.message)
 
-    def load(self, filename=None):
+    def load(self, filename):
         """
         Load a test suite configuration and set it to this :class:`WorkflowTestSuite` instance.
 
@@ -961,8 +959,7 @@ class WorkflowTestSuite(object):
         :param filename: the absolute path of suite configuration file
         """
         self._workflow_test_suite_configuration = WorkflowTestSuite._DEFAULT_SUITE_CONFIGURATION.copy()
-        self._workflow_test_suite_configuration.update(
-            WorkflowTestConfiguration.load(filename or WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME))
+        self._workflow_test_suite_configuration.update(WorkflowTestConfiguration.load(filename))
 
     def dump(self, filename):
         """
@@ -971,8 +968,7 @@ class WorkflowTestSuite(object):
         :type filename: str
         :param filename: the absolute path of the file
         """
-        WorkflowTestConfiguration.dump(filename or WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME,
-                                       self._workflow_test_suite_configuration)
+        WorkflowTestConfiguration.dump(filename, self._workflow_test_suite_configuration)
 
 
 class WorkflowTestRunner(_unittest.TestCase):
@@ -997,7 +993,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         super(WorkflowTestRunner, self).__init__("test_" + workflow_test_config.name)
 
     @staticmethod
-    def new_instance(workflow_test_config, galaxy_url=None, galaxy_api_key=None):
+    def new_instance(workflow_test_config, galaxy_url, galaxy_api_key):
         """
         Factory method to create and initialize a new :class:`WorkflowTestRunner` instance.
 
@@ -1410,7 +1406,7 @@ def get_workflow_info(filename, tools_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=No
     return Workflow(definition, inputs, params, expected_outputs)
 
 
-def _get_workflow_info(filename, tool_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=None, galaxy_api_key=None):
+def _get_workflow_info(filename, galaxy_url, galaxy_api_key, tool_folder=DEFAULT_TOOLS_FOLDER):
     inputs = []
     params = _CommentedMap()
     outputs = {}
@@ -1567,7 +1563,7 @@ def _process_tool_param_element(input_el, tool_params):
                                            when_options)
 
 
-def _get_galaxy_instance(galaxy_url=None, galaxy_api_key=None):
+def _get_galaxy_instance(galaxy_url, galaxy_api_key):
     """
     Private utility function to instantiate and configure a :class:`bioblend.GalaxyInstance`
 
@@ -1577,20 +1573,9 @@ def _get_galaxy_instance(galaxy_url=None, galaxy_api_key=None):
     :type galaxy_api_key: str
     :param galaxy_api_key: a registered Galaxy API KEY
 
-    :rtype: :class:`bioblend.GalaxyInstance`
-    :return: a new :class:`bioblend.GalaxyInstance` instance
+    :rtype: :class:`bioblend.objects.GalaxyInstance`
+    :return: a new :class:`bioblend.objects.GalaxyInstance` instance
     """
-    if not galaxy_url:
-        if ENV_KEY_GALAXY_URL in _os.environ:
-            galaxy_url = _os.environ[ENV_KEY_GALAXY_URL]
-        else:
-            raise ValueError("GALAXY URL not defined!!!")
-    # set the galaxy api key
-    if not galaxy_api_key:
-        if ENV_KEY_GALAXY_API_KEY in _os.environ:
-            galaxy_api_key = _os.environ[ENV_KEY_GALAXY_API_KEY]
-        else:
-            raise ValueError("GALAXY API KEY not defined!!!")
     # initialize the galaxy instance
     return ObjGalaxyInstance(galaxy_url, galaxy_api_key)
 
@@ -1645,7 +1630,7 @@ def _load_comparator(fully_qualified_comparator_function):
     except AttributeError, e:
         _logger.error(e)
     except:
-        _logger.error("Unexpected error:", _exc_info()[0])
+        _logger.error("Unexpected error: %s", _sys.exc_info()[0])
     return mod
 
 
