@@ -1,4 +1,34 @@
+import os
+import shutil
 from setuptools import setup
+from distutils.command.clean import clean
+
+
+class Clean(clean):
+    def _rmrf(self, path):
+        """
+        Remove a file or directory.         
+        """
+        try:
+            if os.path.isdir(path) and not os.path.islink(path):
+                shutil.rmtree(path)
+            else:
+                os.remove(path)
+        except OSError:
+            pass
+
+    def run(self):
+        clean.run(self)
+        garbage_list = [
+            "DEFAULT_HADOOP_HOME",
+            "build",
+            "dist",
+            "wft4galaxy.egg-info",
+            "results"
+        ]
+        for p in garbage_list:
+            self._rmrf(p)
+
 
 setup(
     name='wft4galaxy',
@@ -24,5 +54,8 @@ setup(
         'wft4galaxy = wft4galaxy.app.runner:main',
         'wft4galaxy-wizard = wft4galaxy.app.wizard:main',
         'wft4galaxy-docker = wft4galaxy.utils.docker_runner:run'
-    ]}
+    ]},
+    cmdclass={
+        "clean": Clean
+    },
 )
