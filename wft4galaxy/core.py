@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+
+from __future__ import print_function
+
 import os as _os
 import shutil as _shutil
 import logging as _logging
@@ -54,26 +57,26 @@ class Workflow(object):
         self.params = params
         self.outputs = outputs
 
-    def show_inputs(self):
+    def show_inputs(self, stream=_sys.stdout):
         """
-        Print workflow inputs to the standard output.
+        Print workflow inputs to file.
         """
         max_chars = max([len(x["name"]) for x in self.inputs])
         for i in self.inputs:
-            print "- ", i["name"].ljust(max_chars), "  # " + i["description"] if len(i["description"]) > 0 else ""
+            print("- ", i["name"].ljust(max_chars), ("  # " + i["description"] if len(i["description"]) > 0 else ""), file=stream)
 
-    def show_params(self):
+    def show_params(self, stream=_sys.stdout):
         """
-        Print parameters needed by workflow tools to the standard output.
+        Print parameters needed by workflow tools to file.
         """
-        print(_round_trip_dump(self.params))
+        print(_round_trip_dump(self.params), file=stream)
 
-    def show_outputs(self):
+    def show_outputs(self, stream=_sys.stdout):
         """
-        Print workflow outputs (indexed by workflow step) to the standard output.
+        Print workflow outputs (indexed by workflow step) to file.
         """
-        for step_id, step_outputs in self.outputs.items():
-            print "'{0}': {1}".format(step_id, ", ".join([x["label"] for x in step_outputs.values()]))
+        for step_id, step_outputs in self.outputs.iteritems():
+            print("'{0}': {1}".format(step_id, ", ".join([x["label"] for x in step_outputs.values()])), file=stream)
 
     @staticmethod
     def load(filename, tools_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=None, galaxy_api_key=None):
@@ -206,8 +209,8 @@ class WorkflowTestConfiguration(object):
         }
     }
 
-    def __init__(self, name=None, base_path=".", workflow_filename="workflow.ga", inputs={}, params={},
-                 expected_outputs={}, output_folder=None, disable_cleanup=False, disable_assertions=True):
+    def __init__(self, name=None, base_path=".", workflow_filename="workflow.ga", inputs=None, params=None,
+                 expected_outputs=None, output_folder=None, disable_cleanup=False, disable_assertions=True):
         # init properties
         self._base_path = None
         self._filename = None
@@ -219,9 +222,12 @@ class WorkflowTestConfiguration(object):
         self.name = str(_uuid1()) if not name else name
         self.set_base_path(base_path)
         self.set_filename(workflow_filename)
-        self.set_inputs(inputs)
-        self.set_params(params)
-        self.set_expected_outputs(expected_outputs)
+        if inputs is not None:
+            self.set_inputs(inputs)
+        if params is not None:
+            self.set_params(params)
+        if expected_outputs is not None:
+            self.set_expected_outputs(expected_outputs)
         self.output_folder = _os.path.join(self.DEFAULT_OUTPUT_FOLDER, self.name) \
             if output_folder is None else output_folder
         self.disable_cleanup = disable_cleanup
@@ -278,22 +284,22 @@ class WorkflowTestConfiguration(object):
         :param inputs: dict
         :return: a dictionary of mappings (see :class:`WorkflowTestConfiguration`)
         """
-        for name, config in inputs.items():
+        for name, config in inputs.iteritems():
             self.add_input(name, config["file"], config["type"] if "type" in config else None)
 
-    def add_input(self, name, file, type=None):
+    def add_input(self, name, path, type=None):
         """
         Add a new input mapping.
 
         :type name: str
         :param name: the Galaxy label of an input
 
-        :type file: str
-        :param file: the path (relative to the ``base_path``) of the file containing an input dataset
+        :type path: str
+        :param path: the path (relative to the ``base_path``) of the file containing an input dataset
         """
         if not name:
             raise ValueError("Input name not defined")
-        self._inputs[name] = {"name": name, "file": file if isinstance(file, list) else [file], "type": type}
+        self._inputs[name] = {"name": name, "file": path if isinstance(path, list) else [path], "type": type}
 
     def remove_input(self, name):
         """
@@ -316,7 +322,7 @@ class WorkflowTestConfiguration(object):
         :rtype: dict
         :return: input configuration as dict (e.g., {'name': 'Input Dataset', 'file': "input.txt"})
         """
-        return self._inputs.get(name, None)
+        return self._inputs.get(name)
 
     @property
     def params(self):
@@ -335,8 +341,8 @@ class WorkflowTestConfiguration(object):
         :type params: dict
         :param params: dictionary of parameters indexed by step id (see :class:`WorkflowTestConfiguration`)
         """
-        for step_id, step_params in params.items():
-            for name, value in step_params.items():
+        for step_id, step_params in params.iteritems():
+            for name, value in step_params.iteritems():
                 self.add_param(step_id, name, value)
 
     def add_param(self, step_id, name, value):
@@ -379,7 +385,7 @@ class WorkflowTestConfiguration(object):
         :rtype: dict
         :return: the dictionary of parameters related to the step identified by 'step_id'
         """
-        return self._params.get(step_id, None)
+        return self._params.get(step_id)
 
     def get_param(self, step_id, name):
         """
@@ -393,8 +399,8 @@ class WorkflowTestConfiguration(object):
 
         :return: the value of the requested parameter
         """
-        step_params = self._params.get(step_id, None)
-        return step_params.get(name, None) if step_params else None
+        step_params = self._params.get(step_id)
+        return step_params.get(name) if step_params else None
 
     @property
     def expected_outputs(self):
@@ -411,8 +417,8 @@ class WorkflowTestConfiguration(object):
         :type expected_outputs: dict
         :param expected_outputs: a dictionary structured as specified in :class:`WorkflowTestConfiguration`
         """
-        for name, config in expected_outputs.items():
-            self.add_expected_output(name, config["file"], config.get("comparator", None))
+        for name, config in expected_outputs.iteritems():
+            self.add_expected_output(name, config["file"], config.get("comparator"))
 
     def add_expected_output(self, name, filename, comparator="filecmp.cmp"):
         """
@@ -452,7 +458,7 @@ class WorkflowTestConfiguration(object):
         :return: a dictionary containing the configuration of the expected output as specified
             in :class:`WorkflowTestConfiguration`
         """
-        return self._expected_outputs.get(name, None)
+        return self._expected_outputs.get(name)
 
     def to_dict(self):
         """
@@ -464,7 +470,7 @@ class WorkflowTestConfiguration(object):
         return dict({
             "name": self.name,
             "file": self.filename,
-            "inputs": {name: input["file"][0] for name, input in self.inputs.items()},
+            "inputs": {name: input["file"][0] for name, input in self.inputs.iteritems()},
             "params": self.params,
             "expected": self.expected_outputs
         })
@@ -512,13 +518,12 @@ class WorkflowTestConfiguration(object):
         if _os.path.exists(filename):
             workflows_conf = _load_configuration(filename)
             base_path = workflows_conf.get("base_path", _os.path.dirname(_os.path.abspath(filename)))
-            config["galaxy_url"] = workflows_conf.get("galaxy_url", None)
-            config["galaxy_api_key"] = workflows_conf.get("galaxy_api_key", None)
+            config["galaxy_url"] = workflows_conf.get("galaxy_url")
+            config["galaxy_api_key"] = workflows_conf.get("galaxy_api_key")
             config["enable_logger"] = workflows_conf.get("enable_logger", False)
-            config["output_folder"] = output_folder if output_folder \
-                else workflows_conf.get("output_folder", WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER)
+            config["output_folder"] = output_folder or workflows_conf.get("output_folder") or WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
             config["workflows"] = {}
-            for wf_name, wf_config in workflows_conf.get("workflows").items():
+            for wf_name, wf_config in workflows_conf.get("workflows").iteritems():
                 wf_base_path = _os.path.join(base_path, wf_config.get("base_path", ""))
                 wf_config["output_folder"] = _os.path.join(config["output_folder"],
                                                            wf_config.get("output_folder", wf_name))
@@ -535,7 +540,7 @@ class WorkflowTestConfiguration(object):
             # raise an exception if the workflow test we are searching for
             # cannot be found within the configuration file.
             if workflow_test_name:
-                raise KeyError("WorkflowTest with name '%s' not found" % workflow_test_name)
+                raise KeyError("WorkflowTest with name '{}' not found".format(workflow_test_name))
         else:
             raise ValueError("Filename '{0}' not found".format(filename))
         return config
@@ -570,15 +575,16 @@ class WorkflowTestConfiguration(object):
         for worlflow in worflow_tests_config:
             workflows[worlflow.name] = worlflow.to_dict()
         with open(filename, "w") as f:
-            _yaml_dump(config, f) \
-                if FILE_FORMATS.is_yaml(file_format) \
-                else f.write(_json_dumps(config, indent=2))
+            if FILE_FORMATS.is_yaml(file_format):
+                _yaml_dump(config, f)
+            else:
+                f.write(_json_dumps(config, indent=2))
         return config
 
 
 class WorkflowLoader(object):
     """
-    Utility class responsible for loading (unloading) workflows to (from) a Galaxy server.
+    Singleton utility class responsible for loading (unloading) workflows to (from) a Galaxy server.
     """
 
     _instance = None
@@ -610,7 +616,6 @@ class WorkflowLoader(object):
         :param galaxy_instance: a galaxy instance object
         """
         self._galaxy_instance = None
-        self._galaxy_workflow_client = None
         self._workflows = {}
         # if galaxy_instance exists, complete initialization
         if galaxy_instance:
@@ -650,7 +655,7 @@ class WorkflowLoader(object):
         :param workflow_name: an optional name which overrides the default workflow name
         """
         if not self._galaxy_instance:
-            raise RuntimeError("WorkflowLodaer not initialized")
+            raise RuntimeError("WorkflowLoader not initialized")
         workflow_filename = workflow_test_config.filename \
             if not workflow_test_config.base_path or _os.path.isabs(workflow_test_config.filename) \
             else _os.path.join(workflow_test_config.base_path, workflow_test_config.filename)
@@ -667,7 +672,7 @@ class WorkflowLoader(object):
         :param workflow_name: an optional name which overrides the default workflow name
         """
         if not self._galaxy_instance:
-            raise RuntimeError("WorkflowLodaer not initialized")
+            raise RuntimeError("WorkflowLoader not initialized")
         with open(workflow_filename) as f:
             wf_json = _json_load(f)
         wf_json["name"] = WorkflowTestConfiguration.DEFAULT_WORKFLOW_NAME_PREFIX \
@@ -684,7 +689,7 @@ class WorkflowLoader(object):
         :param workflow_id: the ID of the workflow to unload from the connected Galaxy server.
         """
         if not self._galaxy_instance:
-            raise RuntimeError("WorkflowLodaer not initialized")
+            raise RuntimeError("WorkflowLoader not initialized")
         self._galaxy_instance.workflows.delete(workflow_id)
         if workflow_id in self._workflows:
             del self._workflows[workflow_id]
@@ -694,8 +699,8 @@ class WorkflowLoader(object):
         Unload all workflows loaded by this :class:`WorkflowLoader` instance.
         """
         if not self._galaxy_instance:
-            raise RuntimeError("WorkflowLodaer not initialized")
-        for wf_id, wf in self._workflows.items():
+            raise RuntimeError("WorkflowLoader not initialized")
+        for _, wf in self._workflows.iteritems():
             self.unload_workflow(wf.id)
 
 
@@ -728,7 +733,6 @@ class WorkflowTestSuite(object):
         self._workflow_runners = []
         self._workflow_test_results = []
         self._galaxy_instance = None
-        self._galaxy_workflow_client = None
         # initialize the galaxy instance
         self._galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
         # initialize the workflow loader
@@ -826,8 +830,8 @@ class WorkflowTestSuite(object):
 
     def _suite_setup(self, config, enable_logger=None,
                      enable_debug=None, disable_cleanup=None, disable_assertions=None):
-        config["enable_logger"] = enable_logger if not enable_logger is None else config.get("enable_logger", True)
-        config["enable_debug"] = enable_debug if not enable_debug is None else config.get("enable_debug", False)
+        config["enable_logger"] = enable_logger if enable_logger is not None else config.get("enable_logger", True)
+        config["enable_debug"] = enable_debug if enable_debug is not None else config.get("enable_debug", False)
         config["disable_cleanup"] = disable_cleanup \
             if not disable_cleanup is None else config.get("disable_cleanup", False)
         config["disable_assertions"] = disable_assertions \
@@ -1140,7 +1144,7 @@ class WorkflowTestRunner(_unittest.TestCase):
                 # upload input data to the current history
                 # and generate the datamap INPUT --> DATASET
                 datamap = {}
-                for label, config in inputs.items():
+                for label, config in inputs.iteritems():
                     datamap[label] = []
                     for filename in config["file"]:
                         dataset_filename = filename if _os.path.isabs(filename) else _os.path.join(base_path, filename)
@@ -1213,7 +1217,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         workflow = self.get_galaxy_workflow() if not workflow else workflow
         available_tools = self._galaxy_instance.tools.list()
         missing_tools = []
-        for order, step in workflow.steps.items():
+        for order, step in workflow.steps.iteritems():
             if step.tool_id and len(
                     filter(lambda t: t.id == step.tool_id and t.version == step.tool_version, available_tools)) == 0:
                 missing_tools.append((step.tool_id, step.tool_version))
@@ -1278,7 +1282,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         output datasets (downloaded from Galaxy) are deleted from the output path of the local file system.
         """
         _logger.debug("Cleanup of workflow test '%s'...", self._test_uuid)
-        for test_uuid, test_result in self._test_cases.items():
+        for test_uuid, test_result in self._test_cases.iteritems():
             if test_result.output_history:
                 self._galaxy_instance.histories.delete(test_result.output_history.id)
             self.cleanup_output_folder(test_result)
@@ -1296,7 +1300,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         """
         test_results = self._test_cases.values() if not test_result else [test_result]
         for _test in test_results:
-            for output_name, output_map in _test.output_file_map.items():
+            for output_name, output_map in _test.output_file_map.iteritems():
                 _logger.debug("Cleaning output folder: %s", output_name)
                 if _os.path.exists(output_map["filename"]):
                     _os.remove(output_map["filename"])
@@ -1324,7 +1328,7 @@ class WorkflowTestResult(object):
         self.results = results
 
         self.failed_outputs = {out[0]: out[1]
-                               for out in self.results.items()
+                               for out in self.results.iteritems()
                                if not out[1]}
 
     def __str__(self):
@@ -1332,7 +1336,7 @@ class WorkflowTestResult(object):
             .format(self.test_id, self.workflow.name,
                     ",".join([i for i in self.inputs]),
                     ", ".join(["{0}: {1}".format(x[0], "OK" if x[1] else "ERROR")
-                               for x in self.results.items()]))
+                               for x in self.results.iteritems()]))
 
     def __repr__(self):
         return self.__str__()
@@ -1421,7 +1425,7 @@ def _get_workflow_info(filename, tool_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=No
     with open(filename) as fp:
         wf_config = _json_load(fp)
 
-    for sid, step in wf_config["steps"].items():
+    for sid, step in wf_config["steps"].iteritems():
         # tool = gi.tools.get()
 
         _logger.debug("Processing step '%s' -- '%s'", sid, step["name"])
@@ -1472,7 +1476,7 @@ def _get_workflow_info(filename, tool_folder=DEFAULT_TOOLS_FOLDER, galaxy_url=No
                     if len(tool_params) > 0:
                         params.insert(int(sid), sid, tool_params)
 
-            except Exception, e:
+            except StandardError as e:
                 _logger.debug("Download TOOL '%s' definition file XML: %s....: ERROR", tool_id, tool_config_xml)
                 _logger.error(e)
 
@@ -1600,7 +1604,7 @@ def _load_configuration(config_filename):
             _logger.error("Configuration file '%s' is not a valid YAML or JSON file", config_filename)
             raise ValueError("Not valid format for the configuration file '%s'.", config_filename)
     # update inputs/expected fields
-    for wf_name, wf in workflows_conf["workflows"].items():
+    for wf_name, wf in workflows_conf["workflows"].iteritems():
         wf["inputs"] = _parse_dict(wf["inputs"])
         wf["expected"] = _parse_dict(wf["expected"])
     return workflows_conf
@@ -1608,7 +1612,7 @@ def _load_configuration(config_filename):
 
 def _parse_dict(elements):
     results = {}
-    for name, value in elements.items():
+    for name, value in elements.iteritems():
         result = value
         if isinstance(value, basestring):
             result = {"name": name, "file": value}
@@ -1651,7 +1655,7 @@ def base_comparator(actual_output_filename, expected_output_filename):
         diff = _unified_diff(aout.readlines(), eout.readlines(), actual_output_filename, expected_output_filename)
         ldiff = list(diff)
         if len(ldiff) > 0:
-            print "\n{0}\n...\n".format("".join(ldiff[:20]))
+            print("\n{0}\n...\n".format("".join(ldiff[:20])))
             diff_filename = _os.path.join(_os.path.dirname(actual_output_filename),
                                           _os.path.basename(actual_output_filename) + ".diff")
             with open(diff_filename, "w") as  out_fp:
@@ -1674,7 +1678,13 @@ def _parse_cli_arguments():
                             WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME))
     args = parser.parse_args()
     _logger.debug("Parsed arguments %r", args)
-    print args.test
+    print(args.test, file=_sys.stderr)
+
+    if not _os.path.isfile(args.file):
+        parser.error("Test file {} doesn't exist or isn't a file".format(args.file))
+    if not _os.access(args.file, _os.R_OK):
+        parser.error("Permission error.  Test file {} isn't accessible for reading".format(args.file))
+
     return args
 
 
