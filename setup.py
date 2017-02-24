@@ -13,7 +13,9 @@ setup(
         'lxml': ['lxml'],
         'pyyaml': ['pyyaml'],
         'sphinx_rtd_theme': ['sphinx_rtd_theme'],
-        'Jinja2': ['Jinja2>=2.9']
+        'Jinja2': ['Jinja2>=2.9'],
+        'docker': ['docker>=2.1.0'],
+        'dockerpty': ['dockerpty>=0.4.1']
     },
     package_data={'templates': ['*']},
     packages=["wft4galaxy", "wft4galaxy.comparators", "wft4galaxy.app", "templates"],
