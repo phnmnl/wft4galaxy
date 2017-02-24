@@ -30,7 +30,7 @@ _logger = _logging.getLogger("WorkflowTest")
 _logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s')
 
 
-class FILE_FORMATS:
+class FILE_FORMATS(object):
     YAML = "YAML"
     JSON = "JSON"
 
@@ -43,7 +43,7 @@ class FILE_FORMATS:
         return isinstance(file_format, basestring) and file_format.upper() == FILE_FORMATS.JSON
 
 
-class Workflow:
+class Workflow(object):
     """
     Display workflow information which are relevant to configure a workflow test.
     """
@@ -101,7 +101,7 @@ class Workflow:
                                  galaxy_url=galaxy_url, galaxy_api_key=galaxy_api_key)
 
 
-class WorkflowTestConfiguration:
+class WorkflowTestConfiguration(object):
     """
     A representation of the configuration of a workflow test.
 
@@ -576,7 +576,7 @@ class WorkflowTestConfiguration:
         return config
 
 
-class WorkflowLoader:
+class WorkflowLoader(object):
     """
     Utility class responsible for loading (unloading) workflows to (from) a Galaxy server.
     """
@@ -699,7 +699,7 @@ class WorkflowLoader:
             self.unload_workflow(wf.id)
 
 
-class WorkflowTestSuite:
+class WorkflowTestSuite(object):
     """
     Represent a test suite.
     """
@@ -1303,7 +1303,7 @@ class WorkflowTestRunner(_unittest.TestCase):
                     _logger.debug("Deleted output file '%s'.", output_map["filename"])
 
 
-class WorkflowTestResult():
+class WorkflowTestResult(object):
     """
     Class for representing the result of a workflow test.
     """
