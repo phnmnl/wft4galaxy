@@ -301,7 +301,7 @@ def _logger_setup(options):
     _logger.debug("Command line options %r", options)
 
 
-def run():
+def main():
     options = None
     try:
         # parse cli options/arguments
@@ -327,4 +327,4 @@ def run():
 
 
 if __name__ == '__main__':
-    run()
+    main()
