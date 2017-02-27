@@ -115,6 +115,16 @@ should be used for that input.
 
 The relative path is interpreted relative to the `Base path`_.
 
+By default Galaxy automatically detects the type of the input dataset by its file extension.
+If you need to specify the type of the input dataset you can use the following extended syntax:
+
+.. code-block:: YAML
+
+      inputs:
+        DataMatrix:
+            file: "sacurine/input/dataMatrix.tsv"
+            type: "tsv"
+
 
 Specifying workflow outputs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
