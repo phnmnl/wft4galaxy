@@ -29,8 +29,8 @@ ENV_KEY_GALAXY_API_KEY = "GALAXY_API_KEY"
 DEFAULT_TOOLS_FOLDER = ".tools"
 
 # configure module logger
+LogFormat = '%(asctime)s %(levelname)s: %(message)s'
 _logger = _logging.getLogger("WorkflowTest")
-_logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s')
 
 
 class FILE_FORMATS(object):
@@ -1663,7 +1663,6 @@ def _parse_cli_arguments(cmd_args):
                             WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME))
     args = parser.parse_args(cmd_args)
     _logger.debug("Parsed arguments %r", args)
-    print(args.test, file=_sys.stderr)
 
     if not _os.path.isfile(args.file):
         parser.error("Test file {} doesn't exist or isn't a file".format(args.file))
@@ -1753,6 +1752,8 @@ def run_tests(args, enable_logger=None, enable_debug=None, disable_cleanup=None,
     _sys.exit(exit_code)
 
 def main():
+    # Since we're running as the main executable, configure the logger
+    _logging.basicConfig(format=LogFormat)
     run_tests(_sys.argv[1:])
 
 if __name__ == '__main__':
