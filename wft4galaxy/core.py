@@ -32,6 +32,8 @@ DEFAULT_TOOLS_FOLDER = ".tools"
 LogFormat = '%(asctime)s %(levelname)s: %(message)s'
 _logger = _logging.getLogger("WorkflowTest")
 
+class TestConfigError(RuntimeError):
+    pass
 
 class FILE_FORMATS(object):
     YAML = "YAML"
@@ -1648,7 +1650,7 @@ def base_comparator(actual_output_filename, expected_output_filename):
         return len(ldiff) == 0
 
 
-def _parse_cli_arguments(cmd_args):
+def _make_parser():
     parser = _argparse.ArgumentParser()
     parser.add_argument("test", help="Workflow Test Name", nargs="*")
     parser.add_argument('--server', help='Galaxy server URL')
@@ -1661,6 +1663,9 @@ def _parse_cli_arguments(cmd_args):
     parser.add_argument('-f', '--file', default=WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME,
                         help='YAML configuration file of workflow tests (default is {0})'.format(
                             WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME))
+    return parser
+
+def _parse_cli_arguments(parser, cmd_args):
     args = parser.parse_args(cmd_args)
     _logger.debug("Parsed arguments %r", args)
 
@@ -1676,12 +1681,12 @@ def _configure_test(options, enable_logger=None, enable_debug=None, disable_clea
 
     config["galaxy_url"] = options.server or _os.environ.get(ENV_KEY_GALAXY_URL) or config.get("galaxy_url")
     if not config["galaxy_url"]:
-        raise RuntimeError("Galaxy URL not defined!  Use --server or the environment variable {} "
+        raise TestConfigError("Galaxy URL not defined!  Use --server or the environment variable {} "
                            "or specify it in the test configuration".format(ENV_KEY_GALAXY_URL))
 
     config["galaxy_api_key"] = options.api_key or _os.environ.get(ENV_KEY_GALAXY_API_KEY) or config.get("galaxy_api_key")
     if not config["galaxy_api_key"]:
-        raise RuntimeError("Galaxy API key not defined!  Use --api-key or the environment variable {} "
+        raise TestConfigError("Galaxy API key not defined!  Use --api-key or the environment variable {} "
                            "or specify it in the test configuration".format(ENV_KEY_GALAXY_API_KEY))
 
     config["output_folder"] = options.output or config.get("output_folder") or WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
@@ -1739,7 +1744,8 @@ def run_tests(args, enable_logger=None, enable_debug=None, disable_cleanup=None,
     :param disable_assertions: ``True`` to disable assertions during the execution of the workflow test;
         ``False`` (default) otherwise.
     """
-    options = _parse_cli_arguments(args)
+    parser = _make_parser()
+    options = _parse_cli_arguments(parser, args)
     config = _configure_test(options, enable_logger, enable_debug, disable_cleanup, disable_assertions)
 
     # create and run the configured test suite
