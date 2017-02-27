@@ -15,7 +15,9 @@ workflows:
     file: "stationary_fluxomics_v1.0.ga"
     inputs:
       "exchange": "exchanged_file.csv"
-      "ZipData": "wd.zip"
+      ZipData:
+          file: "wd.zip"
+          type: "zip"
       "tracingModel": "tracing_model.csv"
       "SBMLmodel": "sbml_model.sbml"
       "constraints": "constraints.csv"
