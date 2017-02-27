@@ -283,9 +283,9 @@ class WorkflowTestConfiguration:
         :return: a dictionary of mappings (see :class:`WorkflowTestConfiguration`)
         """
         for name, config in inputs.items():
-            self.add_input(name, config["file"])
+            self.add_input(name, config["file"], config["type"] if "type" in config else None)
 
-    def add_input(self, name, file):
+    def add_input(self, name, file, type=None):
         """
         Add a new input mapping.
 
@@ -297,7 +297,7 @@ class WorkflowTestConfiguration:
         """
         if not name:
             raise ValueError("Input name not defined")
-        self._inputs[name] = {"name": name, "file": file if isinstance(file, list) else [file]}
+        self._inputs[name] = {"name": name, "file": file if isinstance(file, list) else [file], "type": type}
 
     def remove_input(self, name):
         """
