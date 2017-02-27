@@ -1752,15 +1752,24 @@ def run_tests(args, enable_logger=None, enable_debug=None, disable_cleanup=None,
     test_suite = WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
     test_suite.run_test_suite(config, tests=options.test)
 
-    # sys exit
     exit_code = len([r for r in test_suite.get_workflow_test_results() if r.failed()])
-    _logger.debug("wft4galaxy exiting with code: %s", exit_code)
-    _sys.exit(exit_code)
+    _logger.debug("wft4galaxy.run_tests exiting with code: %s", exit_code)
+    return exit_code
 
 def main():
     # Since we're running as the main executable, configure the logger
     _logging.basicConfig(format=LogFormat)
-    run_tests(_sys.argv[1:])
+    try:
+        code = run_tests(_sys.argv[1:])
+        _sys.exit(code)
+    except StandardError as e:
+        # in some cases we exit with an exception even for rather "normal"
+        # situations, such as configuration errors.  For this reason we only display
+        # the exception's stack trace if debug logging is enabled.
+        _logger.error(e)
+        if _logger.isEnabledFor(_logging.DEBUG):
+            _logger.exception(e)
+        _sys.exit(99)
 
 if __name__ == '__main__':
     main()
