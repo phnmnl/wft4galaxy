@@ -1151,8 +1151,12 @@ class WorkflowTestRunner(_unittest.TestCase):
                 for label, config in inputs.items():
                     datamap[label] = []
                     for filename in config["file"]:
-                        datamap[label].append(history.upload_dataset(filename if _os.path.isabs(filename)
-                                                                     else _os.path.join(base_path, filename)))
+                        dataset_filename = filename if _os.path.isabs(filename) else _os.path.join(base_path, filename)
+                        if config["type"]:
+                            datamap[label].append(
+                                history.upload_dataset(dataset_filename, file_type=config["type"]))
+                        else:
+                            datamap[label].append(history.upload_dataset(dataset_filename))
 
                 # run the workflow
                 _logger.info("Workflow '%s' (id: %s) running ...", workflow.name, workflow.id)
