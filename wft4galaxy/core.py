@@ -299,6 +299,9 @@ class WorkflowTestConfiguration(object):
 
         :type path: str
         :param path: the path (relative to the ``base_path``) of the file containing an input dataset
+        
+        :type type: str
+        :param type: the type of the input dataset  
         """
         if not name:
             raise ValueError("Input name not defined")
@@ -511,6 +514,9 @@ class WorkflowTestConfiguration(object):
 
         :type file_format: str
         :param file_format: ``YAML`` or ``JSON``
+
+        :type output_folder: str
+        :param output_folder: the path of the output folder  
 
         :rtype: dict or :class:`WorkflowTestConfiguration`
         :return: a dictionary containing the configuration of a workflow test suite or
