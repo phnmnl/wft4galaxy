@@ -1324,16 +1324,13 @@ class WorkflowTestResult(object):
         self.workflow = workflow
         self.inputs = inputs
         self.outputs = outputs
-        self.errors = errors
+        self.errors = [] if errors is None else errors
         self.output_history = output_history
         self.expected_outputs = expected_outputs
         self.output_folder = output_folder
         self.missing_tools = missing_tools
         self.output_file_map = output_file_map
         self.results = results
-        # init errors if it is None
-        if errors is None:
-            errors = []
 
         self.failed_outputs = {out[0]: out[1]
                                for out in self.results.iteritems()
