@@ -1259,7 +1259,7 @@ class WorkflowTestRunner(_unittest.TestCase):
             if output.name in expected_output_map:
                 _logger.debug("Checking OUTPUT '%s' ...", output.name)
                 output_filename = _os.path.join(output_folder, output.name)
-                with open(output_filename, "w") as out_file:
+                with open(output_filename, "wb") as out_file:
                     output.download(out_file)
                     output_file_map[output.name] = {"dataset": output, "filename": output_filename}
                     _logger.debug(
