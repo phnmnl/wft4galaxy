@@ -34,6 +34,13 @@ DEFAULT_TOOLS_FOLDER = ".tools"
 LogFormat = '%(asctime)s %(levelname)s: %(message)s'
 _logger = _logging.getLogger("WorkflowTest")
 
+# map `StandardError` to `Exception` to allow compatibility both with Python2 and Python3
+_StandardError = Exception
+try:
+    _StandardError = StandardError
+except NameError:
+    pass
+
 
 class TestConfigError(RuntimeError):
     pass
@@ -1483,7 +1490,7 @@ def _get_workflow_info(filename, galaxy_url, galaxy_api_key, tool_folder=DEFAULT
                     if len(tool_params) > 0:
                         params.insert(int(sid), sid, tool_params)
 
-            except StandardError as e:
+            except _StandardError as e:
                 _logger.debug("Download TOOL '%s' definition file XML: %s....: ERROR", tool_id, tool_config_xml)
                 _logger.error(e)
 
@@ -1778,7 +1785,7 @@ def main():
     try:
         code = run_tests(_sys.argv[1:])
         _sys.exit(code)
-    except StandardError as e:
+    except _StandardError as e:
         # in some cases we exit with an exception even for rather "normal"
         # situations, such as configuration errors.  For this reason we only display
         # the exception's stack trace if debug logging is enabled.
