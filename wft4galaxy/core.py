@@ -290,7 +290,7 @@ class WorkflowTestConfiguration(object):
         for name, config in inputs.iteritems():
             self.add_input(name, config["file"], config["type"] if "type" in config else None)
 
-    def add_input(self, name, path, type=None):
+    def add_input(self, name, path, input_=None):
         """
         Add a new input mapping.
 
@@ -300,12 +300,12 @@ class WorkflowTestConfiguration(object):
         :type path: str
         :param path: the path (relative to the ``base_path``) of the file containing an input dataset
         
-        :type type: str
-        :param type: the type of the input dataset  
+        :type input_: str
+        :param input_: the type of the input dataset  
         """
         if not name:
             raise ValueError("Input name not defined")
-        self._inputs[name] = {"name": name, "file": path if isinstance(path, list) else [path], "type": type}
+        self._inputs[name] = {"name": name, "file": path if isinstance(path, list) else [path], "type": input_}
 
     def remove_input(self, name):
         """
@@ -476,7 +476,7 @@ class WorkflowTestConfiguration(object):
         return dict({
             "name": self.name,
             "file": self.filename,
-            "inputs": {name: input["file"][0] for name, input in self.inputs.iteritems()},
+            "inputs": {name: input_["file"][0] for name, input_ in self.inputs.iteritems()},
             "params": self.params,
             "expected": self.expected_outputs
         })
@@ -1441,9 +1441,9 @@ def _get_workflow_info(filename, galaxy_url, galaxy_api_key, tool_folder=DEFAULT
 
         # an input step....
         if not step["tool_id"] and step["type"] == "data_input":
-            for input in step["inputs"]:
-                _logger.debug("Processing input: '%s' (%s)", input["name"], input["description"])
-                inputs.append(input)
+            for input_ in step["inputs"]:
+                _logger.debug("Processing input: '%s' (%s)", input_["name"], input_["description"])
+                inputs.append(input_)
 
         # a processing step (with outputs) ...
         if step["tool_id"] and step["type"] == "tool":
