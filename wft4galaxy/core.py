@@ -37,17 +37,17 @@ class TestConfigError(RuntimeError):
     pass
 
 
-class FILE_FORMATS(object):
+class FileFormats(object):
     YAML = "YAML"
     JSON = "JSON"
 
     @staticmethod
     def is_yaml(file_format):
-        return isinstance(file_format, basestring) and file_format.upper() == FILE_FORMATS.YAML
+        return isinstance(file_format, basestring) and file_format.upper() == FileFormats.YAML
 
     @staticmethod
     def is_json(file_format):
-        return isinstance(file_format, basestring) and file_format.upper() == FILE_FORMATS.JSON
+        return isinstance(file_format, basestring) and file_format.upper() == FileFormats.JSON
 
 
 class Workflow(object):
@@ -481,7 +481,7 @@ class WorkflowTestConfiguration(object):
             "expected": self.expected_outputs
         })
 
-    def save(self, filename=None, file_format=FILE_FORMATS.YAML):
+    def save(self, filename=None, file_format=FileFormats.YAML):
         """
         Serialize this workflow test configuration to a file (YAML or JSON).
 
@@ -493,15 +493,15 @@ class WorkflowTestConfiguration(object):
         """
         if not filename and not self.filename:
             filename = _os.path.splitext(self.DEFAULT_CONFIG_FILENAME)[0] + \
-                       "json" if FILE_FORMATS.is_json(file_format) else "yml"
+                       "json" if FileFormats.is_json(file_format) else "yml"
         if not filename:
             filename, _ = _os.path.splitext(self.filename)
-            filename += "json" if FILE_FORMATS.is_json(file_format) else "yml"
+            filename += "json" if FileFormats.is_json(file_format) else "yml"
         self.dump(filename=filename, worflow_tests_config=self, file_format=file_format)
 
     @staticmethod
     def load(filename=DEFAULT_CONFIG_FILENAME, workflow_test_name=None,
-             file_format=FILE_FORMATS.YAML, output_folder=None):
+             file_format=FileFormats.YAML, output_folder=None):
         """
         Load the configuration of a workflow test suite or a single workflow test
         from a YAML or JSON configuration file.
@@ -557,7 +557,7 @@ class WorkflowTestConfiguration(object):
         return config
 
     @staticmethod
-    def dump(filename, worflow_tests_config, file_format=FILE_FORMATS.YAML):
+    def dump(filename, worflow_tests_config, file_format=FileFormats.YAML):
         """
         Write the configuration of a workflow test suite to a YAML or JSON file.
 
@@ -586,7 +586,7 @@ class WorkflowTestConfiguration(object):
         for worlflow in worflow_tests_config:
             workflows[worlflow.name] = worlflow.to_dict()
         with open(filename, "w") as f:
-            if FILE_FORMATS.is_yaml(file_format):
+            if FileFormats.is_yaml(file_format):
                 _yaml_dump(config, f)
             else:
                 f.write(_json_dumps(config, indent=2))
