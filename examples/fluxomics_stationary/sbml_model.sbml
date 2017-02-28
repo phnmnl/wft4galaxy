@@ -1,0 +1,191 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<sbml xmlns:fbc="http://www.sbml.org/sbml/level3/version1/fbc/version2" level="3" sboTerm="SBO:0000624" version="1" xmlns="http://www.sbml.org/sbml/level3/version1/core" fbc:required="false">
+  <model fbc:strict="true" id="Constraint based model">
+    <listOfUnitDefinitions>
+      <unitDefinition id="mmol_per_gDW_per_hr">
+        <listOfUnits>
+          <unit exponent="1" kind="mole" multiplier="1" scale="-3"/>
+          <unit exponent="-1" kind="gram" multiplier="1" scale="0"/>
+          <unit exponent="-1" kind="second" multiplier="3600" scale="0"/>
+        </listOfUnits>
+      </unitDefinition>
+    </listOfUnitDefinitions>
+    <fbc:listOfObjectives fbc:activeObjective="obj">
+      <fbc:objective fbc:id="obj" fbc:type="maximize">
+        <fbc:listOfFluxObjectives/>
+      </fbc:objective>
+    </fbc:listOfObjectives>
+    <listOfParameters>
+      <parameter constant="true" id="cobra_default_lb" sboTerm="SBO:0000626" units="mmol_per_gDW_per_hr" value="-1000"/>
+      <parameter constant="true" id="cobra_default_ub" sboTerm="SBO:0000626" units="mmol_per_gDW_per_hr" value="1000"/>
+      <parameter constant="true" id="cobra_0_bound" sboTerm="SBO:0000626" units="mmol_per_gDW_per_hr" value="0"/>
+    </listOfParameters>
+    <listOfCompartments/>
+    <listOfSpecies>
+      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_Glc" name="Glucose" compartment="None" fbc:chemicalFormula="C6H12O6"/>
+      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_Lac" name="Lactate" compartment="None" fbc:chemicalFormula="C3H5O3"/>
+      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_Glc6p_a" name="Glucose 6-phosphate (pool A)" compartment="None" fbc:chemicalFormula="C6H11O9P"/>
+      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_Glc6p_b" name="Glucose 6-phosphate (pool B)" compartment="None" fbc:chemicalFormula="C6H11O9P"/>
+      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_Fru6p" name="Fructose 6-phosphate" compartment="None" fbc:chemicalFormula="C6H11O9P"/>
+      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_Fru16bp" name="Fructose 1-6 biphosphate" compartment="None" fbc:chemicalFormula="C6H10O12P2"/>
+      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_Dhap" name="Dihydroxyacetone phsophate" compartment="None" fbc:chemicalFormula="C3H5O6P"/>
+      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_Gap" name="Glyceraldehyde 3-phosphate" compartment="None" fbc:chemicalFormula="C3H5O6P"/>
+      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_Pep" name="Posphoenolpyruvate" compartment="None" fbc:chemicalFormula="C3H2O6P"/>
+      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_Pyr" name="Pyruvate" compartment="None" fbc:chemicalFormula="C3H3O3"/>
+      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_Rul5p" name="Ribulose 5-phosphate" compartment="None" fbc:chemicalFormula="C5H9O8P"/>
+      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_Rib5p" name="Ribose 5-phosphate" compartment="None" fbc:chemicalFormula="C5H9O8P"/>
+      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_Xyl5p" name="Xylulose 5-phosphate" compartment="None" fbc:chemicalFormula="C5H9O8P"/>
+      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_Sed7p" name="Sedoheptulose 7-phosphate" compartment="None" fbc:chemicalFormula="C7H13O10P"/>
+      <species boundaryCondition="false" constant="false" hasOnlySubstanceUnits="false" id="M_E4p" name="Erythrose 4-phosphate" compartment="None" fbc:chemicalFormula="C4H7O7P"/>
+    </listOfSpecies>
+    <listOfReactions>
+      <reaction fast="false" id="R_RglcEx" reversible="false" name="Glucose uptake" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_0_bound">
+        <listOfProducts>
+          <speciesReference constant="true" species="M_Glc" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction fast="false" id="R_RlacEx" reversible="false" name="Lactate release" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_0_bound">
+        <listOfReactants>
+          <speciesReference constant="true" species="M_Lac" stoichiometry="1"/>
+        </listOfReactants>
+      </reaction>
+      <reaction fast="false" id="R_Rhex1" reversible="false" name="Hexokinase" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_0_bound">
+        <listOfReactants>
+          <speciesReference constant="true" species="M_Glc" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference constant="true" species="M_Glc6p_a" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction fast="false" id="R_RglycEx" reversible="false" name="Glycogen utilization" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_0_bound">
+        <listOfProducts>
+          <speciesReference constant="true" species="M_Glc6p_a" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction fast="false" id="R_Rglc6p_pdif" reversible="true" name="Difussion between Glucose 6-phosphate pools" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_default_lb">
+        <listOfReactants>
+          <speciesReference constant="true" species="M_Glc6p_a" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference constant="true" species="M_Glc6p_b" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction fast="false" id="R_Rpgi" reversible="true" name="Glucose-6-phosphate isomerase" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_default_lb">
+        <listOfReactants>
+          <speciesReference constant="true" species="M_Glc6p_b" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference constant="true" species="M_Fru6p" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction fast="false" id="R_Rpfk" reversible="false" name="Phosphofructokinase" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_0_bound">
+        <listOfReactants>
+          <speciesReference constant="true" species="M_Fru6p" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference constant="true" species="M_Fru16bp" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction fast="false" id="R_Rfba" reversible="true" name="Aldolase" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_default_lb">
+        <listOfReactants>
+          <speciesReference constant="true" species="M_Fru16bp" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference constant="true" species="M_Dhap" stoichiometry="1"/>
+          <speciesReference constant="true" species="M_Gap" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction fast="false" id="R_Rtpi" reversible="true" name="Triose-phosphate isomerase" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_default_lb">
+        <listOfReactants>
+          <speciesReference constant="true" species="M_Dhap" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference constant="true" species="M_Gap" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction fast="false" id="R_Rbottom_Glc" reversible="true" name="Glyceraldehyde phosphate dehydrogenase" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_default_lb">
+        <listOfReactants>
+          <speciesReference constant="true" species="M_Gap" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference constant="true" species="M_Pep" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction fast="false" id="R_Rpyk" reversible="false" name="Pyruvate Kinase" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_0_bound">
+        <listOfReactants>
+          <speciesReference constant="true" species="M_Pep" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference constant="true" species="M_Pyr" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction fast="false" id="R_Rldh_l" reversible="true" name="L-lactate dehydrogenase" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_default_lb">
+        <listOfReactants>
+          <speciesReference constant="true" species="M_Pyr" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference constant="true" species="M_Lac" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction fast="false" id="R_RoxPPP" reversible="false" name="Glucose 6-Phosphate dehydrogenase" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_0_bound">
+        <listOfReactants>
+          <speciesReference constant="true" species="M_Glc6p_b" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference constant="true" species="M_Rul5p" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction fast="false" id="R_Rrpi" reversible="true" name="Ribose phosphate isomerase" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_default_lb">
+        <listOfReactants>
+          <speciesReference constant="true" species="M_Rul5p" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference constant="true" species="M_Rib5p" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction fast="false" id="R_Rrpe" reversible="true" name="Ribulose 5 phosphate epimerase" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_default_lb">
+        <listOfReactants>
+          <speciesReference constant="true" species="M_Rul5p" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference constant="true" species="M_Xyl5p" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction fast="false" id="R_Rtkt1" reversible="true" name="Transketolase 1" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_default_lb">
+        <listOfReactants>
+          <speciesReference constant="true" species="M_Rib5p" stoichiometry="1"/>
+          <speciesReference constant="true" species="M_Xyl5p" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference constant="true" species="M_Gap" stoichiometry="1"/>
+          <speciesReference constant="true" species="M_Sed7p" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction fast="false" id="R_Rtkt2" reversible="true" name="Transketolase 2" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_default_lb">
+        <listOfReactants>
+          <speciesReference constant="true" species="M_E4p" stoichiometry="1"/>
+          <speciesReference constant="true" species="M_Xyl5p" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference constant="true" species="M_Fru6p" stoichiometry="1"/>
+          <speciesReference constant="true" species="M_Gap" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction fast="false" id="R_Rtala" reversible="true" name="Transaldolase" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_default_lb">
+        <listOfReactants>
+          <speciesReference constant="true" species="M_Gap" stoichiometry="1"/>
+          <speciesReference constant="true" species="M_Sed7p" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference constant="true" species="M_E4p" stoichiometry="1"/>
+          <speciesReference constant="true" species="M_Fru6p" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction fast="false" id="R_RextraPyr" reversible="false" name="extra pyruvate" fbc:upperFluxBound="cobra_default_ub" fbc:lowerFluxBound="cobra_0_bound">
+        <listOfProducts>
+          <speciesReference constant="true" species="M_Pyr" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+    </listOfReactions>
+  </model>
+</sbml>

@@ -1,0 +1,20 @@
+Metabolite/s,N carbons,Symmetry,Constant,large  unlabelled pool,Name of measured Metabolite
+Glc,,,,,D-Glucose
+Glc6p_a,,,,m/SM,Glycogen
+"Glc6p_b,Fru6p",,,,,
+Fru16bp,,,,,
+"Gap,Dhap",,,,,
+Pep,,,,,
+Pyr,,,,,
+Lac,,,,,L-Lactate
+"Rib5p,Rul5p,Xyl5p",,,,m/SM,D-Ribose
+Sed7p,,,,,
+E4p,,,,,
+,,,,,
+,,,,,
+Reaction,Substrates,Products,,,
+Rfba,"Fru16bp(c1,c2,c3,c4,c5,c6)","Dhap(c3,c2,c1)+Gap(c4,c5,c6)",,,
+RoxPPP,"Glc6p_b(c1,c2,c3,c4,c5,c6)","Rul5p(c2,c3,c4,c5,c6)",,,
+Rtkt1,"Xyl5p(x1,x2,x3,x4,x5)+Rib5p(r1,r2,r3,r4,r5)","Gap(x3,x4,x5)+Sed7p(x1,x2,r1,r2,r3,r4,r5)",,,
+Rtkt2,"Xyl5p(x1,x2,x3,x4,x5)+E4p(e1,e2,e3,e4)","Gap(x3,x4,x5)+Fru6p(x1,x2,e1,e2,e3,e4)",,,
+Rtala,"Sed7p(s1,s2,s3,s4,s5,s6,s7)+Gap(g1,g2,g3)","Fru6p(s1,s2,s3,g1,g2,g3)+E4p(s4,s5,s6,s7)",,,
