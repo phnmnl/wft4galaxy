@@ -65,7 +65,8 @@ class Workflow(object):
         """
         max_chars = max([len(x["name"]) for x in self.inputs])
         for i in self.inputs:
-            print("- ", i["name"].ljust(max_chars), ("  # " + i["description"] if len(i["description"]) > 0 else ""), file=stream)
+            print("- ", i["name"].ljust(max_chars),
+                  ("  # " + i["description"] if len(i["description"]) > 0 else ""), file=stream)
 
     def show_params(self, stream=_sys.stdout):
         """
@@ -521,7 +522,9 @@ class WorkflowTestConfiguration(object):
             config["galaxy_url"] = workflows_conf.get("galaxy_url")
             config["galaxy_api_key"] = workflows_conf.get("galaxy_api_key")
             config["enable_logger"] = workflows_conf.get("enable_logger", False)
-            config["output_folder"] = output_folder or workflows_conf.get("output_folder") or WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
+            config["output_folder"] = output_folder \
+                                      or workflows_conf.get("output_folder") \
+                                      or WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
             config["workflows"] = {}
             for wf_name, wf_config in workflows_conf.get("workflows").iteritems():
                 wf_base_path = _os.path.join(base_path, wf_config.get("base_path", ""))
@@ -1684,12 +1687,16 @@ def _configure_test(options, enable_logger=None, enable_debug=None, disable_clea
         raise TestConfigError("Galaxy URL not defined!  Use --server or the environment variable {} "
                            "or specify it in the test configuration".format(ENV_KEY_GALAXY_URL))
 
-    config["galaxy_api_key"] = options.api_key or _os.environ.get(ENV_KEY_GALAXY_API_KEY) or config.get("galaxy_api_key")
+    config["galaxy_api_key"] = options.api_key \
+                               or _os.environ.get(ENV_KEY_GALAXY_API_KEY) \
+                               or config.get("galaxy_api_key")
     if not config["galaxy_api_key"]:
         raise TestConfigError("Galaxy API key not defined!  Use --api-key or the environment variable {} "
                            "or specify it in the test configuration".format(ENV_KEY_GALAXY_API_KEY))
 
-    config["output_folder"] = options.output or config.get("output_folder") or WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
+    config["output_folder"] = options.output \
+                              or config.get("output_folder") \
+                              or WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
 
     if enable_logger is None:
         config["enable_logger"] = options.enable_logger or config.get("enable_logger", False)
