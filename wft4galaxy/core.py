@@ -32,8 +32,10 @@ DEFAULT_TOOLS_FOLDER = ".tools"
 LogFormat = '%(asctime)s %(levelname)s: %(message)s'
 _logger = _logging.getLogger("WorkflowTest")
 
+
 class TestConfigError(RuntimeError):
     pass
+
 
 class FILE_FORMATS(object):
     YAML = "YAML"
@@ -1418,7 +1420,7 @@ def _get_workflow_info(filename, galaxy_url, galaxy_api_key, tool_folder=DEFAULT
 
     # setup galaxy instance
     galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
-    galaxy_tool_client = _ToolClient(galaxy_instance.gi) # get the non-object version of the GI
+    galaxy_tool_client = _ToolClient(galaxy_instance.gi)  # get the non-object version of the GI
 
     if not _os.path.exists(DEFAULT_TOOLS_FOLDER):
         _os.makedirs(DEFAULT_TOOLS_FOLDER)
@@ -1668,6 +1670,7 @@ def _make_parser():
                             WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME))
     return parser
 
+
 def _parse_cli_arguments(parser, cmd_args):
     args = parser.parse_args(cmd_args)
     _logger.debug("Parsed arguments %r", args)
@@ -1679,20 +1682,21 @@ def _parse_cli_arguments(parser, cmd_args):
 
     return args
 
+
 def _configure_test(options, enable_logger=None, enable_debug=None, disable_cleanup=None, disable_assertions=None):
     config = WorkflowTestConfiguration.load(options.file, output_folder=options.output)
 
     config["galaxy_url"] = options.server or _os.environ.get(ENV_KEY_GALAXY_URL) or config.get("galaxy_url")
     if not config["galaxy_url"]:
         raise TestConfigError("Galaxy URL not defined!  Use --server or the environment variable {} "
-                           "or specify it in the test configuration".format(ENV_KEY_GALAXY_URL))
+                              "or specify it in the test configuration".format(ENV_KEY_GALAXY_URL))
 
     config["galaxy_api_key"] = options.api_key \
                                or _os.environ.get(ENV_KEY_GALAXY_API_KEY) \
                                or config.get("galaxy_api_key")
     if not config["galaxy_api_key"]:
         raise TestConfigError("Galaxy API key not defined!  Use --api-key or the environment variable {} "
-                           "or specify it in the test configuration".format(ENV_KEY_GALAXY_API_KEY))
+                              "or specify it in the test configuration".format(ENV_KEY_GALAXY_API_KEY))
 
     config["output_folder"] = options.output \
                               or config.get("output_folder") \
@@ -1763,6 +1767,7 @@ def run_tests(args, enable_logger=None, enable_debug=None, disable_cleanup=None,
     _logger.debug("wft4galaxy.run_tests exiting with code: %s", exit_code)
     return exit_code
 
+
 def main():
     # Since we're running as the main executable, configure the logger
     _logging.basicConfig(format=LogFormat)
@@ -1777,6 +1782,7 @@ def main():
         if _logger.isEnabledFor(_logging.DEBUG):
             _logger.exception(e)
         _sys.exit(99)
+
 
 if __name__ == '__main__':
     main()
