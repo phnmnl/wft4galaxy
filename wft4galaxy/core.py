@@ -500,8 +500,7 @@ class WorkflowTestConfiguration(object):
         self.dump(filename=filename, worflow_tests_config=self, file_format=file_format)
 
     @staticmethod
-    def load(filename=DEFAULT_CONFIG_FILENAME, workflow_test_name=None,
-             file_format=FileFormats.YAML, output_folder=None):
+    def load(filename=DEFAULT_CONFIG_FILENAME, workflow_test_name=None, output_folder=None):
         """
         Load the configuration of a workflow test suite or a single workflow test
         from a YAML or JSON configuration file.
@@ -511,9 +510,6 @@ class WorkflowTestConfiguration(object):
 
         :type workflow_test_name: str
         :param workflow_test_name: the optional name of a workflow test
-
-        :type file_format: str
-        :param file_format: ``YAML`` or ``JSON``
 
         :type output_folder: str
         :param output_folder: the path of the output folder  
