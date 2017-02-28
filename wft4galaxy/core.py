@@ -1225,8 +1225,8 @@ class WorkflowTestRunner(_unittest.TestCase):
         available_tools = self._galaxy_instance.tools.list()
         missing_tools = []
         for order, step in _iteritems(workflow.steps):
-            if step.tool_id and len(
-                    filter(lambda t: t.id == step.tool_id and t.version == step.tool_version, available_tools)) == 0:
+            if step.tool_id and len([t for t in available_tools
+                                     if t.id == step.tool_id and t.version == step.tool_version]) == 0:
                 missing_tools.append((step.tool_id, step.tool_version))
         _logger.debug("Missing tools: {0}".format("None"
                                                   if len(missing_tools) == 0
