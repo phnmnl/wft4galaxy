@@ -957,7 +957,7 @@ class WorkflowTestSuite(object):
             try:
                 _os.rmdir(output_folder)
                 _logger.debug("Deleted empty output folder: '%s'", output_folder)
-            except OSError, e:
+            except OSError as e:
                 _logger.debug("Deleted empty output folder '%s' failed: ", e.message)
 
     def load(self, filename):
@@ -1177,7 +1177,7 @@ class WorkflowTestRunner(_unittest.TestCase):
                                 "" if len(test_result.failed_outputs) > 1 else "s",
                                 ", ".join(["'{0}'".format(n) for n in test_result.failed_outputs]))
 
-            except RuntimeError, e:
+            except RuntimeError as e:
                 error_msg = "Runtime error: {0}".format(e.message)
                 errors.append(error_msg)
                 _logger.error(error_msg)
@@ -1594,7 +1594,7 @@ def _load_configuration(config_filename):
         workflows_conf = None
         try:
             workflows_conf = _yaml_load(config_file)
-        except ValueError, e:
+        except ValueError as e:
             _logger.error("Configuration file '%s' is not a valid YAML or JSON file", config_filename)
             raise ValueError("Not valid format for the configuration file '%s'.", config_filename)
     # update inputs/expected fields
@@ -1634,9 +1634,9 @@ def _load_comparator(fully_qualified_comparator_function):
         mod = __import__(components[0])
         for comp in components[1:]:
             mod = getattr(mod, comp)
-    except ImportError, e:
+    except ImportError as e:
         _logger.error(e)
-    except AttributeError, e:
+    except AttributeError as e:
         _logger.error(e)
     except:
         _logger.error("Unexpected error: %s", _sys.exc_info()[0])
