@@ -7,6 +7,7 @@ setup(
     version='0.1',
     install_requires={
         'setuptools': ['setuptools'],
+        'future': ['future>=0.16.0'],
         'bioblend': ['bioblend>=0.8.0'],
         'ruamel.yaml': ['ruamel.yaml'],
         'lxml': ['lxml'],
