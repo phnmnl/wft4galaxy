@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 from future.utils import iteritems as _iteritems
+from past.builtins import basestring as _basestring
 
 import os as _os
 import shutil as _shutil
@@ -44,11 +45,11 @@ class FileFormats(object):
 
     @staticmethod
     def is_yaml(file_format):
-        return isinstance(file_format, basestring) and file_format.upper() == FileFormats.YAML
+        return isinstance(file_format, _basestring) and file_format.upper() == FileFormats.YAML
 
     @staticmethod
     def is_json(file_format):
-        return isinstance(file_format, basestring) and file_format.upper() == FileFormats.JSON
+        return isinstance(file_format, _basestring) and file_format.upper() == FileFormats.JSON
 
 
 class Workflow(object):
@@ -804,7 +805,7 @@ class WorkflowTestSuite(object):
         """
         if isinstance(workflow_test, WorkflowTestConfiguration):
             del self._workflow_test_suite_configuration[workflow_test.name]
-        elif isinstance(workflow_test, basestring):
+        elif isinstance(workflow_test, _basestring):
             del self._workflow_test_suite_configuration[workflow_test]
 
     def _add_test_result(self, test_result):
@@ -1376,7 +1377,7 @@ class WorkflowTestResult(object):
         :rtype: bool
         :return: ``True`` if the test is passed; ``False`` otherwise.
         """
-        return self.results[output if isinstance(output, basestring) else output.name]
+        return self.results[output if isinstance(output, _basestring) else output.name]
 
     def check_outputs(self):
         """
@@ -1609,7 +1610,7 @@ def _parse_dict(elements):
     results = {}
     for name, value in _iteritems(elements):
         result = value
-        if isinstance(value, basestring):
+        if isinstance(value, _basestring):
             result = {"name": name, "file": value}
         elif isinstance(value, dict):
             result["name"] = name
