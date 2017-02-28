@@ -925,7 +925,7 @@ class WorkflowTestSuite(object):
                 runner = self._create_test_runner(test_config, suite_config)
                 suite.addTest(runner)
         _RUNNER = _unittest.TextTestRunner(verbosity=2)
-        _RUNNER.run((suite))
+        _RUNNER.run(suite)
         # cleanup
         if not suite_config["disable_cleanup"]:
             self.cleanup(suite_config.get("output_folder", None))
@@ -1278,7 +1278,7 @@ class WorkflowTestRunner(_unittest.TestCase):
                     results[output.name] = result
                 _logger.debug("Checking OUTPUT '%s': DONE", output.name)
         _logger.info("Checking test output: DONE")
-        return (results, output_file_map)
+        return results, output_file_map
 
     def cleanup(self, output_folder=None):
         """
