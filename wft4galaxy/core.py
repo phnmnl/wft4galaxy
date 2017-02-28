@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from future.utils import iteritems as _iteritems
 
 import os as _os
 import shutil as _shutil
@@ -80,7 +81,7 @@ class Workflow(object):
         """
         Print workflow outputs (indexed by workflow step) to file.
         """
-        for step_id, step_outputs in self.outputs.iteritems():
+        for step_id, step_outputs in _iteritems(self.outputs):
             print("'{0}': {1}".format(step_id, ", ".join([x["label"] for x in step_outputs.values()])), file=stream)
 
     @staticmethod
@@ -287,7 +288,7 @@ class WorkflowTestConfiguration(object):
         :param inputs: dict
         :return: a dictionary of mappings (see :class:`WorkflowTestConfiguration`)
         """
-        for name, config in inputs.iteritems():
+        for name, config in _iteritems(inputs):
             self.add_input(name, config["file"], config["type"] if "type" in config else None)
 
     def add_input(self, name, path, input_=None):
@@ -347,8 +348,8 @@ class WorkflowTestConfiguration(object):
         :type params: dict
         :param params: dictionary of parameters indexed by step id (see :class:`WorkflowTestConfiguration`)
         """
-        for step_id, step_params in params.iteritems():
-            for name, value in step_params.iteritems():
+        for step_id, step_params in _iteritems(params):
+            for name, value in _iteritems(step_params):
                 self.add_param(step_id, name, value)
 
     def add_param(self, step_id, name, value):
@@ -423,7 +424,7 @@ class WorkflowTestConfiguration(object):
         :type expected_outputs: dict
         :param expected_outputs: a dictionary structured as specified in :class:`WorkflowTestConfiguration`
         """
-        for name, config in expected_outputs.iteritems():
+        for name, config in _iteritems(expected_outputs):
             self.add_expected_output(name, config["file"], config.get("comparator"))
 
     def add_expected_output(self, name, filename, comparator="filecmp.cmp"):
@@ -476,7 +477,7 @@ class WorkflowTestConfiguration(object):
         return dict({
             "name": self.name,
             "file": self.filename,
-            "inputs": {name: input_["file"][0] for name, input_ in self.inputs.iteritems()},
+            "inputs": {name: input_["file"][0] for name, input_ in _iteritems(self.inputs)},
             "params": self.params,
             "expected": self.expected_outputs
         })
@@ -530,7 +531,7 @@ class WorkflowTestConfiguration(object):
                                       or workflows_conf.get("output_folder") \
                                       or WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
             config["workflows"] = {}
-            for wf_name, wf_config in workflows_conf.get("workflows").iteritems():
+            for wf_name, wf_config in _iteritems(workflows_conf.get("workflows")):
                 wf_base_path = _os.path.join(base_path, wf_config.get("base_path", ""))
                 wf_config["output_folder"] = _os.path.join(config["output_folder"],
                                                            wf_config.get("output_folder", wf_name))
@@ -707,7 +708,7 @@ class WorkflowLoader(object):
         """
         if not self._galaxy_instance:
             raise RuntimeError("WorkflowLoader not initialized")
-        for _, wf in self._workflows.iteritems():
+        for _, wf in _iteritems(self._workflows):
             self.unload_workflow(wf.id)
 
 
@@ -1149,7 +1150,7 @@ class WorkflowTestRunner(_unittest.TestCase):
                 # upload input data to the current history
                 # and generate the datamap INPUT --> DATASET
                 datamap = {}
-                for label, config in inputs.iteritems():
+                for label, config in _iteritems(inputs):
                     datamap[label] = []
                     for filename in config["file"]:
                         dataset_filename = filename if _os.path.isabs(filename) else _os.path.join(base_path, filename)
@@ -1222,7 +1223,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         workflow = self.get_galaxy_workflow() if not workflow else workflow
         available_tools = self._galaxy_instance.tools.list()
         missing_tools = []
-        for order, step in workflow.steps.iteritems():
+        for order, step in _iteritems(workflow.steps):
             if step.tool_id and len(
                     filter(lambda t: t.id == step.tool_id and t.version == step.tool_version, available_tools)) == 0:
                 missing_tools.append((step.tool_id, step.tool_version))
@@ -1287,7 +1288,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         output datasets (downloaded from Galaxy) are deleted from the output path of the local file system.
         """
         _logger.debug("Cleanup of workflow test '%s'...", self._test_uuid)
-        for test_uuid, test_result in self._test_cases.iteritems():
+        for test_uuid, test_result in _iteritems(self._test_cases):
             if test_result.output_history:
                 self._galaxy_instance.histories.delete(test_result.output_history.id)
             self.cleanup_output_folder(test_result)
@@ -1305,7 +1306,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         """
         test_results = self._test_cases.values() if not test_result else [test_result]
         for _test in test_results:
-            for output_name, output_map in _test.output_file_map.iteritems():
+            for output_name, output_map in _iteritems(_test.output_file_map):
                 _logger.debug("Cleaning output folder: %s", output_name)
                 if _os.path.exists(output_map["filename"]):
                     _os.remove(output_map["filename"])
@@ -1333,7 +1334,7 @@ class WorkflowTestResult(object):
         self.results = results
 
         self.failed_outputs = {out[0]: out[1]
-                               for out in self.results.iteritems()
+                               for out in _iteritems(self.results)
                                if not out[1]}
 
     def __str__(self):
@@ -1341,7 +1342,7 @@ class WorkflowTestResult(object):
             .format(self.test_id, self.workflow.name,
                     ",".join([i for i in self.inputs]),
                     ", ".join(["{0}: {1}".format(x[0], "OK" if x[1] else "ERROR")
-                               for x in self.results.iteritems()]))
+                               for x in _iteritems(self.results)]))
 
     def __repr__(self):
         return self.__str__()
@@ -1430,7 +1431,7 @@ def _get_workflow_info(filename, galaxy_url, galaxy_api_key, tool_folder=DEFAULT
     with open(filename) as fp:
         wf_config = _json_load(fp)
 
-    for sid, step in wf_config["steps"].iteritems():
+    for sid, step in _iteritems(wf_config["steps"]):
         # tool = gi.tools.get()
 
         _logger.debug("Processing step '%s' -- '%s'", sid, step["name"])
@@ -1598,7 +1599,7 @@ def _load_configuration(config_filename):
             _logger.error("Configuration file '%s' is not a valid YAML or JSON file", config_filename)
             raise ValueError("Not valid format for the configuration file '%s'.", config_filename)
     # update inputs/expected fields
-    for wf_name, wf in workflows_conf["workflows"].iteritems():
+    for wf_name, wf in _iteritems(workflows_conf["workflows"]):
         wf["inputs"] = _parse_dict(wf["inputs"])
         wf["expected"] = _parse_dict(wf["expected"])
     return workflows_conf
@@ -1606,7 +1607,7 @@ def _load_configuration(config_filename):
 
 def _parse_dict(elements):
     results = {}
-    for name, value in elements.iteritems():
+    for name, value in _iteritems(elements):
         result = value
         if isinstance(value, basestring):
             result = {"name": name, "file": value}
