@@ -1319,7 +1319,7 @@ class WorkflowTestResult(object):
 
     def __init__(self, test_id, workflow, inputs, outputs, output_history, expected_outputs,
                  missing_tools, results, output_file_map,
-                 output_folder=WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER, errors=[]):
+                 output_folder=WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER, errors=None):
         self.test_id = test_id
         self.workflow = workflow
         self.inputs = inputs
@@ -1331,6 +1331,9 @@ class WorkflowTestResult(object):
         self.missing_tools = missing_tools
         self.output_file_map = output_file_map
         self.results = results
+        # init errors if it is None
+        if errors is None:
+            errors = []
 
         self.failed_outputs = {out[0]: out[1]
                                for out in self.results.iteritems()
