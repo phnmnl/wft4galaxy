@@ -844,9 +844,9 @@ class WorkflowTestSuite(object):
         config["enable_logger"] = enable_logger if enable_logger is not None else config.get("enable_logger", True)
         config["enable_debug"] = enable_debug if enable_debug is not None else config.get("enable_debug", False)
         config["disable_cleanup"] = disable_cleanup \
-            if not disable_cleanup is None else config.get("disable_cleanup", False)
+            if disable_cleanup is not None else config.get("disable_cleanup", False)
         config["disable_assertions"] = disable_assertions \
-            if not disable_assertions is None else config.get("disable_assertions", False)
+            if disable_assertions is not None else config.get("disable_assertions", False)
         # update logger level
         if config.get("enable_logger", True) or config.get("enable_debug", True):
             config["logger_level"] = _logging.DEBUG if config.get("enable_debug", False) else _logging.INFO
@@ -1125,9 +1125,9 @@ class WorkflowTestRunner(_unittest.TestCase):
                 raise ValueError("No output configured !!!")
 
         # update config options
-        disable_cleanup = disable_cleanup if not disable_cleanup is None else self._disable_cleanup
-        disable_assertions = disable_assertions if not disable_assertions is None else self._disable_assertions
-        output_folder = output_folder if not output_folder is None else self._output_folder
+        disable_cleanup = disable_cleanup if disable_cleanup is not None else self._disable_cleanup
+        disable_assertions = disable_assertions if disable_assertions is not None else self._disable_assertions
+        output_folder = output_folder if output_folder is not None else self._output_folder
 
         # uuid of the current test
         test_uuid = self._get_test_uuid(True)
