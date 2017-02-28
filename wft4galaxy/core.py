@@ -364,7 +364,7 @@ class WorkflowTestConfiguration(object):
         :type value: str
         :param value: parameter value
         """
-        if not self._params.has_key(step_id):
+        if step_id not in self._params:
             self._params[step_id] = {}
         self._params[step_id][name] = value
 
@@ -378,7 +378,7 @@ class WorkflowTestConfiguration(object):
         :type name: str
         :param name: name of the parameter to be removed
         """
-        if self._params.has_key(step_id):
+        if step_id in self._params:
             del self._params[step_id][name]
 
     def get_params(self, step_id):
