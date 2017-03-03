@@ -7,6 +7,7 @@ setup(
     version='0.1',
     install_requires={
         'setuptools': ['setuptools'],
+        'future': ['future>=0.16.0'],
         'bioblend': ['bioblend>=0.8.0'],
         'ruamel.yaml': ['ruamel.yaml'],
         'lxml': ['lxml'],
@@ -15,5 +16,5 @@ setup(
     },
     packages=["wft4galaxy", "wft4galaxy.comparators"],
     scripts=['utils/docker/wft4galaxy-docker'],
-    entry_points={'console_scripts': ['wft4galaxy = wft4galaxy.core:run_tests']},
+    entry_points={'console_scripts': ['wft4galaxy = wft4galaxy.core:main']},
 )
