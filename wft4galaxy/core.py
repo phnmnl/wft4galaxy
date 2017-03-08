@@ -12,6 +12,10 @@ import argparse as _argparse
 import tarfile as _tarfile
 import sys as _sys
 
+from .common import TestConfigError
+from .common import ENV_KEY_GALAXY_URL
+from .common import ENV_KEY_GALAXY_API_KEY
+
 from lxml import etree as _etree
 from uuid import uuid1 as  _uuid1
 from difflib import unified_diff as _unified_diff
