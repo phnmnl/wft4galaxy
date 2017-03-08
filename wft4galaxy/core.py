@@ -23,10 +23,6 @@ from json import load as _json_load, loads as _json_loads, dumps as _json_dumps
 from bioblend.galaxy.objects import GalaxyInstance as ObjGalaxyInstance
 from bioblend.galaxy.tools import ToolClient as _ToolClient
 
-# Galaxy ENV variable names
-ENV_KEY_GALAXY_URL = "GALAXY_URL"
-ENV_KEY_GALAXY_API_KEY = "GALAXY_API_KEY"
-
 # Default folder where tool configuration is downloaded
 DEFAULT_TOOLS_FOLDER = ".tools"
 
@@ -39,10 +35,6 @@ _StandardError = Exception
 try:
     _StandardError = StandardError
 except NameError:
-    pass
-
-
-class TestConfigError(RuntimeError):
     pass
 
 
