@@ -1665,8 +1665,8 @@ def base_comparator(actual_output_filename, expected_output_filename):
 def _make_parser():
     parser = _argparse.ArgumentParser()
     parser.add_argument("test", help="Workflow Test Name", nargs="*")
-    parser.add_argument('--server', help='Galaxy server URL')
-    parser.add_argument('--api-key', help='Galaxy server API KEY')
+    parser.add_argument('--server', help='Galaxy server URL', dest="galaxy_url")
+    parser.add_argument('--api-key', help='Galaxy server API KEY', dest="galaxy_api_key")
     parser.add_argument('--enable-logger', help='Enable log messages', action='store_true')
     parser.add_argument('--debug', help='Enable debug mode', action='store_true')
     parser.add_argument('--disable-cleanup', help='Disable cleanup', action='store_true')
@@ -1693,12 +1693,12 @@ def _parse_cli_arguments(parser, cmd_args):
 def _configure_test(options, enable_logger=None, enable_debug=None, disable_cleanup=None, disable_assertions=None):
     config = WorkflowTestConfiguration.load(options.file, output_folder=options.output)
 
-    config["galaxy_url"] = options.server or _os.environ.get(ENV_KEY_GALAXY_URL) or config.get("galaxy_url")
+    config["galaxy_url"] = options.galaxy_url or _os.environ.get(ENV_KEY_GALAXY_URL) or config.get("galaxy_url")
     if not config["galaxy_url"]:
         raise TestConfigError("Galaxy URL not defined!  Use --server or the environment variable {} "
                               "or specify it in the test configuration".format(ENV_KEY_GALAXY_URL))
 
-    config["galaxy_api_key"] = options.api_key \
+    config["galaxy_api_key"] = options.galaxy_api_key \
                                or _os.environ.get(ENV_KEY_GALAXY_API_KEY) \
                                or config.get("galaxy_api_key")
     if not config["galaxy_api_key"]:
