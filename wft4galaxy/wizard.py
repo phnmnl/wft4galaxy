@@ -51,5 +51,25 @@ def write_test_suite_definition_file(output_file, suite_config):
         print(e.message)
 
 
+def generate_template(config):
+    _logger.info("Generating test definition template folder...")
+    # config a sample suite
+    suite = _wft4core.WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
+    cfg = _wft4core.WorkflowTestConfiguration(name="workflow_test_case_1")
+    cfg.output_folder = config["output_folder"]
+    cfg.enable_debug = config["enable_debug"]
+    cfg.add_input("input_1", "{0}/<INPUT_FILE_PATH>".format(DEFAULT_INPUTS_FOLDER), "txt")
+    cfg.add_expected_output("output_1", "{0}/<OUTPUT_FILE_PATH>".format(DEFAULT_EXPECTED_FOLDER))
+    suite.add_workflow_test(cfg)
+    output_folder = _os.path.abspath(config["output_folder"])
+    output_filename = _os.path.join(output_folder, config["file"])
+    # make directory structure of the test definition
+    _makedirs(output_folder)
+    _makedirs(_os.path.join(output_folder, DEFAULT_INPUTS_FOLDER))
+    _makedirs(_os.path.join(output_folder, DEFAULT_EXPECTED_FOLDER))
+    # write the definition file
+    write_test_suite_definition_file(output_filename, suite)
+    _logger.info("Test definition template folder correctly generated.\n ===> See folder: %s", output_folder)
+
 if __name__ == '__main__':
     main()
