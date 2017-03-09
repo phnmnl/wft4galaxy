@@ -9,7 +9,7 @@ setup(
         'setuptools': ['setuptools'],
         'future': ['future>=0.16.0'],
         'bioblend': ['bioblend>=0.8.0'],
-        'ruamel.yaml': ['ruamel.yaml'],
+        'ruamel.yaml': ['ruamel.yaml'],  # TODO: to be removed in the next release
         'lxml': ['lxml'],
         'pyyaml': ['pyyaml'],
         'sphinx_rtd_theme': ['sphinx_rtd_theme']
