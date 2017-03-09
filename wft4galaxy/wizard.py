@@ -71,5 +71,41 @@ def generate_template(config):
     write_test_suite_definition_file(output_filename, suite)
     _logger.info("Test definition template folder correctly generated.\n ===> See folder: %s", output_folder)
 
+
+def _make_parser():
+    main_parser = _argparse.ArgumentParser()
+    # log settings
+    main_parser.add_argument('--debug', help='Enable debug mode', action='store_true', default=False,
+                             dest="enable_debug")
+    # Galaxy instance settings
+    main_parser.add_argument('--server', help='Galaxy server URL (default $GALAXY_URL)', dest="galaxy_url")
+    main_parser.add_argument('--api-key', help='Galaxy server API KEY (default $GALAXY_API_KEY)', dest="galaxy_api_key")
+    # output settings
+    main_parser.add_argument('-o', '--output', dest="output_folder", default=DEFAULT_OUTPUT_FOLDER,
+                             help='absolute path of the output folder (default is "{0}")'.format(DEFAULT_OUTPUT_FOLDER))
+    main_parser.add_argument("-f", "--file", default=DEFAULT_TEST_DEFINITION_FILENAME,
+                             help="YAML configuration file of workflow tests (default is \"{0}\")"
+                             .format(DEFAULT_TEST_DEFINITION_FILENAME))
+    # reference to the global options
+    epilog = "NOTICE: Type \"{0} -h\" to see the global options.".format(main_parser.prog)
+
+    # add entrypoint subparsers
+    command_subparsers_factory = \
+        main_parser.add_subparsers(title="command",
+                                   description="command", dest=_OPTION_CMD,
+                                   help="Wizard tool command: [generate-test | generate-template]")
+
+    # add wizard options
+    test_parser = command_subparsers_factory.add_parser(_TEST_CMD,
+                                                        help="Generate a test definition file from a history",
+                                                        epilog=epilog)
+
+    test_parser.add_argument('workflow-name', help='Workflow name')
+    test_parser.add_argument('history-name', help='History name')
+
+    template_parser = command_subparsers_factory.add_parser(_TEMPLATE_CMD,
+                                                            help="Generate a test definition template",
+                                                            epilog=epilog)
+    return main_parser
 if __name__ == '__main__':
     main()
