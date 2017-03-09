@@ -15,7 +15,8 @@ setup(
         'sphinx_rtd_theme': ['sphinx_rtd_theme'],
         'Jinja2': ['Jinja2>=2.9']
     },
-    packages=["wft4galaxy", "wft4galaxy.comparators"],
+    package_data={'templates': ['*']},
+    packages=["wft4galaxy", "wft4galaxy.comparators", "templates"],
     scripts=['utils/docker/wft4galaxy-docker'],
     entry_points={'console_scripts': ['wft4galaxy = wft4galaxy.core:main']},
 )
