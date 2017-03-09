@@ -296,7 +296,7 @@ class WorkflowTestConfiguration(object):
         for name, config in _iteritems(inputs):
             self.add_input(name, config["file"], config["type"] if "type" in config else None)
 
-    def add_input(self, name, path, input_=None):
+    def add_input(self, name, path, type_=None):
         """
         Add a new input mapping.
 
@@ -306,12 +306,12 @@ class WorkflowTestConfiguration(object):
         :type path: str
         :param path: the path (relative to the ``base_path``) of the file containing an input dataset
         
-        :type input_: str
-        :param input_: the type of the input dataset  
+        :type type_: str
+        :param type_: the type of the input dataset  
         """
         if not name:
             raise ValueError("Input name not defined")
-        self._inputs[name] = {"name": name, "file": path if isinstance(path, list) else [path], "type": input_}
+        self._inputs[name] = {"name": name, "file": path if isinstance(path, list) else [path], "type": type_}
 
     def remove_input(self, name):
         """
