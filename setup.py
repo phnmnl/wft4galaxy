@@ -12,7 +12,8 @@ setup(
         'ruamel.yaml': ['ruamel.yaml'],  # TODO: to be removed in the next release
         'lxml': ['lxml'],
         'pyyaml': ['pyyaml'],
-        'sphinx_rtd_theme': ['sphinx_rtd_theme']
+        'sphinx_rtd_theme': ['sphinx_rtd_theme'],
+        'Jinja2': ['Jinja2>=2.9']
     },
     packages=["wft4galaxy", "wft4galaxy.comparators"],
     scripts=['utils/docker/wft4galaxy-docker'],
