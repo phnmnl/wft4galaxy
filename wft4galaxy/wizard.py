@@ -107,5 +107,37 @@ def _make_parser():
                                                             help="Generate a test definition template",
                                                             epilog=epilog)
     return main_parser
+
+
+def main(args=None):
+    # default configuration of the logger
+    # _logging.basicConfig(format=LogFormat)
+
+    # set args
+    args = args if args else _sys.argv[1:]
+    try:
+        # process CLI args and opts
+        parser = _make_parser()
+        options = parser.parse_args(args)
+        config = Configuration(vars(options))
+
+        # enable debug mode
+        if options.enable_debug:
+            _logger.setLevel(_logging.DEBUG)
+        # log the configuration
+        _logger.debug("CLI config %r", config)
+        # update defaults
+        _set_galaxy_server_settings(config, options)
+        # log the configuration
+        _logger.info("Configuration...")
+        print(_pformat(config))
+        if options.command == _TEMPLATE_CMD:
+            generate_template(config)
+    except Exception as e:
+        _logger.error(e)
+        if _logger.isEnabledFor(_logging.DEBUG):
+            _logger.exception(e)
+
+
 if __name__ == '__main__':
     main()
