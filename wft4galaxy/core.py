@@ -206,6 +206,7 @@ class WorkflowTestConfiguration(object):
     DEFAULT_OUTPUT_FOLDER = "results"
     DEFAULT_CONFIG_FILENAME = "workflow-test-suite.yml"
     DEFAULT_WORKFLOW_CONFIG = {
+        "name": "workflow_test_case",
         "file": "workflow.ga",
         "output_folder": DEFAULT_OUTPUT_FOLDER,
         "inputs": {
