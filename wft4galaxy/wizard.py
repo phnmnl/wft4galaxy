@@ -40,5 +40,16 @@ _logger = _logging.getLogger("WorkflowTest")
 _logger.setLevel(_logging.INFO)
 
 
+def write_test_suite_definition_file(output_file, suite_config):
+    j2_env = _jinja2.Environment(loader=_jinja2.FileSystemLoader(_TEMPLATE_DIR), trim_blocks=True)
+    try:
+        file_content = j2_env.get_template('workflow-test-template.yaml').render(config=suite_config)
+        _logger.debug("==>Output file:\n%s", file_content)
+        with open(output_file, "w") as out:
+            out.write(file_content)
+    except _jinja2.exceptions.UndefinedError as e:
+        print(e.message)
+
+
 if __name__ == '__main__':
     main()
