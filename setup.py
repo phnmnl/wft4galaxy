@@ -18,5 +18,8 @@ setup(
     package_data={'templates': ['*']},
     packages=["wft4galaxy", "wft4galaxy.comparators", "templates"],
     scripts=['utils/docker/wft4galaxy-docker'],
-    entry_points={'console_scripts': ['wft4galaxy = wft4galaxy.core:main']},
+    entry_points={'console_scripts': [
+        'wft4galaxy = wft4galaxy.core:main',
+        'wft4galaxy-wizard = wft4galaxy.wizard:main'
+    ]}
 )
