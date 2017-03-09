@@ -717,6 +717,7 @@ class WorkflowLoader(object):
             self.unload_workflow(wf.id)
 
 
+# FIXME: split config from runner
 class WorkflowTestSuite(object):
     """
     Represent a test suite.
@@ -752,6 +753,17 @@ class WorkflowTestSuite(object):
         self._workflow_loader = WorkflowLoader.get_instance(self._galaxy_instance)
         # default suite configuration
         self._workflow_test_suite_configuration = WorkflowTestSuite._DEFAULT_SUITE_CONFIGURATION.copy()
+
+        # TODO: move on the configuration object `WorkflowTestSuiteConfiguration`
+        # galaxy_url: "http://192.168.64.8:30700" # default is GALAXY_URL
+        # galaxy_api_key: "4b86f51252b5f220012b3e259d0877f9" # default is GALAXY_API_KEY
+        # enable_debug: True
+        # output_folder: "results"
+        self.enable_debug = False
+        self.galaxy_url = galaxy_url
+        self.galaxy_api_key = galaxy_api_key
+        self.output_folder = WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
+
 
     @property
     def galaxy_instance(self):
