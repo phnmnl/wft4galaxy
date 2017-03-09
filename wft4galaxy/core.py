@@ -503,7 +503,7 @@ class WorkflowTestConfiguration(object):
         if not filename:
             filename, _ = _os.path.splitext(self.filename)
             filename += "json" if FileFormats.is_json(file_format) else "yml"
-        self.dump(filename=filename, worflow_tests_config=self, file_format=file_format)
+        self.dump(filename=filename, worflow_tests_config=self.to_dict(), file_format=file_format)
 
     @staticmethod
     def load(filename=DEFAULT_CONFIG_FILENAME, workflow_test_name=None, output_folder=None):
