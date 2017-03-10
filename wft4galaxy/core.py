@@ -1717,61 +1717,56 @@ def _parse_cli_arguments(parser, cmd_args):
     return args
 
 
-def _configure_test(options, enable_logger=None, enable_debug=None, disable_cleanup=None, disable_assertions=None):
-    config = WorkflowTestConfiguration.load(options.file, output_folder=options.output)
-
-    config["galaxy_url"] = options.galaxy_url or _os.environ.get(ENV_KEY_GALAXY_URL) or config.get("galaxy_url")
-    if not config["galaxy_url"]:
+def _configure_test(galaxy_url, galaxy_api_key, suite, output_folder, tests,
+                    enable_logger, enable_debug, disable_cleanup, disable_assertions):
+    # configure `galaxy_url`
+    suite.galaxy_url = galaxy_url or suite.galaxy_url or _os.environ.get(ENV_KEY_GALAXY_URL)
+    if not suite.galaxy_url:
         raise TestConfigError("Galaxy URL not defined!  Use --server or the environment variable {} "
                               "or specify it in the test configuration".format(ENV_KEY_GALAXY_URL))
-
-    config["galaxy_api_key"] = options.galaxy_api_key \
-                               or _os.environ.get(ENV_KEY_GALAXY_API_KEY) \
-                               or config.get("galaxy_api_key")
-    if not config["galaxy_api_key"]:
+    # configure `galaxy_api_key`
+    suite.galaxy_api_key = galaxy_api_key \
+                           or suite.galaxy_api_key \
+                           or _os.environ.get(ENV_KEY_GALAXY_API_KEY)
+    if not suite.galaxy_api_key:
         raise TestConfigError("Galaxy API key not defined!  Use --api-key or the environment variable {} "
                               "or specify it in the test configuration".format(ENV_KEY_GALAXY_API_KEY))
+    # configure `output_folder`
+    suite.output_folder = output_folder \
+                          or suite.output_folder \
+                          or WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
 
-    config["output_folder"] = options.output \
-                              or config.get("output_folder") \
-                              or WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
+    if enable_logger is not None:
+        suite.enable_logger = enable_logger
 
-    if enable_logger is None:
-        config["enable_logger"] = options.enable_logger or config.get("enable_logger", False)
-    else:
-        config["enable_logger"] = enable_logger
+    if enable_debug is not None:
+        suite.enable_debug = enable_debug
 
-    if enable_debug is None:
-        config["enable_debug"] = options.debug or config.get("enable_debug", False)
-    else:
-        config["enable_debug"] = enable_debug
+    if disable_cleanup is not None:
+        suite.disable_cleanup = disable_cleanup
 
-    if disable_cleanup is None:
-        config["disable_cleanup"] = options.disable_cleanup or config.get("disable_cleanup", False)
-    else:
-        config["disable_cleanup"] = disable_cleanup
+    if disable_assertions is not None:
+        suite.disable_assertions = disable_assertions
 
-    if disable_assertions is None:
-        config["disable_assertions"] = options.disable_assertions or config.get("disable_assertions", False)
-    else:
-        config["disable_assertions"] = disable_assertions
-
-    for test_config in config["workflows"].values():
-        test_config.disable_cleanup = config["disable_cleanup"]
-        test_config.disable_assertions = config["disable_assertions"]
+    # FIXME: do we need this ?
+    for test_config in suite.workflow_tests.values():
+        test_config.disable_cleanup = suite.disable_cleanup
+        test_config.disable_assertions = suite.disable_assertions
 
     # enable the logger with the proper detail level
-    if config["enable_logger"] or config["enable_debug"]:
-        config["logger_level"] = _logging.DEBUG if config["enable_debug"] else _logging.INFO
-        _logger.setLevel(config["logger_level"])
+    if suite.enable_logger or suite.enable_debug:
+        _logger_level = _logging.DEBUG if suite.enable_debug else _logging.INFO
+        _logger.setLevel(_logger_level)
 
     # log the current configuration
-    _logger.info("Configuration: %r", config)
-
-    return config
+    _logger.info("Configuration: %r", suite)
 
 
-def run_tests(args, enable_logger=None, enable_debug=None, disable_cleanup=None, disable_assertions=None):
+def run_tests(filename,
+              galaxy_url=None, galaxy_api_key=None,
+              enable_logger=None, enable_debug=None,
+              disable_cleanup=None, disable_assertions=None,
+              output_folder=None, tests=None):
     """
     Run a workflow test suite defined in a configuration file.
 
@@ -1789,15 +1784,20 @@ def run_tests(args, enable_logger=None, enable_debug=None, disable_cleanup=None,
     :param disable_assertions: ``True`` to disable assertions during the execution of the workflow test;
         ``False`` (default) otherwise.
     """
-    parser = _make_parser()
-    options = _parse_cli_arguments(parser, args)
-    config = _configure_test(options, enable_logger, enable_debug, disable_cleanup, disable_assertions)
+
+    # load suite configuration
+    suite = WorkflowTestSuiteConfiguration.load(filename,
+                                                output_folder=output_folder)  # FIXME: do we need output_folder here ?
+    _configure_test(galaxy_url=galaxy_url, galaxy_api_key=galaxy_api_key,
+                    suite=suite, tests=tests, output_folder=output_folder,
+                    enable_logger=enable_logger, enable_debug=enable_debug,
+                    disable_cleanup=disable_cleanup, disable_assertions=disable_assertions)
 
     # create and run the configured test suite
-    test_suite = WorkflowTestSuiteRunner(config["galaxy_url"], config["galaxy_api_key"])
-    test_suite.run_test_suite(config, tests=options.test)
-
-    exit_code = len([r for r in test_suite.get_workflow_test_results() if r.failed()])
+    test_suite_runner = WorkflowTestSuiteRunner(suite.galaxy_url, suite.galaxy_api_key)
+    test_suite_runner.run_test_suite(suite, tests=tests)
+    # compute exit code
+    exit_code = len([r for r in test_suite_runner.get_workflow_test_results() if r.failed()])
     _logger.debug("wft4galaxy.run_tests exiting with code: %s", exit_code)
     return exit_code
 
@@ -1806,7 +1806,17 @@ def main():
     # Since we're running as the main executable, configure the logger
     _logging.basicConfig(format=LogFormat)
     try:
-        code = run_tests(_sys.argv[1:])
+        parser = _make_parser()
+        options = _parse_cli_arguments(parser, _sys.argv[1:])
+        code = run_tests(filename=options.file,
+                         galaxy_url=options.galaxy_url,
+                         galaxy_api_key=options.galaxy_api_key,
+                         output_folder=options.output,
+                         enable_logger=options.enable_logger,
+                         enable_debug=options.debug,
+                         disable_assertions=options.disable_assertions,
+                         disable_cleanup=options.disable_cleanup,
+                         tests=options.test)
         _sys.exit(code)
     except _StandardError as e:
         # in some cases we exit with an exception even for rather "normal"
