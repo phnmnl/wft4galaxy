@@ -1604,6 +1604,9 @@ def _process_tool_param_element(input_el, tool_params):
                                            when_options)
 
 
+def configure_galaxy_instance(galaxy_url, galaxy_api_key):
+    _os.environ[ENV_KEY_GALAXY_URL] = galaxy_url
+    _os.environ[ENV_KEY_GALAXY_API_KEY] = galaxy_api_key
 
 
 def _get_galaxy_instance(galaxy_url=None, galaxy_api_key=None):
