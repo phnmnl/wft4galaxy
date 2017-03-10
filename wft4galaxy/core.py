@@ -817,6 +817,13 @@ class WorkflowTestSuite(object):
         else:
             raise ValueError("Filename '{0}' not found".format(filename))
 
+    def run(self, galaxy_url=None, galaxy_api_key=None, tests=None,
+                  enable_logger=None, enable_debug=None, disable_cleanup=None):
+        test_suite_runner = WorkflowTestSuiteRunner(galaxy_url, galaxy_api_key)
+        return test_suite_runner.run_test_suite(self, tests=tests,
+                                                enable_logger=enable_logger, enable_debug=enable_debug,
+                                                disable_assertions=True, disable_cleanup=disable_cleanup)
+
 
 class WorkflowTestSuiteRunner(object):
     """
