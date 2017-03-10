@@ -506,7 +506,8 @@ class WorkflowTestConfiguration(object):
         self.dump(filename=filename, worflow_tests_config=self.to_dict(), file_format=file_format)
 
     @staticmethod
-    def load(filename=DEFAULT_CONFIG_FILENAME, workflow_test_name=None, output_folder=None):
+    def load(filename=DEFAULT_CONFIG_FILENAME,
+             workflow_test_name=DEFAULT_WORKFLOW_CONFIG["name"], output_folder=None):
         """
         Load the configuration of a workflow test suite or a single workflow test
         from a YAML or JSON configuration file.
@@ -515,48 +516,38 @@ class WorkflowTestConfiguration(object):
         :param filename: the path of the file containing the suite definition
 
         :type workflow_test_name: str
-        :param workflow_test_name: the optional name of a workflow test
+        :param workflow_test_name: the optional name of a workflow test (default is "workflow-test-case")
 
         :type output_folder: str
         :param output_folder: the path of the output folder  
 
-        :rtype: dict or :class:`WorkflowTestConfiguration`
-        :return: a dictionary containing the configuration of a workflow test suite or
-            a single workflow test configuration (i.e., an instance of :class:`WorkflowTestConfiguration`)
+        :rtype: :class:`WorkflowTestConfiguration`
+        :return: the :class:`WorkflowTestConfiguration` instance which matches the name 
+                provided by the argument `workflow_test_name_`
         """
-
-        config = {}
         if _os.path.exists(filename):
-            workflows_conf = _load_configuration(filename)
-            base_path = workflows_conf.get("base_path", _os.path.dirname(_os.path.abspath(filename)))
-            config["galaxy_url"] = workflows_conf.get("galaxy_url")
-            config["galaxy_api_key"] = workflows_conf.get("galaxy_api_key")
-            config["enable_logger"] = workflows_conf.get("enable_logger", False)
-            config["output_folder"] = output_folder \
-                                      or workflows_conf.get("output_folder") \
-                                      or WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
-            config["workflows"] = {}
-            for wf_name, wf_config in _iteritems(workflows_conf.get("workflows")):
-                wf_base_path = _os.path.join(base_path, wf_config.get("base_path", ""))
-                wf_config["output_folder"] = _os.path.join(config["output_folder"],
-                                                           wf_config.get("output_folder", wf_name))
-                # add the workflow
-                w = WorkflowTestConfiguration(name=wf_name, base_path=wf_base_path, workflow_filename=wf_config["file"],
-                                              inputs=wf_config["inputs"], params=wf_config.get("params", {}),
-                                              expected_outputs=wf_config["expected"],
-                                              output_folder=wf_config["output_folder"])
-                config["workflows"][wf_name] = w
-                # returns the current workflow test config
-                # if its name matches the 'workflow_test_name' param
-                if workflow_test_name and wf_name == workflow_test_name:
-                    return w
+            file_configuration = _load_configuration(filename)
+            base_path = file_configuration.get("base_path", _os.path.dirname(_os.path.abspath(filename)))
+            output_folder = output_folder \
+                            or file_configuration.get("output_folder") \
+                            or WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
             # raise an exception if the workflow test we are searching for
             # cannot be found within the configuration file.
-            if workflow_test_name:
+            if workflow_test_name not in file_configuration["workflows"]:
                 raise KeyError("WorkflowTest with name '{}' not found".format(workflow_test_name))
+
+            wft_config = file_configuration["workflows"][workflow_test_name]
+            wft_base_path = _os.path.join(base_path, wft_config.get("base_path", ""))
+            wft_output_folder = _os.path.join(output_folder,
+                                              wft_config.get("output_folder", workflow_test_name))
+            # add the workflow
+            return WorkflowTestConfiguration(name=workflow_test_name,
+                                             base_path=wft_base_path, workflow_filename=wft_config["file"],
+                                             inputs=wft_config["inputs"], params=wft_config.get("params", {}),
+                                             expected_outputs=wft_config["expected"],
+                                             output_folder=wft_output_folder)
         else:
             raise ValueError("Filename '{0}' not found".format(filename))
-        return config
 
     @staticmethod
     def dump(filename, worflow_tests_config, file_format=FileFormats.YAML):
