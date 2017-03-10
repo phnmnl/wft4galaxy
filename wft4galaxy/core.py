@@ -585,6 +585,11 @@ class WorkflowTestCase(object):
                 f.write(_json_dumps(config, indent=2))
         return config
 
+    def run(self, galaxy_url=None, galaxy_api_key=None, disable_cleanup=None, enable_logger=None, enable_debug=None):
+        runner = WorkflowTestRunner.new_instance(self, galaxy_url, galaxy_api_key)
+        return runner.run_test(disable_assertions=True, disable_cleanup=disable_cleanup,
+                               enable_logger=enable_logger, enable_debug=enable_debug)
+
 
 class WorkflowLoader(object):
     """
