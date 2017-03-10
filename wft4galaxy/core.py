@@ -811,6 +811,52 @@ class WorkflowTestSuiteConfiguration(object):
             return suite
         else:
             raise ValueError("Filename '{0}' not found".format(filename))
+
+
+
+
+class WorkflowTestSuiteRunner(object):
+    """
+    Represent a test suite.
+    """
+
+    def __init__(self, galaxy_url=None, galaxy_api_key=None):
+        """
+        Create an instance of :class:`WorkflowTestSuite`.
+
+        :type galaxy_url: str
+        :param galaxy_url: url of your Galaxy server instance.  If ``none``, the environment variable
+            ``GALAXY_URL`` is used. An error is raised when such a variable cannot be found.
+
+        :type galaxy_api_key: str
+        :param galaxy_api_key: an API key from your Galaxy server instance.  If ``none``, the environment variable
+            ``GALAXY_API_KEY`` is used. An error is raised when such a variable cannot be found.
+        """
+        self._workflows = {}
+        self._workflow_runners = []
+        self._workflow_test_results = []
+        self._galaxy_instance = None
+        # initialize the galaxy instance
+        self._galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
+        # initialize the workflow loader
+        self._workflow_loader = WorkflowLoader.get_instance(self._galaxy_instance)
+
+    @property
+    def galaxy_instance(self):
+        """
+        :rtype: :class:`bioblend.galaxy.objects.GalaxyInstance`
+        :return: the :class:`bioblend.galaxy.objects.GalaxyInstance` instance used to communicate with a Galaxy server
+        """
+        return self._galaxy_instance
+
+    @property
+    def workflow_loader(self):
+        """
+        :rtype: :class:`WorkflowTestLoader`
+        :return: the :class:`WorkflowTestLoader` instance used by this suite
+        """
+        return self._workflow_loader
+
     def _add_test_result(self, test_result):
         """
         Private method to publish a test result.
@@ -831,10 +877,10 @@ class WorkflowTestSuiteConfiguration(object):
         :return: the created :class:'WorkflowTestResult' instance
         """
         # update test config
-        workflow_test_config.disable_cleanup = suite_config.get("disable_cleanup", False)
-        workflow_test_config.disable_assertions = suite_config.get("disable_assertions", False)
-        workflow_test_config.enable_logger = suite_config.get("enable_logger", False)
-        workflow_test_config.enable_debug = suite_config.get("enable_debug", False)
+        workflow_test_config.disable_cleanup = suite_config.disable_cleanup
+        workflow_test_config.disable_assertions = suite_config.disable_assertions
+        workflow_test_config.enable_logger = suite_config.enable_logger
+        workflow_test_config.enable_debug = suite_config.enable_debug
         # create a new runner instance
         runner = WorkflowTestRunner(self.galaxy_instance, self.workflow_loader, workflow_test_config, self)
         self._workflow_runners.append(runner)
@@ -842,24 +888,26 @@ class WorkflowTestSuiteConfiguration(object):
 
     def _suite_setup(self, config, enable_logger=None,
                      enable_debug=None, disable_cleanup=None, disable_assertions=None):
-        config["enable_logger"] = enable_logger if enable_logger is not None else config.get("enable_logger", True)
-        config["enable_debug"] = enable_debug if enable_debug is not None else config.get("enable_debug", False)
-        config["disable_cleanup"] = disable_cleanup \
-            if disable_cleanup is not None else config.get("disable_cleanup", False)
-        config["disable_assertions"] = disable_assertions \
-            if disable_assertions is not None else config.get("disable_assertions", False)
+        if enable_logger is not None:
+            config.enable_logger = enable_logger
+        if enable_debug is not None:
+            config.enable_debug = enable_debug
+        if disable_cleanup is not None:
+            config.disable_cleanup = disable_cleanup
+        if disable_assertions is not None:
+            config.disable_assertions = disable_assertions
         # update logger level
-        if config.get("enable_logger", True) or config.get("enable_debug", True):
-            config["logger_level"] = _logging.DEBUG if config.get("enable_debug", False) else _logging.INFO
-            _logger.setLevel(config["logger_level"])
+        if config.enable_logger or config.enable_debug:
+            logger_level = _logging.DEBUG if config.enable_debug else _logging.INFO
+            _logger.setLevel(logger_level)
 
-    def run_tests(self, workflow_tests_config=None, tests=None, enable_logger=None,
+    def run_tests(self, suite_config, tests=None, enable_logger=None,
                   enable_debug=None, disable_cleanup=None, disable_assertions=None):
         """
         Execute tests associated to this suite and return the corresponding results.
 
-        :type workflow_tests_config: dict
-        :param workflow_tests_config: a suite configuration as produced
+        :type suite_config: dict
+        :param suite_config: a suite configuration as produced
                by the `WorkflowTestConfiguration.load(...)` method
 
         :type tests: list
@@ -883,25 +931,24 @@ class WorkflowTestSuiteConfiguration(object):
         :return: a list of :class:`WorkflowTestResult` instances
         """
         results = []
-        suite_config = workflow_tests_config or self._workflow_test_suite_configuration
         self._suite_setup(suite_config, enable_logger, enable_debug, disable_cleanup, disable_assertions)
-        for test_config in suite_config["workflows"].values():
+        for test_config in suite_config.workflow_tests.values():
             if not tests or len(tests) == 0 or test_config.name in tests:
                 runner = self._create_test_runner(test_config, suite_config)
                 result = runner.run_test()
                 results.append(result)
         # cleanup
-        if not suite_config["disable_cleanup"]:
-            self.cleanup(suite_config.get("output_folder", None))
+        if not suite_config.disable_cleanup:
+            self.cleanup(suite_config.output_folder)
         return results
 
-    def run_test_suite(self, workflow_tests_config=None, tests=None, enable_logger=None,
+    def run_test_suite(self, suite_config, tests=None, enable_logger=None,
                        enable_debug=None, disable_cleanup=None, disable_assertions=None):
         """
         Execute tests associated to this suite using the unittest framework.
 
-        :type workflow_tests_config: dict
-        :param workflow_tests_config: a suite configuration as produced
+        :type suite_config: dict
+        :param suite_config: a suite configuration as produced
                by the `WorkflowTestConfiguration.load(...)` method
 
         :type tests: list
@@ -922,9 +969,8 @@ class WorkflowTestSuiteConfiguration(object):
             ``False`` (default) otherwise.
         """
         suite = _unittest.TestSuite()
-        suite_config = workflow_tests_config or self._workflow_test_suite_configuration
         self._suite_setup(suite_config, enable_logger, enable_debug, disable_cleanup, disable_assertions)
-        for test_config in suite_config["workflows"].values():
+        for test_config in suite_config.workflow_tests.values():
             test_config.disable_assertions = False
             if not tests or len(tests) == 0 or test_config.name in tests:
                 runner = self._create_test_runner(test_config, suite_config)
@@ -932,8 +978,8 @@ class WorkflowTestSuiteConfiguration(object):
         _RUNNER = _unittest.TextTestRunner(verbosity=2)
         _RUNNER.run(suite)
         # cleanup
-        if not suite_config["disable_cleanup"]:
-            self.cleanup(suite_config.get("output_folder", None))
+        if not suite_config.disable_cleanup:
+            self.cleanup(suite_config.output_folder)
 
     def get_workflow_test_results(self, workflow_id=None):
         """
