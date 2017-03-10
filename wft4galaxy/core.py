@@ -713,7 +713,7 @@ class WorkflowLoader(object):
             self.unload_workflow(wf.id)
 
 
-class WorkflowTestSuiteConfiguration(object):
+class WorkflowTestSuite(object):
     """
     Represent a test suite.
     """
@@ -794,7 +794,7 @@ class WorkflowTestSuiteConfiguration(object):
             file_configuration = _load_configuration(filename)
 
             base_path = file_configuration.get("base_path", _os.path.dirname(_os.path.abspath(filename)))
-            suite = WorkflowTestSuiteConfiguration(
+            suite = WorkflowTestSuite(
                 galaxy_url=file_configuration.get("galaxy_url"),
                 galaxy_api_key=file_configuration.get("galaxy_api_key"),
                 enable_logger=file_configuration.get("enable_logger", False),
@@ -1810,8 +1810,8 @@ def run_tests(filename,
     """
 
     # load suite configuration
-    suite = WorkflowTestSuiteConfiguration.load(filename,
-                                                output_folder=output_folder)  # FIXME: do we need output_folder here ?
+    suite = WorkflowTestSuite.load(filename,
+                                   output_folder=output_folder)  # FIXME: do we need output_folder here ?
     _configure_test(galaxy_url=galaxy_url, galaxy_api_key=galaxy_api_key,
                     suite=suite, tests=tests, output_folder=output_folder,
                     enable_logger=enable_logger, enable_debug=enable_debug,
