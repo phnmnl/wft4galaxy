@@ -772,6 +772,45 @@ class WorkflowTestSuiteConfiguration(object):
         elif isinstance(workflow_test, _basestring):
             del self._workflows[workflow_test]
 
+    def dump(self, filename):
+        """
+        Write a suite configuration to a file.
+
+        :type filename: str
+        :param filename: the absolute path of the file
+        """
+        # WorkflowTestConfiguration.dump(filename, self._workflow_test_suite_configuration)
+        raise Exception("Not implemented yet!")
+
+    @staticmethod
+    def load(filename, output_folder=None):
+        if _os.path.exists(filename):
+            # TODO: catch YAML parsing errors
+            file_configuration = _load_configuration(filename)
+
+            base_path = file_configuration.get("base_path", _os.path.dirname(_os.path.abspath(filename)))
+            suite = WorkflowTestSuiteConfiguration(
+                galaxy_url=file_configuration.get("galaxy_url"),
+                galaxy_api_key=file_configuration.get("galaxy_api_key"),
+                enable_logger=file_configuration.get("enable_logger", False),
+                enable_debug=file_configuration.get("enable_debug", False),
+                output_folder=output_folder \
+                              or file_configuration.get("output_folder") \
+                              or WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
+            )
+            for wf_name, wf_config in _iteritems(file_configuration.get("workflows")):
+                wf_base_path = _os.path.join(base_path, wf_config.get("base_path", ""))
+                wf_config["output_folder"] = _os.path.join(suite.output_folder,
+                                                           wf_config.get("output_folder", wf_name))
+                # add the workflow
+                w = WorkflowTestConfiguration(name=wf_name, base_path=wf_base_path, workflow_filename=wf_config["file"],
+                                              inputs=wf_config["inputs"], params=wf_config.get("params", {}),
+                                              expected_outputs=wf_config["expected"],
+                                              output_folder=wf_config["output_folder"])
+                suite.add_workflow_test(w)
+            return suite
+        else:
+            raise ValueError("Filename '{0}' not found".format(filename))
     def _add_test_result(self, test_result):
         """
         Private method to publish a test result.
@@ -925,25 +964,6 @@ class WorkflowTestSuiteConfiguration(object):
                 _logger.debug("Deleted empty output folder: '%s'", output_folder)
             except OSError as e:
                 _logger.debug("Deleted empty output folder '%s' failed: ", e.message)
-
-    def load(self, filename):
-        """
-        Load a test suite configuration and set it to this :class:`WorkflowTestSuite` instance.
-
-        :type filename: str
-        :param filename: the absolute path of suite configuration file
-        """
-        self._workflow_test_suite_configuration = WorkflowTestSuiteRunner._DEFAULT_SUITE_CONFIGURATION.copy()
-        self._workflow_test_suite_configuration.update(WorkflowTestConfiguration.load(filename))
-
-    def dump(self, filename):
-        """
-        Write a suite configuration to a file.
-
-        :type filename: str
-        :param filename: the absolute path of the file
-        """
-        WorkflowTestConfiguration.dump(filename, self._workflow_test_suite_configuration)
 
 
 class WorkflowTestRunner(_unittest.TestCase):
