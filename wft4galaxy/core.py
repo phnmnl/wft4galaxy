@@ -1604,7 +1604,9 @@ def _process_tool_param_element(input_el, tool_params):
                                            when_options)
 
 
-def _get_galaxy_instance(galaxy_url, galaxy_api_key):
+
+
+def _get_galaxy_instance(galaxy_url=None, galaxy_api_key=None):
     """
     Private utility function to instantiate and configure a :class:`bioblend.GalaxyInstance`
 
@@ -1617,6 +1619,22 @@ def _get_galaxy_instance(galaxy_url, galaxy_api_key):
     :rtype: :class:`bioblend.objects.GalaxyInstance`
     :return: a new :class:`bioblend.objects.GalaxyInstance` instance
     """
+    # configure `galaxy_url`
+    if galaxy_url is None:
+        if ENV_KEY_GALAXY_URL not in _os.environ:
+            raise TestConfigError("Galaxy URL not defined!  Use --server or the environment variable {} "
+                                  "or specify it in the test configuration".format(ENV_KEY_GALAXY_URL))
+        else:
+            galaxy_url = _os.environ[ENV_KEY_GALAXY_URL]
+
+    # configure `galaxy_api_key`
+    if galaxy_api_key is None:
+        if ENV_KEY_GALAXY_API_KEY not in _os.environ:
+            raise TestConfigError("Galaxy API key not defined!  Use --api-key or the environment variable {} "
+                                  "or specify it in the test configuration".format(ENV_KEY_GALAXY_API_KEY))
+        else:
+            galaxy_api_key = _os.environ[ENV_KEY_GALAXY_API_KEY]
+
     # initialize the galaxy instance
     return ObjGalaxyInstance(galaxy_url, galaxy_api_key)
 
