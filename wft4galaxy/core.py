@@ -708,25 +708,14 @@ class WorkflowLoader(object):
             self.unload_workflow(wf.id)
 
 
-
-
-
-
-# FIXME: split config from runner
-class WorkflowTestSuiteRunner(object):
+class WorkflowTestSuiteConfiguration(object):
     """
     Represent a test suite.
     """
 
-    _DEFAULT_SUITE_CONFIGURATION = {
-        "enable_logger": True,
-        "enable_debug": False,
-        "disable_cleanup": False,
-        "disable_assertions": False,
-        "workflows": {}
-    }
-
-    def __init__(self, galaxy_url=None, galaxy_api_key=None):
+    def __init__(self, galaxy_url=None, galaxy_api_key=None,
+                 output_folder=WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER,
+                 enable_logger=True, enable_debug=False, disable_cleanup=False, disable_assertions=False):
         """
         Create an instance of :class:`WorkflowTestSuite`.
 
@@ -738,51 +727,16 @@ class WorkflowTestSuiteRunner(object):
         :param galaxy_api_key: an API key from your Galaxy server instance.  If ``none``, the environment variable
             ``GALAXY_API_KEY`` is used. An error is raised when such a variable cannot be found.
         """
-        self._workflows = {}
-        self._workflow_runners = []
-        self._workflow_test_results = []
-        self._galaxy_instance = None
-        # initialize the galaxy instance
-        self._galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
-        # initialize the workflow loader
-        self._workflow_loader = WorkflowLoader.get_instance(self._galaxy_instance)
-        # default suite configuration
-        self._workflow_test_suite_configuration = WorkflowTestSuiteRunner._DEFAULT_SUITE_CONFIGURATION.copy()
 
-        # TODO: move on the configuration object `WorkflowTestSuiteConfiguration`
-        # galaxy_url: "http://192.168.64.8:30700" # default is GALAXY_URL
-        # galaxy_api_key: "4b86f51252b5f220012b3e259d0877f9" # default is GALAXY_API_KEY
-        # enable_debug: True
-        # output_folder: "results"
-        self.enable_debug = False
         self.galaxy_url = galaxy_url
         self.galaxy_api_key = galaxy_api_key
-        self.output_folder = WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
-
-
-    @property
-    def galaxy_instance(self):
-        """
-        :rtype: :class:`bioblend.galaxy.objects.GalaxyInstance`
-        :return: the :class:`bioblend.galaxy.objects.GalaxyInstance` instance used to communicate with a Galaxy server
-        """
-        return self._galaxy_instance
-
-    @property
-    def workflow_loader(self):
-        """
-        :rtype: :class:`WorkflowTestLoader`
-        :return: the :class:`WorkflowTestLoader` instance used by this suite
-        """
-        return self._workflow_loader
-
-    @property
-    def configuration(self):
-        """
-        :rtype: dict
-        :return: the dictionary containing the configuration of this workflow test suite
-        """
-        return self._workflow_test_suite_configuration
+        self.enable_logger = enable_logger
+        self.enable_debug = enable_debug
+        self.disable_cleanup = disable_cleanup
+        self.disable_assertions = disable_assertions
+        self.output_folder = output_folder
+        # instantiate the dict for worklofws
+        self._workflows = {}
 
     @property
     def workflow_tests(self):
@@ -793,7 +747,7 @@ class WorkflowTestSuiteRunner(object):
         :return: a dictionary which maps a `workflow test name` to the :class:`WorkflowTestConfiguration` instance
             representing its configuration
         """
-        return self._workflow_test_suite_configuration["workflows"].copy()
+        return self._workflows.copy()
 
     def add_workflow_test(self, workflow_test_configuration):
         """
@@ -803,8 +757,7 @@ class WorkflowTestSuiteRunner(object):
         :param workflow_test_configuration: the :class:`WorkflowTestConfiguration` instance
             representing the workflow test configuration
         """
-        self._workflow_test_suite_configuration["workflows"][
-            workflow_test_configuration.name] = workflow_test_configuration
+        self._workflows[workflow_test_configuration.name] = workflow_test_configuration
 
     def remove_workflow_test(self, workflow_test):
         """
@@ -815,9 +768,9 @@ class WorkflowTestSuiteRunner(object):
             or the :class:`WorkflowTestConfiguration` instance representing the workflow test configuration
         """
         if isinstance(workflow_test, WorkflowTestConfiguration):
-            del self._workflow_test_suite_configuration[workflow_test.name]
+            del self._workflows[workflow_test.name]
         elif isinstance(workflow_test, _basestring):
-            del self._workflow_test_suite_configuration[workflow_test]
+            del self._workflows[workflow_test]
 
     def _add_test_result(self, test_result):
         """
