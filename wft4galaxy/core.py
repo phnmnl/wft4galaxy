@@ -717,8 +717,12 @@ class WorkflowLoader(object):
             self.unload_workflow(wf.id)
 
 
+
+
+
+
 # FIXME: split config from runner
-class WorkflowTestSuite(object):
+class WorkflowTestSuiteRunner(object):
     """
     Represent a test suite.
     """
@@ -752,7 +756,7 @@ class WorkflowTestSuite(object):
         # initialize the workflow loader
         self._workflow_loader = WorkflowLoader.get_instance(self._galaxy_instance)
         # default suite configuration
-        self._workflow_test_suite_configuration = WorkflowTestSuite._DEFAULT_SUITE_CONFIGURATION.copy()
+        self._workflow_test_suite_configuration = WorkflowTestSuiteRunner._DEFAULT_SUITE_CONFIGURATION.copy()
 
         # TODO: move on the configuration object `WorkflowTestSuiteConfiguration`
         # galaxy_url: "http://192.168.64.8:30700" # default is GALAXY_URL
@@ -985,7 +989,7 @@ class WorkflowTestSuite(object):
         :type filename: str
         :param filename: the absolute path of suite configuration file
         """
-        self._workflow_test_suite_configuration = WorkflowTestSuite._DEFAULT_SUITE_CONFIGURATION.copy()
+        self._workflow_test_suite_configuration = WorkflowTestSuiteRunner._DEFAULT_SUITE_CONFIGURATION.copy()
         self._workflow_test_suite_configuration.update(WorkflowTestConfiguration.load(filename))
 
     def dump(self, filename):
@@ -1780,7 +1784,7 @@ def run_tests(args, enable_logger=None, enable_debug=None, disable_cleanup=None,
     config = _configure_test(options, enable_logger, enable_debug, disable_cleanup, disable_assertions)
 
     # create and run the configured test suite
-    test_suite = WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
+    test_suite = WorkflowTestSuiteRunner(config["galaxy_url"], config["galaxy_api_key"])
     test_suite.run_test_suite(config, tests=options.test)
 
     exit_code = len([r for r in test_suite.get_workflow_test_results() if r.failed()])

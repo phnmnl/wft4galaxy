@@ -54,7 +54,7 @@ def write_test_suite_definition_file(output_file, suite_config):
 def generate_template(config):
     _logger.info("Generating test definition template folder...")
     # config a sample suite
-    suite = _wft4core.WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
+    suite = _wft4core.WorkflowTestSuiteRunner(config["galaxy_url"], config["galaxy_api_key"])
     cfg = _wft4core.WorkflowTestConfiguration(name="workflow_test_case_1")
     cfg.output_folder = config["output_folder"]
     cfg.enable_debug = config["enable_debug"]
