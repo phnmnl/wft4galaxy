@@ -1187,7 +1187,6 @@ class WorkflowTestRunner(_unittest.TestCase):
                 for label, config in _iteritems(inputs):
                     datamap[label] = []
                     for filename in config["file"]:
-                        print(filename, base_path)
                         dataset_filename = filename if _os.path.isabs(filename) else _os.path.join(base_path, filename)
                         if config["type"]:
                             datamap[label].append(
