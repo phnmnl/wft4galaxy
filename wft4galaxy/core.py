@@ -112,7 +112,7 @@ class Workflow(object):
                                  galaxy_url=galaxy_url, galaxy_api_key=galaxy_api_key)
 
 
-class WorkflowTestConfiguration(object):
+class WorkflowTestCase(object):
     """
     A representation of the configuration of a workflow test.
 
@@ -291,7 +291,7 @@ class WorkflowTestConfiguration(object):
         Update the mapping between workflow inputs and test datasets.
 
         :param inputs: dict
-        :return: a dictionary of mappings (see :class:`WorkflowTestConfiguration`)
+        :return: a dictionary of mappings (see :class:`WorkflowTestCase`)
         """
         for name, config in _iteritems(inputs):
             self.add_input(name, config["file"], config["type"] if "type" in config else None)
@@ -339,7 +339,7 @@ class WorkflowTestConfiguration(object):
     @property
     def params(self):
         """
-        Return the dictionary containing the configured parameters (see :class:`WorkflowTestConfiguration`)
+        Return the dictionary containing the configured parameters (see :class:`WorkflowTestCase`)
 
         :rtype: dict
         :return: a dictionary of configured parameters
@@ -351,7 +351,7 @@ class WorkflowTestConfiguration(object):
         Add a new set of parameters.
 
         :type params: dict
-        :param params: dictionary of parameters indexed by step id (see :class:`WorkflowTestConfiguration`)
+        :param params: dictionary of parameters indexed by step id (see :class:`WorkflowTestCase`)
         """
         for step_id, step_params in _iteritems(params):
             for name, value in _iteritems(step_params):
@@ -418,16 +418,16 @@ class WorkflowTestConfiguration(object):
     def expected_outputs(self):
         """
         A dictionary to configure the expected output, i.e., the output which has to be compared
-        to the actual one produced by a workflow execution (see :class:`WorkflowTestConfiguration`).
+        to the actual one produced by a workflow execution (see :class:`WorkflowTestCase`).
         """
         return self._expected_outputs
 
     def set_expected_outputs(self, expected_outputs):
         """
-        Add a new set of expected outputs (see :class:`WorkflowTestConfiguration`).
+        Add a new set of expected outputs (see :class:`WorkflowTestCase`).
 
         :type expected_outputs: dict
-        :param expected_outputs: a dictionary structured as specified in :class:`WorkflowTestConfiguration`
+        :param expected_outputs: a dictionary structured as specified in :class:`WorkflowTestCase`
         """
         for name, config in _iteritems(expected_outputs):
             self.add_expected_output(name, config["file"], config.get("comparator"))
@@ -443,7 +443,7 @@ class WorkflowTestConfiguration(object):
         :param filename: the path (relative to the ``base_path``) of the file containing the expected output dataset
 
         :type comparator: str
-        :param comparator: a fully qualified name of a `comparator`function (see :class:`WorkflowTestConfiguration`)
+        :param comparator: a fully qualified name of a `comparator`function (see :class:`WorkflowTestCase`)
         """
         if not name:
             raise ValueError("Input name not defined")
@@ -468,7 +468,7 @@ class WorkflowTestConfiguration(object):
 
         :rtype: dict
         :return: a dictionary containing the configuration of the expected output as specified
-            in :class:`WorkflowTestConfiguration`
+            in :class:`WorkflowTestCase`
         """
         return self._expected_outputs.get(name)
 
@@ -521,8 +521,8 @@ class WorkflowTestConfiguration(object):
         :type output_folder: str
         :param output_folder: the path of the output folder  
 
-        :rtype: :class:`WorkflowTestConfiguration`
-        :return: the :class:`WorkflowTestConfiguration` instance which matches the name 
+        :rtype: :class:`WorkflowTestCase`
+        :return: the :class:`WorkflowTestCase` instance which matches the name 
                 provided by the argument `workflow_test_name_`
         """
         if _os.path.exists(filename):
@@ -530,7 +530,7 @@ class WorkflowTestConfiguration(object):
             base_path = file_configuration.get("base_path", _os.path.dirname(_os.path.abspath(filename)))
             output_folder = output_folder \
                             or file_configuration.get("output_folder") \
-                            or WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
+                            or WorkflowTestCase.DEFAULT_OUTPUT_FOLDER
             # raise an exception if the workflow test we are searching for
             # cannot be found within the configuration file.
             if workflow_test_name not in file_configuration["workflows"]:
@@ -541,11 +541,11 @@ class WorkflowTestConfiguration(object):
             wft_output_folder = _os.path.join(output_folder,
                                               wft_config.get("output_folder", workflow_test_name))
             # add the workflow
-            return WorkflowTestConfiguration(name=workflow_test_name,
-                                             base_path=wft_base_path, workflow_filename=wft_config["file"],
-                                             inputs=wft_config["inputs"], params=wft_config.get("params", {}),
-                                             expected_outputs=wft_config["expected"],
-                                             output_folder=wft_output_folder)
+            return WorkflowTestCase(name=workflow_test_name,
+                                    base_path=wft_base_path, workflow_filename=wft_config["file"],
+                                    inputs=wft_config["inputs"], params=wft_config.get("params", {}),
+                                    expected_outputs=wft_config["expected"],
+                                    output_folder=wft_output_folder)
         else:
             raise ValueError("Filename '{0}' not found".format(filename))
 
@@ -559,8 +559,8 @@ class WorkflowTestConfiguration(object):
 
         :type worflow_tests_config: dict or list
         :param worflow_tests_config: a dictionary which maps a workflow test name
-               to the corresponding configuration (:class:`WorkflowTestConfiguration`)
-               or a list of :class:`WorkflowTestConfiguration` instances
+               to the corresponding configuration (:class:`WorkflowTestCase`)
+               or a list of :class:`WorkflowTestCase` instances
 
         :type file_format: str
         :param file_format: ``YAML`` or ``JSON``
@@ -574,7 +574,7 @@ class WorkflowTestConfiguration(object):
         elif not isinstance(worflow_tests_config, list):
             raise ValueError(
                 "'workflow_tests_config' must be a configuration dict "
-                "or a list of 'WorkflowTestConfiguration' instances")
+                "or a list of 'WorkflowTestCase' instances")
 
         for worlflow in worflow_tests_config:
             workflows[worlflow.name] = worlflow.to_dict()
@@ -652,7 +652,7 @@ class WorkflowLoader(object):
         ``workflow_name`` overrides the default workflow name.
 
         :type workflow_test_config: :class:`WorkflowTestConfig`
-        :param workflow_test_config: the instance of  :class:`WorkflowTestConfiguration`
+        :param workflow_test_config: the instance of  :class:`WorkflowTestCase`
             representing the workflow test configuration
 
         :type workflow_name: str
@@ -679,7 +679,7 @@ class WorkflowLoader(object):
             raise RuntimeError("WorkflowLoader not initialized")
         with open(workflow_filename) as f:
             wf_json = _json_load(f)
-        wf_json["name"] = WorkflowTestConfiguration.DEFAULT_WORKFLOW_NAME_PREFIX \
+        wf_json["name"] = WorkflowTestCase.DEFAULT_WORKFLOW_NAME_PREFIX \
                           + (workflow_name if workflow_name else wf_json["name"])
         wf = self._galaxy_instance.workflows.import_new(wf_json)
         self._workflows[wf.id] = wf
@@ -714,7 +714,7 @@ class WorkflowTestSuiteConfiguration(object):
     """
 
     def __init__(self, galaxy_url=None, galaxy_api_key=None,
-                 output_folder=WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER,
+                 output_folder=WorkflowTestCase.DEFAULT_OUTPUT_FOLDER,
                  enable_logger=True, enable_debug=False, disable_cleanup=False, disable_assertions=False):
         """
         Create an instance of :class:`WorkflowTestSuite`.
@@ -744,7 +744,7 @@ class WorkflowTestSuiteConfiguration(object):
         Return the configuration of workflow tests associated to this test suite.
 
         :rtype: dict
-        :return: a dictionary which maps a `workflow test name` to the :class:`WorkflowTestConfiguration` instance
+        :return: a dictionary which maps a `workflow test name` to the :class:`WorkflowTestCase` instance
             representing its configuration
         """
         return self._workflows.copy()
@@ -753,8 +753,8 @@ class WorkflowTestSuiteConfiguration(object):
         """
         Add a new workflow test to this suite.
 
-        :type workflow_test_configuration: :class:"WorkflowTestConfiguration"
-        :param workflow_test_configuration: the :class:`WorkflowTestConfiguration` instance
+        :type workflow_test_configuration: :class:"WorkflowTestCase"
+        :param workflow_test_configuration: the :class:`WorkflowTestCase` instance
             representing the workflow test configuration
         """
         self._workflows[workflow_test_configuration.name] = workflow_test_configuration
@@ -763,11 +763,11 @@ class WorkflowTestSuiteConfiguration(object):
         """
         Remove a workflow test from this suite.
 
-        :type workflow_test: str or :class:"WorkflowTestConfiguration"
+        :type workflow_test: str or :class:"WorkflowTestCase"
         :param workflow_test: the name of the workflow test to be removed
-            or the :class:`WorkflowTestConfiguration` instance representing the workflow test configuration
+            or the :class:`WorkflowTestCase` instance representing the workflow test configuration
         """
-        if isinstance(workflow_test, WorkflowTestConfiguration):
+        if isinstance(workflow_test, WorkflowTestCase):
             del self._workflows[workflow_test.name]
         elif isinstance(workflow_test, _basestring):
             del self._workflows[workflow_test]
@@ -779,7 +779,7 @@ class WorkflowTestSuiteConfiguration(object):
         :type filename: str
         :param filename: the absolute path of the file
         """
-        # WorkflowTestConfiguration.dump(filename, self._workflow_test_suite_configuration)
+        # WorkflowTestCase.dump(filename, self._workflow_test_suite_configuration)
         raise Exception("Not implemented yet!")
 
     @staticmethod
@@ -796,23 +796,21 @@ class WorkflowTestSuiteConfiguration(object):
                 enable_debug=file_configuration.get("enable_debug", False),
                 output_folder=output_folder \
                               or file_configuration.get("output_folder") \
-                              or WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
+                              or WorkflowTestCase.DEFAULT_OUTPUT_FOLDER
             )
             for wf_name, wf_config in _iteritems(file_configuration.get("workflows")):
                 wf_base_path = _os.path.join(base_path, wf_config.get("base_path", ""))
                 wf_config["output_folder"] = _os.path.join(suite.output_folder,
                                                            wf_config.get("output_folder", wf_name))
                 # add the workflow
-                w = WorkflowTestConfiguration(name=wf_name, base_path=wf_base_path, workflow_filename=wf_config["file"],
-                                              inputs=wf_config["inputs"], params=wf_config.get("params", {}),
-                                              expected_outputs=wf_config["expected"],
-                                              output_folder=wf_config["output_folder"])
+                w = WorkflowTestCase(name=wf_name, base_path=wf_base_path, workflow_filename=wf_config["file"],
+                                     inputs=wf_config["inputs"], params=wf_config.get("params", {}),
+                                     expected_outputs=wf_config["expected"],
+                                     output_folder=wf_config["output_folder"])
                 suite.add_workflow_test(w)
             return suite
         else:
             raise ValueError("Filename '{0}' not found".format(filename))
-
-
 
 
 class WorkflowTestSuiteRunner(object):
@@ -908,7 +906,7 @@ class WorkflowTestSuiteRunner(object):
 
         :type suite_config: dict
         :param suite_config: a suite configuration as produced
-               by the `WorkflowTestConfiguration.load(...)` method
+               by the `WorkflowTestCase.load(...)` method
 
         :type tests: list
         :param tests: optional list of test names to filter tests defined in ``workflow_tests_config``
@@ -949,7 +947,7 @@ class WorkflowTestSuiteRunner(object):
 
         :type suite_config: dict
         :param suite_config: a suite configuration as produced
-               by the `WorkflowTestConfiguration.load(...)` method
+               by the `WorkflowTestCase.load(...)` method
 
         :type tests: list
         :param tests: optional list of test names to filter tests defined in ``workflow_tests_config``
@@ -1038,7 +1036,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         """
         Factory method to create and initialize a new :class:`WorkflowTestRunner` instance.
 
-        :type workflow_test_config: :class:`WorkflowTestConfiguration`
+        :type workflow_test_config: :class:`WorkflowTestCase`
         :param workflow_test_config: the configuration of a workflow test
 
         :type galaxy_url: str
@@ -1061,8 +1059,8 @@ class WorkflowTestRunner(_unittest.TestCase):
     @property
     def workflow_test_config(self):
         """
-        :rtype: :class:`WorkflowTestConfiguration`
-        :return: the :class:`WorkflowTestConfiguration` instance associated to this runner
+        :rtype: :class:`WorkflowTestCase`
+        :return: the :class:`WorkflowTestCase` instance associated to this runner
         """
         return self._workflow_test_config
 
@@ -1113,8 +1111,8 @@ class WorkflowTestRunner(_unittest.TestCase):
         Run the workflow test which this runner is associated to.
         The parameters ``base_path``, ``inputs``, ``outputs``, ``expected_outputs``
         ``output_folder``, ``disable_assertions``, ``disable_cleanup``, ``enable_logger``, ``enable_debug``
-        can be provided to override the corresponding defined in the :class:`WorkflowTestConfiguration` instance
-        which this runner is related to (see :class:`WorkflowTestConfiguration` for more details).
+        can be provided to override the corresponding defined in the :class:`WorkflowTestCase` instance
+        which this runner is related to (see :class:`WorkflowTestCase` for more details).
 
         :rtype: :class:`WorkflowTestResult`
         :return: the :class:`WorkflowTestResult` instance which represents the test result
@@ -1175,7 +1173,7 @@ class WorkflowTestRunner(_unittest.TestCase):
 
                 # create a new history for the current test
                 history = self._galaxy_instance.histories.create(
-                    WorkflowTestConfiguration.DEFAULT_HISTORY_NAME_PREFIX + test_uuid)
+                    WorkflowTestCase.DEFAULT_HISTORY_NAME_PREFIX + test_uuid)
                 _logger.info("Create a history '%s' (id: %r)", history.name, history.id)
 
                 # upload input data to the current history
@@ -1184,6 +1182,7 @@ class WorkflowTestRunner(_unittest.TestCase):
                 for label, config in _iteritems(inputs):
                     datamap[label] = []
                     for filename in config["file"]:
+                        print(filename, base_path)
                         dataset_filename = filename if _os.path.isabs(filename) else _os.path.join(base_path, filename)
                         if config["type"]:
                             datamap[label].append(
@@ -1351,7 +1350,7 @@ class WorkflowTestResult(object):
 
     def __init__(self, test_id, workflow, inputs, outputs, output_history, expected_outputs,
                  missing_tools, results, output_file_map,
-                 output_folder=WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER, errors=None):
+                 output_folder=WorkflowTestCase.DEFAULT_OUTPUT_FOLDER, errors=None):
         self.test_id = test_id
         self.workflow = workflow
         self.inputs = inputs
@@ -1426,7 +1425,7 @@ def cleanup_test_workflows(galaxy_url=None, galaxy_api_key=None):
     galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
     workflow_loader = WorkflowLoader.get_instance(galaxy_instance)
     wflist = galaxy_instance.workflows.list()
-    workflows = [w for w in wflist if WorkflowTestConfiguration.DEFAULT_WORKFLOW_NAME_PREFIX in w.name]
+    workflows = [w for w in wflist if WorkflowTestCase.DEFAULT_WORKFLOW_NAME_PREFIX in w.name]
     for wf in workflows:
         workflow_loader.unload_workflow(wf.id)
 
@@ -1435,7 +1434,7 @@ def cleanup_test_workflow_data(galaxy_url=None, galaxy_api_key=None):
     _logger.debug("Cleaning saved histories ...")
     galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
     hslist = galaxy_instance.histories.list()
-    for history in [h for h in hslist if WorkflowTestConfiguration.DEFAULT_HISTORY_NAME_PREFIX in h.name]:
+    for history in [h for h in hslist if WorkflowTestCase.DEFAULT_HISTORY_NAME_PREFIX in h.name]:
         galaxy_instance.histories.delete(history.id)
 
 
@@ -1720,9 +1719,9 @@ def _make_parser():
     parser.add_argument('--disable-cleanup', help='Disable cleanup', action='store_true')
     parser.add_argument('--disable-assertions', help='Disable assertions', action='store_true')
     parser.add_argument('-o', '--output', help='absolute path of the output folder')
-    parser.add_argument('-f', '--file', default=WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME,
+    parser.add_argument('-f', '--file', default=WorkflowTestCase.DEFAULT_CONFIG_FILENAME,
                         help='YAML configuration file of workflow tests (default is {0})'.format(
-                            WorkflowTestConfiguration.DEFAULT_CONFIG_FILENAME))
+                            WorkflowTestCase.DEFAULT_CONFIG_FILENAME))
     return parser
 
 
@@ -1755,7 +1754,7 @@ def _configure_test(galaxy_url, galaxy_api_key, suite, output_folder, tests,
     # configure `output_folder`
     suite.output_folder = output_folder \
                           or suite.output_folder \
-                          or WorkflowTestConfiguration.DEFAULT_OUTPUT_FOLDER
+                          or WorkflowTestCase.DEFAULT_OUTPUT_FOLDER
 
     if enable_logger is not None:
         suite.enable_logger = enable_logger
