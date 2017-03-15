@@ -17,11 +17,13 @@ from wft4galaxy.common import ENV_KEY_GALAXY_API_KEY
 from wft4galaxy.common import make_dirs as _makedirs
 from wft4galaxy.common import _set_galaxy_server_settings
 from wft4galaxy.common import _pformat
+from wft4galaxy.common import HistoryWrapper
 
 # default output settings
 DEFAULT_OUTPUT_FOLDER = "test-config"
 DEFAULT_INPUTS_FOLDER = "inputs"
 DEFAULT_EXPECTED_FOLDER = "expected"
+DEFAULT_WORFLOW_DEFINITION_FILENAME = "workflow.ga"
 DEFAULT_TEST_DEFINITION_FILENAME = "workflow-test-suite.yml"
 
 # command string
@@ -50,10 +52,25 @@ def write_test_suite_definition_file(output_file, suite_config):
         print(e.message)
 
 
+def make_dir_structure(output_folder):
+    # make directory structure of the test definition
+    _makedirs(output_folder)
+    _makedirs(_os.path.join(output_folder, DEFAULT_INPUTS_FOLDER))
+    _makedirs(_os.path.join(output_folder, DEFAULT_EXPECTED_FOLDER))
+
+
+def download_dataset(datasets, output_folder, labels=None):
+    for ds in datasets:
+        ds_in_filename = _os.path.join(output_folder,
+                                       "{0}.{1}".format(labels[ds.id], ds.file_ext) if labels is not None else ds.name)
+        with open(ds_in_filename, "w") as ds_in_fp:
+            ds.download(ds_in_fp)
+
+
 def generate_template(config):
     _logger.info("Generating test definition template folder...")
     # config a sample suite
-    suite = _wft4core.WorkflowTestSuiteRunner(config["galaxy_url"], config["galaxy_api_key"])
+    suite = _wft4core.WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
     cfg = _wft4core.WorkflowTestCase(name="workflow_test_case_1")
     cfg.output_folder = config["output_folder"]
     cfg.enable_debug = config["enable_debug"]
@@ -63,12 +80,64 @@ def generate_template(config):
     output_folder = _os.path.abspath(config["output_folder"])
     output_filename = _os.path.join(output_folder, config["file"])
     # make directory structure of the test definition
-    _makedirs(output_folder)
-    _makedirs(_os.path.join(output_folder, DEFAULT_INPUTS_FOLDER))
-    _makedirs(_os.path.join(output_folder, DEFAULT_EXPECTED_FOLDER))
+    make_dir_structure(output_folder)
     # write the definition file
     write_test_suite_definition_file(output_filename, suite)
     _logger.info("Test definition template folder correctly generated.\n ===> See folder: %s", output_folder)
+
+
+def generate_test_case(config):
+    gi = _wft4core._get_galaxy_instance(config["galaxy_url"], config["galaxy_api_key"])
+
+    # get history object
+    h = gi.histories.get(config["history-name"])
+
+    # instantiate the history wrapper
+    hw = HistoryWrapper(h)
+
+    # set the output folder
+    output_folder = _os.path.abspath(config["output_folder"])
+
+    # make directory structure of the test definition
+    make_dir_structure(output_folder)
+
+    # extract workflow
+    workflow_definition_filename = _os.path.join(output_folder, DEFAULT_WORFLOW_DEFINITION_FILENAME)
+    wf_def = hw.extract_workflow(workflow_definition_filename)
+
+    # download input datasets
+    download_dataset(hw.input_datasets.values(), _os.path.join(output_folder, DEFAULT_INPUTS_FOLDER))
+
+    # download output datasets
+    download_dataset(hw.output_datasets.values(), _os.path.join(output_folder, DEFAULT_EXPECTED_FOLDER),
+                     labels=hw.output_labels)
+
+    # load the wf wrapper
+    wf = _wft4core.Workflow.load(workflow_definition_filename)
+
+    suite = _wft4core.WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
+    cfg = _wft4core.WorkflowTestCase(name="workflow_test_case_1")
+    cfg.output_folder = _wft4core.WorkflowTestCase.DEFAULT_OUTPUT_FOLDER
+    cfg.enable_debug = config["enable_debug"]
+    #cfg.filename = DEFAULT_WORFLOW_DEFINITION_FILENAME
+
+    # configure input
+    for ds in hw.input_datasets.values():
+        cfg.add_input("input_{0}".format(hw.dataset_index[ds.id]),
+                      "{0}/{1}".format(DEFAULT_INPUTS_FOLDER, ds.wrapped["name"]), ds.file_ext)
+
+    # configure output
+    for ds in hw.output_datasets.values():
+        cfg.add_expected_output(hw.output_labels[ds.id],
+                                "{0}/{1}".format(DEFAULT_EXPECTED_FOLDER,
+                                                 "{0}.{1}".format(hw.output_labels[ds.id], ds.file_ext)),
+                                "comparators.csv_same_row_and_col_lengths")
+
+    # append test case to the test suite
+    suite.add_workflow_test(cfg)
+
+    # write the definition file
+    write_test_suite_definition_file(_os.path.join(output_folder, config["file"]), suite)
 
 
 def _make_parser():
@@ -99,7 +168,7 @@ def _make_parser():
                                                         help="Generate a test definition file from a history",
                                                         epilog=epilog)
 
-    test_parser.add_argument('workflow-name', help='Workflow name')
+    # test_parser.add_argument('workflow-name', help='Workflow name')
     test_parser.add_argument('history-name', help='History name')
 
     template_parser = command_subparsers_factory.add_parser(_TEMPLATE_CMD,
@@ -132,6 +201,8 @@ def main(args=None):
         print(_pformat(config))
         if options.command == _TEMPLATE_CMD:
             generate_template(config)
+        elif options.command == _TEST_CMD:
+            generate_test_case(config)
     except Exception as e:
         _logger.error(e)
         if _logger.isEnabledFor(_logging.DEBUG):
