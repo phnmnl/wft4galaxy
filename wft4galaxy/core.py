@@ -89,7 +89,7 @@ class Workflow(object):
             print("'{0}': {1}".format(step_id, ", ".join([x["label"] for x in step_outputs.values()])), file=stream)
 
     @staticmethod
-    def load(filename, galaxy_url, galaxy_api_key, tools_folder=DEFAULT_TOOLS_FOLDER):
+    def load(filename, galaxy_url=None, galaxy_api_key=None, tools_folder=DEFAULT_TOOLS_FOLDER):
         """
         Return the :class:`Workflow` instance related to the workflow defined in ``filename``
 
@@ -1494,38 +1494,38 @@ def _get_workflow_info(filename, galaxy_url, galaxy_api_key, tool_folder=DEFAULT
             tool = galaxy_instance.tools.get(tool_id)
             ## LP:  re-write this using the bioblend.objects API to fetch the tool
             # inputs.  See the comment above `def _process_tool_param_element`
-            tool_config_xml = _os.path.basename(tool.wrapped["config_file"])
-            _logger.debug("Processing step tool '%s'", tool_id)
-
-            try:
-                _logger.debug("Download TOOL '%s' definition file XML: %s....", tool_id, tool_config_xml)
-                targz_filename = _os.path.join(DEFAULT_TOOLS_FOLDER, tool_id + ".tar.gz")
-                targz_content = galaxy_tool_client._get(_os.path.join(tool_id, "download"), json=False)
-                if targz_content.status_code == 200:
-                    with open(targz_filename, "w") as tfp:
-                        tfp.write(targz_content.content)
-                    tar = _tarfile.open(targz_filename)
-                    tar.extractall(path=tool_folder)
-                    tar.close()
-                    _os.remove(targz_filename)
-                    _logger.debug("Download TOOL '%s' definition file XML: %s....: DONE", tool_id, tool_config_xml)
-                else:
-                    _logger.debug("Download TOOL '%s' definition file XML: %s....: ERROR %r",
-                                  tool_id, tool_config_xml, targz_content.status_code)
-
-                tool_config_xml = _os.path.join(DEFAULT_TOOLS_FOLDER, tool_config_xml)
-                if _os.path.exists(tool_config_xml):
-                    tree = _etree.parse(tool_config_xml)
-                    root = tree.getroot()
-                    inputs_el = root.find("inputs")
-                    for input_el in inputs_el:
-                        _process_tool_param_element(input_el, tool_params)
-                    if len(tool_params) > 0:
-                        params.insert(int(sid), sid, tool_params)
-
-            except _StandardError as e:
-                _logger.debug("Download TOOL '%s' definition file XML: %s....: ERROR", tool_id, tool_config_xml)
-                _logger.error(e)
+            # tool_config_xml = _os.path.basename(tool.wrapped["config_file"])
+            # _logger.debug("Processing step tool '%s'", tool_id)
+            #
+            # try:
+            #     _logger.debug("Download TOOL '%s' definition file XML: %s....", tool_id, tool_config_xml)
+            #     targz_filename = _os.path.join(DEFAULT_TOOLS_FOLDER, tool_id + ".tar.gz")
+            #     targz_content = galaxy_tool_client._get(_os.path.join(tool_id, "download"), json=False)
+            #     if targz_content.status_code == 200:
+            #         with open(targz_filename, "w") as tfp:
+            #             tfp.write(targz_content.content)
+            #         tar = _tarfile.open(targz_filename)
+            #         tar.extractall(path=tool_folder)
+            #         tar.close()
+            #         _os.remove(targz_filename)
+            #         _logger.debug("Download TOOL '%s' definition file XML: %s....: DONE", tool_id, tool_config_xml)
+            #     else:
+            #         _logger.debug("Download TOOL '%s' definition file XML: %s....: ERROR %r",
+            #                       tool_id, tool_config_xml, targz_content.status_code)
+            #
+            #     tool_config_xml = _os.path.join(DEFAULT_TOOLS_FOLDER, tool_config_xml)
+            #     if _os.path.exists(tool_config_xml):
+            #         tree = _etree.parse(tool_config_xml)
+            #         root = tree.getroot()
+            #         inputs_el = root.find("inputs")
+            #         for input_el in inputs_el:
+            #             _process_tool_param_element(input_el, tool_params)
+            #         if len(tool_params) > 0:
+            #             params.insert(int(sid), sid, tool_params)
+            #
+            # except _StandardError as e:
+            #     _logger.debug("Download TOOL '%s' definition file XML: %s....: ERROR", tool_id, tool_config_xml)
+            #     _logger.error(e)
 
             # process
             outputs[str(sid)] = {}
