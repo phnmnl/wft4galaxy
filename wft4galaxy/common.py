@@ -86,6 +86,29 @@ class HistoryWrapper(object):
             # detect whether the DS is an input
             job_inputs = job_info.wrapped["inputs"]
             print("Job inputs %r" % job_inputs)
+    @property
+    def jobs(self):
+        return self._jobs
+
+    def _get_job(self, job_id):
+        if job_id not in self._jobs:
+            try:
+                self._jobs[job_id] = self._gi.jobs.get(job_id, full_details=True)
+            except ConnectionError as e:
+                raise TestConfigError("Unable to retrieve job info !")
+        return self._jobs[job_id]
+
+    @property
+    def tools(self):
+        return self._tools
+
+    def _get_tool(self, tool_id):
+        if not tool_id in self._tools:
+            try:
+                self._tools[tool_id] = self._gi.tools.get(tool_id, io_details=True)
+            except ConnectionError as e:
+                raise TestConfigError("Unable to retrieve tool info !")
+        return self._tools[tool_id]
             if len(job_inputs) == 0:
                 print("Input found %r %s" % (hd.id, hd.wrapped["name"]))
                 self.input_datasets[hd.id] = hd
