@@ -1,10 +1,14 @@
 import os as _os
 import json as _json
-import types as _types
-import collections as _collections
 import uuid as _uuid
+import types as _types
+import operator as _operator
+
+import collections as _collections
 
 # Galaxy ENV variable names
+from bioblend import ConnectionError
+
 ENV_KEY_GALAXY_URL = "GALAXY_URL"
 ENV_KEY_GALAXY_API_KEY = "GALAXY_API_KEY"
 
