@@ -110,7 +110,7 @@ def generate_test_case(config):
 
     # download output datasets
     download_dataset(hw.output_datasets.values(), _os.path.join(output_folder, DEFAULT_EXPECTED_FOLDER),
-                     labels=hw.output_labels)
+                     labels=hw.output_dataset_labels)
 
     # load the wf wrapper
     wf = _wft4core.Workflow.load(workflow_definition_filename)
@@ -119,18 +119,17 @@ def generate_test_case(config):
     cfg = _wft4core.WorkflowTestCase(name="workflow_test_case_1")
     cfg.output_folder = _wft4core.WorkflowTestCase.DEFAULT_OUTPUT_FOLDER
     cfg.enable_debug = config["enable_debug"]
-    #cfg.filename = DEFAULT_WORFLOW_DEFINITION_FILENAME
 
     # configure input
     for ds in hw.input_datasets.values():
-        cfg.add_input("input_{0}".format(hw.dataset_index[ds.id]),
+        cfg.add_input(hw.input_dataset_labels[ds.id],
                       "{0}/{1}".format(DEFAULT_INPUTS_FOLDER, ds.wrapped["name"]), ds.file_ext)
 
     # configure output
     for ds in hw.output_datasets.values():
-        cfg.add_expected_output(hw.output_labels[ds.id],
+        cfg.add_expected_output(hw.output_dataset_labels[ds.id],
                                 "{0}/{1}".format(DEFAULT_EXPECTED_FOLDER,
-                                                 "{0}.{1}".format(hw.output_labels[ds.id], ds.file_ext)),
+                                                 "{0}.{1}".format(hw.output_dataset_labels[ds.id], ds.file_ext)),
                                 "comparators.csv_same_row_and_col_lengths")
 
     # append test case to the test suite
