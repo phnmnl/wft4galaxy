@@ -35,18 +35,39 @@ class Configuration(DynamicObject):
 class HistoryWrapper(object):
     def __init__(self, wrapped_history):
         super(HistoryWrapper, self).__init__()
-        self.wrapped = wrapped_history
-        self.gi = wrapped_history.gi
+
+        # set wrapped history and GalaxyInstance
+        self._history = wrapped_history
+        self._gi = wrapped_history.gi
+
+        # job info
         self.job_tool = {}
         self.creating_jobs = {}
+
+        # datasets
         self.datasets = None
-        self.dataset_index = {}
-        self.input_datasets = {}
-        self.output_datasets = {}
-        # TODO: to properly initialize
-        self.output_labels = {}
-        self.intermediate_outputs = {}
-        self.dataset_input_of = {}
+        self.input_datasets = _collections.OrderedDict()
+        self.output_datasets = _collections.OrderedDict()
+        self.intermediate_datasets = _collections.OrderedDict()
+
+        # map dataset inputs to their order
+        self._input_order_map = {}
+
+        # job info
+        self._jobs = {}
+        self.job_input_ids = {}
+        self.job_output_ids = {}
+        self.creating_jobs = {}
+        self.processing_jobs = _collections.OrderedDict()
+        self.processing_job_levels = {}
+
+        # tool cache
+        self._tools = {}
+
+        # labels
+        self.input_dataset_labels = {}
+        self.output_dataset_labels = {}
+        self.intermediate_dataset_labels = {}
 
         # process history
         self._init()
