@@ -212,36 +212,43 @@ class HistoryWrapper(object):
 
         inputs = self.input_datasets.keys() + intermediate_inputs
         self._input_order_map = {x: inputs.index(x) for x in inputs}
+
+    def compute_processing_job_level(self, job_id):
+        level = 0
+        for job in self.processing_jobs.values():
+            print "\nComparing ", job.id, job_id, job.id == job_id, "Target", job_id
+            if job.id == job_id:
+                break
+            dependencies = [x for x in self.job_output_ids[job.id] if x in self.job_input_ids[job_id]]
+            print "Intersetct", job_id, self.job_output_ids[job.id], self.job_input_ids[job_id], x
+            if len(dependencies) > 0:
+                print "Updating level {0} {1}".format(level, self.processing_job_levels[job.id] + 1)
+                level = max(level, self.processing_job_levels[job.id] + 1)
+        return level
+
+    def extract_workflow(self, filename=None, workflow_name=None, v_step=100, h_step=400):
+        if workflow_name is None:
+            workflow_name = "Workflow extracted from history {0}".format(self._history.id)
         wf = _collections.OrderedDict({
             "a_galaxy_workflow": "true",
             "annotation": "",
             "format-version": "0.1",
-            "name": "Imported Workflow",
+            "name": workflow_name,
             "uuid": str(_uuid.uuid1()),
             "steps": _collections.OrderedDict()
         })
-
-        # processed jobs
-        processed_jobs = []
-
-        # map hds to step
-        hds_map = {}
 
         # position
         p_left = 50
         p_top = 0
 
-        # map output id to its name
-        output_labels = {}
-
         # process steps
         for hds_id, hds in self.input_datasets.items():
             job = self.creating_jobs[hds.id]
             index = len(wf["steps"])
-            hds_map[hds_id] = index
-            input_name = "input_{0}".format(index)
+            input_name = self.input_dataset_labels[hds_id]
             input_description = ""
-            p_top += 100
+            p_top += v_step
             wf["steps"][str(index)] = {
                 "annotation": "",
                 "content_id": None,
@@ -268,23 +275,24 @@ class HistoryWrapper(object):
                 "uuid": str(_uuid.uuid1()),
                 "workflow_outputs": []
             }
-            processed_jobs.append(job.id)
-            print processed_jobs
 
-        p_top = p_top - (100 * (len(self.input_datasets) / 2))
+        # reset top position
+        p_top = p_top - (v_step * (len(self.input_datasets) / 2))
 
         # process intermediate and final steps
-        for hds_id, hds in self.intermediate_outputs.items() + self.output_datasets.items():
+        for job_id, job in self.processing_jobs.items():
 
-            job = self.creating_jobs[hds.id]
-            if job.id in processed_jobs:
-                continue
-            tool = self.job_tool[hds_id]
+            # update top position
+            p_left += h_step
 
-            p_left += 200
+            # compute the step index
+            index = len(wf["steps"])
 
-            print "Processing {0} node: {1}".format("intermediate" if hds_id in self.intermediate_outputs else "output",
-                                                    tool.name)
+            # get the tool related to the current job
+            tool = self._get_tool(job.wrapped["tool_id"])
+
+            # log
+            print "Processing {0} node: {1}".format(job_id, tool.name)
 
             # compute params
             params = {"__page__": 0, "__rerun_remap_job_id__": None}
@@ -298,16 +306,16 @@ class HistoryWrapper(object):
             inputs = []
             input_connections = {}
             for job_input_name, job_input_info in job.wrapped["inputs"].items():
-                print "Input", job_input_name
                 params[job_input_name] = _json.dumps({"__class__": "RuntimeValue"})
                 inputs.append({
                     "description": "Runtime input value {0}".format(job_input_name),
                     "name": job_input_name
                 })
+                output_name = self.intermediate_dataset_labels[job_input_info["id"]] \
+                    if job_input_info["id"] in self.intermediate_dataset_labels else "output"
                 input_connections[job_input_name] = {
-                    "id": hds_map[job_input_info["id"]],
-                    "output_name": output_labels[job_input_info["id"]] if job_input_info[
-                                                                              "id"] in output_labels else "output"
+                    "id": self._input_order_map[job_input_info["id"]],
+                    "output_name": output_name
                 }
 
             # add outputs
@@ -324,11 +332,6 @@ class HistoryWrapper(object):
                     "output_name": job_output_name,
                     "uuid": str(_uuid.uuid1())
                 })
-
-                output_labels[job_output_info["id"]] = job_output_name
-
-            index = len(wf["steps"])
-            hds_map[hds_id] = index
 
             wf["steps"][str(index)] = {
                 "annotation": "",
@@ -351,18 +354,11 @@ class HistoryWrapper(object):
                 "uuid": str(_uuid.uuid1()),
                 "workflow_outputs": workflow_outputs
             }
-            print tool.name, workflow_outputs
-            processed_jobs.append(job.id)
-            print processed_jobs
-
-        # TODO: move me!!!!
-        self.dataset_index = hds_map
-        self.output_labels = output_labels
 
         # save workflow
-        print "Filename", filename
-        with open(filename, "w") as fp:
-            _json.dump(wf, fp, indent=4)
+        if filename is not None:
+            with open(filename, "w") as fp:
+                _json.dump(wf, fp, indent=4)
 
         return wf
 
