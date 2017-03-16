@@ -70,22 +70,8 @@ class HistoryWrapper(object):
         self.intermediate_dataset_labels = {}
 
         # process history
-        self._init()
+        self._process_history()
 
-    def _init(self):
-        h = self.wrapped
-        datasets = h.get_datasets()
-        self.datasets = datasets
-
-        for hd in datasets:
-            job_id = hd.wrapped["creating_job"]
-            job_info = self.gi.jobs.get(job_id, full_details=True)
-            self.creating_jobs[hd.id] = job_info
-            self.job_tool[hd.id] = self.gi.tools.get(job_info.wrapped["tool_id"], io_details=True)
-
-            # detect whether the DS is an input
-            job_inputs = job_info.wrapped["inputs"]
-            print("Job inputs %r" % job_inputs)
     @property
     def jobs(self):
         return self._jobs
@@ -109,28 +95,119 @@ class HistoryWrapper(object):
             except ConnectionError as e:
                 raise TestConfigError("Unable to retrieve tool info !")
         return self._tools[tool_id]
+
+    def _process_history(self):
+
+        # check if a history has been assigned
+        if self._history is None:
+            raise RuntimeError("No history found!")
+
+        # auxiliary infos
+        ds_input_info = {}
+        ds_output_info = {}
+        intermediate_datasets = []
+
+        # get history datasets
+        history = self._history
+        self.datasets = history.get_datasets()
+
+        # process jobs chain (through their created datasets)
+        for ds in self.datasets:
+
+            # load job info
+            creating_job = self._get_job(ds.wrapped["creating_job"])
+            job_inputs = {in_info["id"]: in_name for in_name, in_info in creating_job.wrapped["inputs"].items()}
+            job_outputs = {out_info["id"]: out_name for out_name, out_info in creating_job.wrapped["outputs"].items()}
+            intermediate_datasets += job_inputs.keys()
+
+            # update auxiliary data info
+            for in_id, in_name in job_inputs.items():
+                if in_id not in ds_input_info:
+                    ds_input_info[in_id] = {}
+                ds_input_info[in_id][creating_job.id] = in_name
+
+            for out_id, out_name in job_outputs.items():
+                if out_id not in ds_output_info:
+                    ds_output_info[out_id] = {}
+                ds_output_info[out_id][creating_job.id] = out_name
+
+            # register the job as the creating of this DS
+            self.creating_jobs[ds.id] = creating_job
+
+            # detect if the job creates an input DS
+            # or it is a processing job
             if len(job_inputs) == 0:
-                print("Input found %r %s" % (hd.id, hd.wrapped["name"]))
-                self.input_datasets[hd.id] = hd
+                self.input_datasets[ds.id] = ds
             else:
-                print("Not an input: %r %s" % (hd.id, hd.wrapped["name"]))
-                for ji, jv in job_inputs.items():
-                    print("HD %s %s" % (jv["id"], hd.id))
-                    if ji not in self.dataset_input_of:
-                        self.dataset_input_of[jv["id"]] = []
-                    self.dataset_input_of[jv["id"]].append(hd.id)
+                # add the processing job
+                self.processing_jobs[creating_job.id] = creating_job
+                # compute the processing job level
+                self.processing_jobs[creating_job.id]
+                # update in/out maps
+                if creating_job.id not in self.job_input_ids:
+                    self.job_input_ids[creating_job.id] = job_inputs.keys()
+                    self.job_output_ids[creating_job.id] = job_outputs.keys()
 
-        # detect whether the DS is an output
-        for hd in datasets:
-            # print("Checking %s" % hd.id)
-            if hd.id not in self.dataset_input_of:
-                print("Output found:  %r %s" % (hd.id, hd.wrapped["name"]))
-                self.output_datasets[hd.id] = hd
-            elif hd.id not in self.input_datasets:
-                print("Intermediary output %r" % hd.id)
-                self.intermediate_outputs[hd.id] = hd
+        # Auxiliary function which computes the label for a given dataset
+        def __set_label(labels, ds_id, info_matrix, label=None, prefix=None):
+            if label is not None:
+                labels[ds_id] = label
+            elif len(info_matrix[ds_id]) == 1:
+                # use job
+                labels[ds_id] = info_matrix[ds_id][info_matrix[ds_id].keys()[0]]
+            else:
+                # use a default label if the same dataset if used by more than one job
+                labels[ds_id] = "{0}_{1}".format(prefix, len(labels))
 
-    def extract_workflow(self, filename=None):
+        # process datasets to:
+        #  - determine intermediate and output datasets
+        #  - determine input/output labels
+        for ds in self.datasets:
+            if ds.id in self.input_datasets:
+                __set_label(self.input_dataset_labels, ds.id, ds_input_info, prefix="input")
+                __set_label(self.intermediate_dataset_labels, ds.id, ds_input_info, label="output")
+            else:
+                if ds.id in intermediate_datasets:
+                    self.intermediate_datasets[ds.id] = ds
+                    __set_label(self.input_dataset_labels, ds.id, ds_input_info, prefix="input")
+                    __set_label(self.intermediate_dataset_labels, ds.id, ds_output_info, prefix="output")
+                else:
+                    self.output_datasets[ds.id] = ds
+                    __set_label(self.output_dataset_labels, ds.id, ds_output_info, prefix="output")
+
+        intermediate_inputs = []
+        not_ordered_inputs = self.input_datasets.keys()
+        input_datasets = _collections.OrderedDict()
+
+        # determine the job level
+        for job_id, job in self.processing_jobs.items():
+            self.processing_job_levels[job_id] = self.compute_processing_job_level(job_id)
+
+            print "Ordering: ", not_ordered_inputs
+            tool = self._get_tool(job.wrapped["tool_id"])
+            ordered_names = [x["name"] for x in tool.wrapped["inputs"]]
+            print "Ordered names", ordered_names
+            for name in ordered_names:
+                print "Name", name, in_id in not_ordered_inputs
+                if name in job.wrapped["inputs"]:
+                    in_id = job.wrapped["inputs"][name]["id"]
+                    if in_id in not_ordered_inputs:
+                        input_datasets[in_id] = self.input_datasets[in_id]
+                        not_ordered_inputs.remove(in_id)
+            intermediate_inputs.extend([x["id"] for x in job.wrapped["outputs"].values()
+                                        if x["id"] not in self.output_datasets])
+
+        # copy remaining inputs
+        print "Remaining", not_ordered_inputs
+        for ds_in in not_ordered_inputs:
+            input_datasets[ds_in] = self.input_datasets[ds_in]
+
+        print "Order before: ", self.input_datasets.keys()
+        self.input_datasets = input_datasets
+        print "Order after: ", self.input_datasets.keys()
+
+        inputs = self.input_datasets.keys() + intermediate_inputs
+        self._input_order_map = {x: inputs.index(x) for x in inputs}
         wf = _collections.OrderedDict({
             "a_galaxy_workflow": "true",
             "annotation": "",
