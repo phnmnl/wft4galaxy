@@ -5,7 +5,7 @@ import sys as _sys
 import jinja2 as _jinja2
 import logging as _logging
 import argparse as _argparse
-from dateutil.parser import parse as _date_parser
+import datetime as _datetime
 
 # wft4galaxy dependencies
 import wft4galaxy.core as _core
@@ -145,7 +145,9 @@ def _get_history_id(config):
 
             for opt, h in enumerate(candidate_histories):
                 print("".ljust(3), "{0})".format(opt + 1).ljust(4), h.name.ljust(30),
-                      "".ljust(4), "create-time:", _date_parser(h.wrapped["create_time"]).strftime("%Y-%m-%d %H:%M:%S"))
+                      "".ljust(4), "create-time:",
+                      _datetime.datetime.strptime(h.wrapped["create_time"], "%Y-%m-%dT%H:%M:%S.%f").strftime(
+                          "%Y-%m-%d %H:%M:%S"))
             print("\n".ljust(4), "0)".ljust(4), "Exit")
 
             try:
