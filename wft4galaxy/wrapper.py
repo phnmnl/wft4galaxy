@@ -378,7 +378,7 @@ class History(object):
         def __set_label(labels, ds_id, info_matrix, label=None, prefix=None):
             if label is not None:
                 labels[ds_id] = label
-            elif len(info_matrix[ds_id]) == 1:
+            elif ds_id in info_matrix and len(info_matrix[ds_id]) == 1:
                 # use job
                 labels[ds_id] = info_matrix[ds_id][info_matrix[ds_id].keys()[0]]
             else:
