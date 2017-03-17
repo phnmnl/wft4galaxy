@@ -235,7 +235,7 @@ def main(args=None):
             generate_template(config)
         elif options.command == _TEST_CMD:
             history = _get_history_id(config)
-            if history.id is not None:
+            if history is not None:
                 _logger.info("Selected history: %s (id: %r)", history.name, history.id)
                 config["history-id"] = history.id
                 generate_test_case(config)
