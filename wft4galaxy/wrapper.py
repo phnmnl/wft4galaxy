@@ -567,8 +567,3 @@ class HistoryWrapper(object):
                 _json.dump(wf, fp, indent=4)
 
         return wf
-
-
-def extract_workflow(history, filename=None):
-    hw = HistoryWrapper(history)
-    return hw.extract_workflow(filename)
