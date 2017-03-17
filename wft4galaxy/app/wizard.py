@@ -181,10 +181,10 @@ def main(args=None):
         # log the configuration
         _logger.debug("CLI config %r", config)
         # update defaults
-        _common._set_galaxy_server_settings(config, options)
+        _common.configure_env_galaxy_server_instance(config, options)
         # log the configuration
         _logger.info("Configuration...")
-        print(_common._pformat(config))
+        print(_common.pformat(config))
         if options.command == _TEMPLATE_CMD:
             generate_template(config)
         elif options.command == _TEST_CMD:

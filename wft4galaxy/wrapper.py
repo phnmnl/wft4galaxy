@@ -100,7 +100,7 @@ def _get_workflow_info(filename, galaxy_url, galaxy_api_key, tool_folder=DEFAULT
     outputs = {}
 
     # setup galaxy instance
-    galaxy_instance = _common._get_galaxy_instance(galaxy_url, galaxy_api_key)
+    galaxy_instance = _common.get_galaxy_instance(galaxy_url, galaxy_api_key)
     galaxy_tool_client = _ToolClient(galaxy_instance.gi)  # get the non-object version of the GI
 
     if not _os.path.exists(DEFAULT_TOOLS_FOLDER):
@@ -259,7 +259,7 @@ class History(object):
         super(History, self).__init__()
 
         # set the Galaxy instance
-        self._gi = _common._get_galaxy_instance(galaxy_url, galaxy_api_key)
+        self._gi = _common.get_galaxy_instance(galaxy_url, galaxy_api_key)
 
         # set wrapped history
         self._history = self._gi.histories.get(history_id)

@@ -567,7 +567,7 @@ class WorkflowLoader(object):
         """
         if not self._galaxy_instance:
             # initialize the galaxy instance
-            self._initialize(_common._get_galaxy_instance(galaxy_url, galaxy_api_key))
+            self._initialize(_common.get_galaxy_instance(galaxy_url, galaxy_api_key))
 
     def _initialize(self, galaxy_instance):
         if not self._galaxy_instance:
@@ -770,7 +770,7 @@ class WorkflowTestSuiteRunner(object):
         self._workflow_test_results = []
         self._galaxy_instance = None
         # initialize the galaxy instance
-        self._galaxy_instance = _common._get_galaxy_instance(galaxy_url, galaxy_api_key)
+        self._galaxy_instance = _common.get_galaxy_instance(galaxy_url, galaxy_api_key)
         # initialize the workflow loader
         self._workflow_loader = WorkflowLoader.get_instance(self._galaxy_instance)
 
@@ -986,7 +986,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         :return: a :class:`WorkflowTestRunner` instance
         """
         # initialize the galaxy instance
-        galaxy_instance = _common._get_galaxy_instance(galaxy_url, galaxy_api_key)
+        galaxy_instance = _common.get_galaxy_instance(galaxy_url, galaxy_api_key)
         workflow_loader = WorkflowLoader.get_instance(galaxy_instance)
         # return the runner instance
         return WorkflowTestRunner(galaxy_instance, workflow_loader, workflow_test_config)
@@ -1357,7 +1357,7 @@ class WorkflowTestResult(object):
 
 def cleanup_test_workflows(galaxy_url=None, galaxy_api_key=None):
     _logger.debug("Cleaning workflow library ...")
-    galaxy_instance = _common._get_galaxy_instance(galaxy_url, galaxy_api_key)
+    galaxy_instance = _common.get_galaxy_instance(galaxy_url, galaxy_api_key)
     workflow_loader = WorkflowLoader.get_instance(galaxy_instance)
     wflist = galaxy_instance.workflows.list()
     workflows = [w for w in wflist if WorkflowTestCase.DEFAULT_WORKFLOW_NAME_PREFIX in w.name]
@@ -1367,7 +1367,7 @@ def cleanup_test_workflows(galaxy_url=None, galaxy_api_key=None):
 
 def cleanup_test_workflow_data(galaxy_url=None, galaxy_api_key=None):
     _logger.debug("Cleaning saved histories ...")
-    galaxy_instance = _common._get_galaxy_instance(galaxy_url, galaxy_api_key)
+    galaxy_instance = _common.get_galaxy_instance(galaxy_url, galaxy_api_key)
     hslist = galaxy_instance.histories.list()
     for history in [h for h in hslist if WorkflowTestCase.DEFAULT_HISTORY_NAME_PREFIX in h.name]:
         galaxy_instance.histories.delete(history.id)
