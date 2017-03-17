@@ -28,13 +28,6 @@ _logger = _common._logger
 # Default folder where tool configuration is downloaded
 DEFAULT_TOOLS_FOLDER = ".tools"
 
-# map `StandardError` to `Exception` to allow compatibility both with Python2 and Python3
-_StandardError = Exception
-try:
-    _StandardError = StandardError
-except NameError:
-    pass
-
 
 class FileFormats(object):
     YAML = "YAML"
@@ -1780,7 +1773,7 @@ def main():
                          disable_cleanup=options.disable_cleanup,
                          tests=options.test)
         _sys.exit(code)
-    except _StandardError as e:
+    except _common.RunnerStandardError as e:
         # in some cases we exit with an exception even for rather "normal"
         # situations, such as configuration errors.  For this reason we only display
         # the exception's stack trace if debug logging is enabled.

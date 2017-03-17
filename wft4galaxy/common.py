@@ -14,6 +14,13 @@ from bioblend.galaxy.objects import GalaxyInstance as ObjGalaxyInstance
 ENV_KEY_GALAXY_URL = "GALAXY_URL"
 ENV_KEY_GALAXY_API_KEY = "GALAXY_API_KEY"
 
+# map `StandardError` to `Exception` to allow compatibility both with Python2 and Python3
+RunnerStandardError = Exception
+try:
+    RunnerStandardError = StandardError
+except NameError:
+    pass
+
 _log_format = '%(asctime)s %(levelname)s: %(message)s'
 _logger = _logging.getLogger("WorkflowTest")
 
