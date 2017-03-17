@@ -152,8 +152,8 @@ def _get_history_id(config):
                 choice = input("\n ==> Choice: ")
                 if choice in range(0, candidate_count + 1):
                     if choice > 0:
-                        result = candidate_histories[choice - 1].id
-                        print(result)
+                        result = candidate_histories[choice - 1]
+                        print("\n\n")
                     break
             except NameError:
                 print("\nWARNING: ".ljust(10), "Your choice is not valid!!!")
@@ -226,9 +226,10 @@ def main(args=None):
         if options.command == _TEMPLATE_CMD:
             generate_template(config)
         elif options.command == _TEST_CMD:
-            history_id = _get_history_id(config)
-            if history_id is not None:
-                config["history-id"] = history_id
+            history = _get_history_id(config)
+            if history.id is not None:
+                _logger.info("Selected history: %s (id: %r)", history.name, history.id)
+                config["history-id"] = history.id
                 generate_test_case(config)
     except Exception as e:
         _logger.error(e)
