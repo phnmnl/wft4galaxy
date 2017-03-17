@@ -149,16 +149,22 @@ def _get_history_id(config):
             print("\n".ljust(4), "0)".ljust(4), "Exit")
 
             try:
-                choice = input("\n ==> Choice: ")
+                # get the user choice as int
+                # notice that `input` in python3 is equivalent to `raw_input` in python2
+                choice = int(input("\n ==> Choice: "))
                 if choice in range(0, candidate_count + 1):
                     if choice > 0:
                         result = candidate_histories[choice - 1]
                         print("\n")
                     break
+            except ValueError:
+                print("\nWARNING: ".ljust(10), "Your choice is not valid!!!")
             except NameError:
                 print("\nWARNING: ".ljust(10), "Your choice is not valid!!!")
             except SyntaxError:
                 print("\nWARNING: ".ljust(10), "Your choice is not valid!!!")
+            except KeyboardInterrupt:
+                break
             else:
                 print("\nWARNING: ".ljust(10), "Your choice is not valid!!!")
     return result
