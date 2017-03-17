@@ -117,8 +117,7 @@ def generate_test_case(config):
     for ds in hw.output_datasets.values():
         cfg.add_expected_output(hw.output_dataset_labels[ds.id],
                                 "{0}/{1}".format(DEFAULT_EXPECTED_FOLDER,
-                                                 "{0}.{1}".format(hw.output_dataset_labels[ds.id], ds.file_ext)),
-                                "comparators.csv_same_row_and_col_lengths")
+                                                 "{0}.{1}".format(hw.output_dataset_labels[ds.id], ds.file_ext)))
 
     # append test case to the test suite
     suite.add_workflow_test(cfg)
