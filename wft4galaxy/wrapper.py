@@ -5,6 +5,7 @@ import sys as _sys
 import uuid as _uuid
 import json as _json
 import collections as _collections
+from future.utils import iteritems as _iteritems
 
 from bioblend import ConnectionError
 from future.utils import iteritems as _iteritems
@@ -341,18 +342,18 @@ class History(object):
             # load job info
             creating_job = self._get_job(ds.wrapped["creating_job"])
             job_inputs = {in_info["id"]: in_name for in_name, in_info in
-                          creating_job.wrapped["inputs"].items()}
+                          _iteritems(creating_job.wrapped["inputs"])}
             job_outputs = {out_info["id"]: out_name for out_name, out_info in
-                           creating_job.wrapped["outputs"].items()}
-            intermediate_datasets += job_inputs.keys()
+                           _iteritems(creating_job.wrapped["outputs"])}
+            intermediate_datasets += list(job_inputs)
 
             # update auxiliary data info
-            for in_id, in_name in job_inputs.items():
+            for in_id, in_name in _iteritems(job_inputs):
                 if in_id not in ds_input_info:
                     ds_input_info[in_id] = {}
                 ds_input_info[in_id][creating_job.id] = in_name
 
-            for out_id, out_name in job_outputs.items():
+            for out_id, out_name in _iteritems(job_outputs):
                 if out_id not in ds_output_info:
                     ds_output_info[out_id] = {}
                 ds_output_info[out_id][creating_job.id] = out_name
@@ -407,7 +408,7 @@ class History(object):
         input_datasets = _collections.OrderedDict()
 
         # determine the job level
-        for job_id, job in self.processing_jobs.items():
+        for job_id, job in _iteritems(self.processing_jobs):
             # compute and set the job level
             self.processing_job_levels[job_id] = self.compute_processing_job_level(job_id)
             # order inputs
@@ -458,7 +459,7 @@ class History(object):
         p_top = 0
 
         # process steps
-        for hds_id, hds in self.input_datasets.items():
+        for hds_id, hds in _iteritems(self.input_datasets):
             job = self.creating_jobs[hds.id]
             index = len(wf["steps"])
             input_name = self.input_dataset_labels[hds_id]
@@ -495,7 +496,7 @@ class History(object):
         p_top = p_top - (v_step * (len(self.input_datasets) / 2))
 
         # process intermediate and final steps
-        for job_id, job in self.processing_jobs.items():
+        for job_id, job in _iteritems(self.processing_jobs):
 
             # update top position
             p_left += h_step
@@ -509,14 +510,14 @@ class History(object):
             # compute params
             params = {"__page__": 0, "__rerun_remap_job_id__": None}
             tool_inputs = {param["name"]: param for param in tool.wrapped["inputs"]}
-            for param_name, param_info in job.wrapped["params"].items():
+            for param_name, param_info in _iteritems(job.wrapped["params"]):
                 if param_name in tool_inputs:
                     params[param_name] = param_info
 
             # add inputs to tool state and inputs
             inputs = []
             input_connections = {}
-            for job_input_name, job_input_info in job.wrapped["inputs"].items():
+            for job_input_name, job_input_info in _iteritems(job.wrapped["inputs"]):
                 params[job_input_name] = _json.dumps({"__class__": "RuntimeValue"})
                 inputs.append({
                     "description": "Runtime input value {0}".format(job_input_name),
@@ -533,7 +534,7 @@ class History(object):
             outputs = []
             workflow_outputs = []
             tool_outputs = {param["name"]: param for param in tool.wrapped["outputs"]}
-            for job_output_name, job_output_info in job.wrapped["outputs"].items():
+            for job_output_name, job_output_info in _iteritems(job.wrapped["outputs"]):
                 outputs.append({
                     "name": job_output_name,
                     "type": tool_outputs[job_output_name]["format"]
