@@ -254,9 +254,9 @@ def _process_tool_param_element(input_el, tool_params):
                                            when_options)
 
 
-class HistoryWrapper(object):
+class History(object):
     def __init__(self, history_id, galaxy_url=None, galaxy_api_key=None):
-        super(HistoryWrapper, self).__init__()
+        super(History, self).__init__()
 
         # set the Galaxy instance
         self._gi = _common._get_galaxy_instance(galaxy_url, galaxy_api_key)

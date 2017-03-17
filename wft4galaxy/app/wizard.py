@@ -80,8 +80,8 @@ def generate_template(config):
 
 def generate_test_case(config):
     # instantiate the history wrapper
-    hw = _wrapper.HistoryWrapper(config["history-name"],
-                                 galaxy_url=config["galaxy_url"], galaxy_api_key=config["galaxy_api_key"])
+    hw = _wrapper.History(config["history-name"],
+                          galaxy_url=config["galaxy_url"], galaxy_api_key=config["galaxy_api_key"])
 
     # set the output folder
     output_folder = _os.path.abspath(config["output_folder"])
