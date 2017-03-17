@@ -56,7 +56,7 @@ def download_dataset(datasets, output_folder, labels=None):
     for ds in datasets:
         ds_in_filename = _os.path.join(output_folder,
                                        "{0}.{1}".format(labels[ds.id], ds.file_ext) if labels is not None else ds.name)
-        with open(ds_in_filename, "w") as ds_in_fp:
+        with open(ds_in_filename, "wb") as ds_in_fp:
             ds.download(ds_in_fp)
 
 
