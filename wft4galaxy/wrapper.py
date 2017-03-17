@@ -1,14 +1,15 @@
+from __future__ import print_function
+
 import os as _os
 import sys as _sys
 import uuid as _uuid
+import json as _json
 import collections as _collections
 
 from bioblend import ConnectionError
 from future.utils import iteritems as _iteritems
 from ruamel.yaml import round_trip_dump as _round_trip_dump
 from ruamel.yaml.comments import CommentedMap as _CommentedMap
-from json import load as _json_load
-from json import dumps as _json_dumps
 
 # BioBlend dependecies
 from bioblend.galaxy.tools import ToolClient as _ToolClient
@@ -104,7 +105,7 @@ class Workflow(object):
                             _os.makedirs(DEFAULT_TOOLS_FOLDER)
 
                         with open(filename) as fp:
-                            wf_config = _json_load(fp)
+                            wf_config = _json.load(fp)
 
                         for sid, step in _iteritems(wf_config["steps"]):
                             # tool = gi.tools.get()
@@ -248,6 +249,7 @@ class Workflow(object):
                                     conditional_options.insert(len(conditional_options),
                                                                when_el.get("value"),
                                                                when_options)
+
 
 class HistoryWrapper(object):
     def __init__(self, wrapped_history):
@@ -401,45 +403,36 @@ class HistoryWrapper(object):
 
         # determine the job level
         for job_id, job in self.processing_jobs.items():
+            # compute and set the job level
             self.processing_job_levels[job_id] = self.compute_processing_job_level(job_id)
-
-            print "Ordering: ", not_ordered_inputs
+            # order inputs
             tool = self._get_tool(job.wrapped["tool_id"])
             ordered_names = [x["name"] for x in tool.wrapped["inputs"]]
-            print "Ordered names", ordered_names
             for name in ordered_names:
-                print "Name", name, in_id in not_ordered_inputs
                 if name in job.wrapped["inputs"]:
                     in_id = job.wrapped["inputs"][name]["id"]
                     if in_id in not_ordered_inputs:
                         input_datasets[in_id] = self.input_datasets[in_id]
                         not_ordered_inputs.remove(in_id)
+            # add intermediate inputs
             intermediate_inputs.extend([x["id"] for x in job.wrapped["outputs"].values()
                                         if x["id"] not in self.output_datasets])
 
         # copy remaining inputs
-        print "Remaining", not_ordered_inputs
         for ds_in in not_ordered_inputs:
             input_datasets[ds_in] = self.input_datasets[ds_in]
-
-        print "Order before: ", self.input_datasets.keys()
         self.input_datasets = input_datasets
-        print "Order after: ", self.input_datasets.keys()
-
         inputs = self.input_datasets.keys() + intermediate_inputs
         self._input_order_map = {x: inputs.index(x) for x in inputs}
 
     def compute_processing_job_level(self, job_id):
         level = 0
         for job in self.processing_jobs.values():
-            print "\nComparing ", job.id, job_id, job.id == job_id, "Target", job_id
             if job.id == job_id:
                 break
             dependencies = [x for x in self.job_output_ids[job.id] if
                             x in self.job_input_ids[job_id]]
-            print "Intersetct", job_id, self.job_output_ids[job.id], self.job_input_ids[job_id], x
             if len(dependencies) > 0:
-                print "Updating level {0} {1}".format(level, self.processing_job_levels[job.id] + 1)
                 level = max(level, self.processing_job_levels[job.id] + 1)
         return level
 
@@ -508,14 +501,10 @@ class HistoryWrapper(object):
             # get the tool related to the current job
             tool = self._get_tool(job.wrapped["tool_id"])
 
-            # log
-            print "Processing {0} node: {1}".format(job_id, tool.name)
-
             # compute params
             params = {"__page__": 0, "__rerun_remap_job_id__": None}
             tool_inputs = {param["name"]: param for param in tool.wrapped["inputs"]}
             for param_name, param_info in job.wrapped["params"].items():
-                print "Params", param_name
                 if param_name in tool_inputs:
                     params[param_name] = param_info
 
@@ -578,6 +567,7 @@ class HistoryWrapper(object):
                 _json.dump(wf, fp, indent=4)
 
         return wf
+
 
 def extract_workflow(history, filename=None):
     hw = HistoryWrapper(history)
