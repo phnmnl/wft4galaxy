@@ -16,10 +16,10 @@ setup(
         'Jinja2': ['Jinja2>=2.9']
     },
     package_data={'templates': ['*']},
-    packages=["wft4galaxy", "wft4galaxy.comparators", "templates"],
+    packages=["wft4galaxy", "wft4galaxy.comparators", "wft4galaxy.app", "templates"],
     scripts=['utils/docker/wft4galaxy-docker'],
     entry_points={'console_scripts': [
-        'wft4galaxy = wft4galaxy.core:main',
-        'wft4galaxy-wizard = wft4galaxy.wizard:main'
+        'wft4galaxy = wft4galaxy.app.runner:main',
+        'wft4galaxy-wizard = wft4galaxy.app.wizard:main'
     ]}
 )
