@@ -129,7 +129,7 @@ def _get_workflow_info(filename, galaxy_url, galaxy_api_key, tool_folder=DEFAULT
 
             # process tool info to extract parameters
             tool_id = step["tool_id"]
-            #tool = galaxy_instance.tools.get(tool_id)
+            # tool = galaxy_instance.tools.get(tool_id)
             ## LP:  re-write this using the bioblend.objects API to fetch the tool
             # inputs.  See the comment above `def _process_tool_param_element`
             # tool_config_xml = _os.path.basename(tool.wrapped["config_file"])
