@@ -12,9 +12,9 @@ import argparse as _argparse
 import tarfile as _tarfile
 import sys as _sys
 
-from .common import TestConfigError
-from .common import ENV_KEY_GALAXY_URL
-from .common import ENV_KEY_GALAXY_API_KEY
+from wft4galaxy.common import TestConfigError
+from wft4galaxy.common import ENV_KEY_GALAXY_URL
+from wft4galaxy.common import ENV_KEY_GALAXY_API_KEY
 from wft4galaxy.common import load_comparator
 
 from lxml import etree as _etree
