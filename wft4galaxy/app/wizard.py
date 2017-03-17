@@ -153,7 +153,7 @@ def _get_history_id(config):
                 if choice in range(0, candidate_count + 1):
                     if choice > 0:
                         result = candidate_histories[choice - 1]
-                        print("\n\n")
+                        print("\n")
                     break
             except NameError:
                 print("\nWARNING: ".ljust(10), "Your choice is not valid!!!")
