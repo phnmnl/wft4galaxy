@@ -1,34 +1,29 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-from future.utils import iteritems as _iteritems
-from past.builtins import basestring as _basestring
 
+import sys as _sys
 import os as _os
 import shutil as _shutil
+import argparse as _argparse
 import logging as _logging
 import unittest as _unittest
-import argparse as _argparse
-import tarfile as _tarfile
-import sys as _sys
-
-from wft4galaxy.common import _logger
-from wft4galaxy.common import _log_format
-from wft4galaxy.common import TestConfigError
-from wft4galaxy.common import ENV_KEY_GALAXY_URL
-from wft4galaxy.common import ENV_KEY_GALAXY_API_KEY
-from wft4galaxy.common import load_comparator
-
-from lxml import etree as _etree
 from uuid import uuid1 as  _uuid1
+from yaml import load as _yaml_load
+from yaml import dump as _yaml_dump
 from difflib import unified_diff as _unified_diff
-from yaml import load as _yaml_load, dump as _yaml_dump
-from ruamel.yaml.comments import CommentedMap as _CommentedMap
-from ruamel.yaml import round_trip_dump as _round_trip_dump
-from json import load as _json_load, loads as _json_loads, dumps as _json_dumps
+from json import load as _json_load, dumps as _json_dumps
 
-from bioblend.galaxy.objects import GalaxyInstance as ObjGalaxyInstance
+import wft4galaxy.common as _common
+
 from bioblend.galaxy.tools import ToolClient as _ToolClient
+from future.utils import iteritems as _iteritems
+from past.builtins import basestring as _basestring
+from ruamel.yaml import round_trip_dump as _round_trip_dump
+from ruamel.yaml.comments import CommentedMap as _CommentedMap
+
+# set logger
+_logger = _common._logger
 
 # Default folder where tool configuration is downloaded
 DEFAULT_TOOLS_FOLDER = ".tools"
@@ -1307,7 +1302,7 @@ class WorkflowTestRunner(_unittest.TestCase):
                 config = expected_output_map[output.name]
                 comparator_fn = config.get("comparator", None)
                 _logger.debug("Configured comparator function: %s", comparator_fn)
-                comparator = load_comparator(comparator_fn) if comparator_fn else base_comparator
+                comparator = _common.load_comparator(comparator_fn) if comparator_fn else base_comparator
                 if comparator:
                     expected_output_filename = config["file"] if _os.path.isabs(config["file"]) \
                         else _os.path.join(base_path, config["file"])
@@ -1687,17 +1682,17 @@ def _parse_cli_arguments(parser, cmd_args):
 def _configure_test(galaxy_url, galaxy_api_key, suite, output_folder, tests,
                     enable_logger, enable_debug, disable_cleanup, disable_assertions):
     # configure `galaxy_url`
-    suite.galaxy_url = galaxy_url or suite.galaxy_url or _os.environ.get(ENV_KEY_GALAXY_URL)
+    suite.galaxy_url = galaxy_url or suite.galaxy_url or _os.environ.get(_common.ENV_KEY_GALAXY_URL)
     if not suite.galaxy_url:
-        raise TestConfigError("Galaxy URL not defined!  Use --server or the environment variable {} "
-                              "or specify it in the test configuration".format(ENV_KEY_GALAXY_URL))
+        raise _common.TestConfigError("Galaxy URL not defined!  Use --server or the environment variable {} "
+                                      "or specify it in the test configuration".format(_common.ENV_KEY_GALAXY_URL))
     # configure `galaxy_api_key`
     suite.galaxy_api_key = galaxy_api_key \
                            or suite.galaxy_api_key \
-                           or _os.environ.get(ENV_KEY_GALAXY_API_KEY)
+                           or _os.environ.get(_common.ENV_KEY_GALAXY_API_KEY)
     if not suite.galaxy_api_key:
-        raise TestConfigError("Galaxy API key not defined!  Use --api-key or the environment variable {} "
-                              "or specify it in the test configuration".format(ENV_KEY_GALAXY_API_KEY))
+        raise _common.TestConfigError("Galaxy API key not defined!  Use --api-key or the environment variable {} "
+                                      "or specify it in the test configuration".format(_common.ENV_KEY_GALAXY_API_KEY))
     # configure `output_folder`
     suite.output_folder = output_folder \
                           or suite.output_folder \
@@ -1771,7 +1766,7 @@ def run_tests(filename,
 
 def main():
     # Since we're running as the main executable, configure the logger
-    _logging.basicConfig(format=_log_format)
+    _logging.basicConfig(format=_common._log_format)
     try:
         parser = _make_parser()
         options = _parse_cli_arguments(parser, _sys.argv[1:])

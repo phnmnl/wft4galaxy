@@ -1,24 +1,13 @@
 from __future__ import print_function
-from future.utils import iteritems as _iteritems
-from past.builtins import basestring as _basestring
 
 import os as _os
 import sys as _sys
-import json as _json
 import jinja2 as _jinja2
 import logging as _logging
 import argparse as _argparse
 
-import wft4galaxy.common
+import wft4galaxy.common as _common
 from wft4galaxy import core as _wft4core
-from wft4galaxy.common import Configuration
-from wft4galaxy.common import TestConfigError
-from wft4galaxy.common import ENV_KEY_GALAXY_URL
-from wft4galaxy.common import ENV_KEY_GALAXY_API_KEY
-from wft4galaxy.common import make_dirs as _makedirs
-from wft4galaxy.common import _set_galaxy_server_settings
-from wft4galaxy.common import _pformat
-from wft4galaxy.common import HistoryWrapper
 
 # default output settings
 DEFAULT_OUTPUT_FOLDER = "test-config"
@@ -55,9 +44,9 @@ def write_test_suite_definition_file(output_file, suite_config):
 
 def make_dir_structure(output_folder):
     # make directory structure of the test definition
-    _makedirs(output_folder)
-    _makedirs(_os.path.join(output_folder, DEFAULT_INPUTS_FOLDER))
-    _makedirs(_os.path.join(output_folder, DEFAULT_EXPECTED_FOLDER))
+    _common.makedirs(output_folder)
+    _common.makedirs(_os.path.join(output_folder, DEFAULT_INPUTS_FOLDER))
+    _common.makedirs(_os.path.join(output_folder, DEFAULT_EXPECTED_FOLDER))
 
 
 def download_dataset(datasets, output_folder, labels=None):
@@ -88,13 +77,13 @@ def generate_template(config):
 
 
 def generate_test_case(config):
-    gi = wft4galaxy.common._get_galaxy_instance(config["galaxy_url"], config["galaxy_api_key"])
+    gi = _common._get_galaxy_instance(config["galaxy_url"], config["galaxy_api_key"])
 
     # get history object
     h = gi.histories.get(config["history-name"])
 
     # instantiate the history wrapper
-    hw = HistoryWrapper(h)
+    hw = _common.HistoryWrapper(h)
 
     # set the output folder
     output_folder = _os.path.abspath(config["output_folder"])
@@ -187,7 +176,7 @@ def main(args=None):
         # process CLI args and opts
         parser = _make_parser()
         options = parser.parse_args(args)
-        config = Configuration(vars(options))
+        config = _common.Configuration(vars(options))
 
         # enable debug mode
         if options.enable_debug:
@@ -195,10 +184,10 @@ def main(args=None):
         # log the configuration
         _logger.debug("CLI config %r", config)
         # update defaults
-        _set_galaxy_server_settings(config, options)
+        _common._set_galaxy_server_settings(config, options)
         # log the configuration
         _logger.info("Configuration...")
-        print(_pformat(config))
+        print(_common._pformat(config))
         if options.command == _TEMPLATE_CMD:
             generate_template(config)
         elif options.command == _TEST_CMD:

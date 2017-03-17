@@ -440,7 +440,7 @@ def _pformat(obj):
     return _json.dumps(obj, sort_keys=True, indent=4)
 
 
-def make_dirs(path, check_if_exists=False):
+def makedirs(path, check_if_exists=False):
     try:
         _os.makedirs(path)
     except OSError as e:
