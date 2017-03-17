@@ -2,8 +2,8 @@
 
 from __future__ import print_function
 
-import sys as _sys
 import os as _os
+import sys as _sys
 import shutil as _shutil
 import argparse as _argparse
 import logging as _logging
@@ -11,10 +11,10 @@ import unittest as _unittest
 from uuid import uuid1 as  _uuid1
 from yaml import load as _yaml_load
 from yaml import dump as _yaml_dump
-from difflib import unified_diff as _unified_diff
 from json import load as _json_load, dumps as _json_dumps
 
 import wft4galaxy.common as _common
+import wft4galaxy.comparators as _comparators
 
 from bioblend.galaxy.tools import ToolClient as _ToolClient
 from future.utils import iteritems as _iteritems
@@ -1295,7 +1295,8 @@ class WorkflowTestRunner(_unittest.TestCase):
                 config = expected_output_map[output.name]
                 comparator_fn = config.get("comparator", None)
                 _logger.debug("Configured comparator function: %s", comparator_fn)
-                comparator = _common.load_comparator(comparator_fn) if comparator_fn else base_comparator
+                comparator = _comparators.load_comparator(comparator_fn) \
+                    if comparator_fn else _comparators.base_comparator
                 if comparator:
                     expected_output_filename = config["file"] if _os.path.isabs(config["file"]) \
                         else _os.path.join(base_path, config["file"])
@@ -1628,20 +1629,6 @@ def _parse_dict(elements):
             raise ValueError("Configuration error: %r", elements)
         results[name] = result
     return results
-
-
-def base_comparator(actual_output_filename, expected_output_filename):
-    _logger.debug("Using default comparator....")
-    with open(actual_output_filename) as aout, open(expected_output_filename) as eout:
-        diff = _unified_diff(aout.readlines(), eout.readlines(), actual_output_filename, expected_output_filename)
-        ldiff = list(diff)
-        if len(ldiff) > 0:
-            print("\n{0}\n...\n".format("".join(ldiff[:20])))
-            diff_filename = _os.path.join(_os.path.dirname(actual_output_filename),
-                                          _os.path.basename(actual_output_filename) + ".diff")
-            with open(diff_filename, "w") as  out_fp:
-                out_fp.writelines("%r\n" % item.rstrip('\n') for item in ldiff)
-        return len(ldiff) == 0
 
 
 def _make_parser():
