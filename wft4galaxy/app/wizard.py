@@ -6,8 +6,10 @@ import jinja2 as _jinja2
 import logging as _logging
 import argparse as _argparse
 
+# wft4galaxy dependencies
+import wft4galaxy.core as _core
 import wft4galaxy.common as _common
-from wft4galaxy import core as _wft4core
+import wft4galaxy.wrapper as _wrapper
 
 # default output settings
 DEFAULT_OUTPUT_FOLDER = "test-config"
@@ -60,8 +62,8 @@ def download_dataset(datasets, output_folder, labels=None):
 def generate_template(config):
     _logger.info("Generating test definition template folder...")
     # config a sample suite
-    suite = _wft4core.WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
-    cfg = _wft4core.WorkflowTestCase(name="workflow_test_case_1")
+    suite = _core.WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
+    cfg = _core.WorkflowTestCase(name="workflow_test_case_1")
     cfg.output_folder = config["output_folder"]
     cfg.enable_debug = config["enable_debug"]
     cfg.add_input("input_1", "{0}/<INPUT_FILE_PATH>".format(DEFAULT_INPUTS_FOLDER), "txt")
@@ -103,11 +105,11 @@ def generate_test_case(config):
                      labels=hw.output_dataset_labels)
 
     # load the wf wrapper
-    wf = _wft4core.Workflow.load(workflow_definition_filename)
+    wf = _wrapper.Workflow.load(workflow_definition_filename)
 
-    suite = _wft4core.WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
-    cfg = _wft4core.WorkflowTestCase(name="workflow_test_case_1")
-    cfg.output_folder = _wft4core.WorkflowTestCase.DEFAULT_OUTPUT_FOLDER
+    suite = _core.WorkflowTestSuite(config["galaxy_url"], config["galaxy_api_key"])
+    cfg = _core.WorkflowTestCase(name="workflow_test_case_1")
+    cfg.output_folder = _core.WorkflowTestCase.DEFAULT_OUTPUT_FOLDER
     cfg.enable_debug = config["enable_debug"]
 
     # configure input
