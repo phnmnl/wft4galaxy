@@ -22,7 +22,7 @@ _TEST_CMD = "generate-test"
 _TEMPLATE_CMD = "generate-template"
 
 # templates directory
-_TEMPLATE_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), _os.pardir, "templates")
+_TEMPLATE_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), _os.pardir, _os.pardir, "templates")
 
 # configure module logger
 LogFormat = '%(asctime)s %(levelname)s: %(message)s'
