@@ -79,13 +79,9 @@ def generate_template(config):
 
 
 def generate_test_case(config):
-    gi = _common._get_galaxy_instance(config["galaxy_url"], config["galaxy_api_key"])
-
-    # get history object
-    h = gi.histories.get(config["history-name"])
-
     # instantiate the history wrapper
-    hw = _wrapper.HistoryWrapper(h)
+    hw = _wrapper.HistoryWrapper(config["history-name"],
+                                 galaxy_url=config["galaxy_url"], galaxy_api_key=config["galaxy_api_key"])
 
     # set the output folder
     output_folder = _os.path.abspath(config["output_folder"])

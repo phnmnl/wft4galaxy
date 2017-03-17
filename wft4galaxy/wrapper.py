@@ -252,12 +252,14 @@ class Workflow(object):
 
 
 class HistoryWrapper(object):
-    def __init__(self, wrapped_history):
+    def __init__(self, history_id, galaxy_url=None, galaxy_api_key=None):
         super(HistoryWrapper, self).__init__()
 
-        # set wrapped history and GalaxyInstance
-        self._history = wrapped_history
-        self._gi = wrapped_history.gi
+        # set the Galaxy instance
+        self._gi = _common._get_galaxy_instance(galaxy_url, galaxy_api_key)
+
+        # set wrapped history
+        self._history = self._gi.histories.get(history_id)
 
         # job info
         self.job_tool = {}
