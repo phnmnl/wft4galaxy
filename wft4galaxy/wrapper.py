@@ -372,8 +372,8 @@ class History(object):
                 self.processing_jobs[creating_job.id]
                 # update in/out maps
                 if creating_job.id not in self.job_input_ids:
-                    self.job_input_ids[creating_job.id] = job_inputs.keys()
-                    self.job_output_ids[creating_job.id] = job_outputs.keys()
+                    self.job_input_ids[creating_job.id] = list(job_inputs)
+                    self.job_output_ids[creating_job.id] = list(job_outputs)
 
         # Auxiliary function which computes the label for a given dataset
         def __set_label(labels, ds_id, info_matrix, label=None, prefix=None):
@@ -381,7 +381,7 @@ class History(object):
                 labels[ds_id] = label
             elif ds_id in info_matrix and len(info_matrix[ds_id]) == 1:
                 # use job
-                labels[ds_id] = info_matrix[ds_id][info_matrix[ds_id].keys()[0]]
+                labels[ds_id] = info_matrix[ds_id][list(info_matrix[ds_id])[0]]
             else:
                 # use a default label if the same dataset if used by more than one job
                 labels[ds_id] = "{0}_{1}".format(prefix, len(labels))
@@ -404,7 +404,7 @@ class History(object):
                     __set_label(self.output_dataset_labels, ds.id, ds_output_info, prefix="output")
 
         intermediate_inputs = []
-        not_ordered_inputs = self.input_datasets.keys()
+        not_ordered_inputs = list(self.input_datasets)
         input_datasets = _collections.OrderedDict()
 
         # determine the job level
@@ -428,7 +428,7 @@ class History(object):
         for ds_in in not_ordered_inputs:
             input_datasets[ds_in] = self.input_datasets[ds_in]
         self.input_datasets = input_datasets
-        inputs = self.input_datasets.keys() + intermediate_inputs
+        inputs = list(self.input_datasets) + intermediate_inputs
         self._input_order_map = {x: inputs.index(x) for x in inputs}
 
     def compute_processing_job_level(self, job_id):

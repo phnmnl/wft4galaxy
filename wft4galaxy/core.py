@@ -167,7 +167,7 @@ class WorkflowTestCase(object):
 
     def __str__(self):
         return "WorkflowTestConfig: name={0}, file={1}, inputs=[{2}], expected_outputs=[{3}]".format(
-            self.name, self.filename, ",".join(self.inputs.keys()), ",".join(self.expected_outputs.keys()))
+            self.name, self.filename, ",".join(list(self.inputs)), ",".join(list(self.expected_outputs)))
 
     def __repr__(self):
         return self.__str__()
