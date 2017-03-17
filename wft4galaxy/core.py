@@ -12,6 +12,8 @@ import argparse as _argparse
 import tarfile as _tarfile
 import sys as _sys
 
+from wft4galaxy.common import _logger
+from wft4galaxy.common import _log_format
 from wft4galaxy.common import TestConfigError
 from wft4galaxy.common import ENV_KEY_GALAXY_URL
 from wft4galaxy.common import ENV_KEY_GALAXY_API_KEY
@@ -30,10 +32,6 @@ from bioblend.galaxy.tools import ToolClient as _ToolClient
 
 # Default folder where tool configuration is downloaded
 DEFAULT_TOOLS_FOLDER = ".tools"
-
-# configure module logger
-LogFormat = '%(asctime)s %(levelname)s: %(message)s'
-_logger = _logging.getLogger("WorkflowTest")
 
 # map `StandardError` to `Exception` to allow compatibility both with Python2 and Python3
 _StandardError = Exception
@@ -819,7 +817,7 @@ class WorkflowTestSuite(object):
             raise ValueError("Filename '{0}' not found".format(filename))
 
     def run(self, galaxy_url=None, galaxy_api_key=None, tests=None,
-                  enable_logger=None, enable_debug=None, disable_cleanup=None):
+            enable_logger=None, enable_debug=None, disable_cleanup=None):
         test_suite_runner = WorkflowTestSuiteRunner(galaxy_url, galaxy_api_key)
         return test_suite_runner.run_test_suite(self, tests=tests,
                                                 enable_logger=enable_logger, enable_debug=enable_debug,
@@ -1811,7 +1809,7 @@ def run_tests(filename,
 
 def main():
     # Since we're running as the main executable, configure the logger
-    _logging.basicConfig(format=LogFormat)
+    _logging.basicConfig(format=_log_format)
     try:
         parser = _make_parser()
         options = _parse_cli_arguments(parser, _sys.argv[1:])

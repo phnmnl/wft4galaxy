@@ -13,6 +13,12 @@ ENV_KEY_GALAXY_URL = "GALAXY_URL"
 ENV_KEY_GALAXY_API_KEY = "GALAXY_API_KEY"
 
 
+import logging as _logging
+
+_log_format = '%(asctime)s %(levelname)s: %(message)s'
+_logger = _logging.getLogger("WorkflowTest")
+
+
 def load_comparator(fully_qualified_comparator_function):
     """
     Utility function responsible for dynamically loading a comparator function
