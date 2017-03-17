@@ -13,6 +13,30 @@ ENV_KEY_GALAXY_URL = "GALAXY_URL"
 ENV_KEY_GALAXY_API_KEY = "GALAXY_API_KEY"
 
 
+def load_comparator(fully_qualified_comparator_function):
+    """
+    Utility function responsible for dynamically loading a comparator function
+    given its fully qualified name.
+
+    :type fully_qualified_comparator_function: str
+    :param fully_qualified_comparator_function: fully qualified name of a comparator function
+
+    :return: a callable reference to the loaded comparator function
+    """
+    mod = None
+    try:
+        components = fully_qualified_comparator_function.split('.')
+        mod = __import__(components[0])
+        for comp in components[1:]:
+            mod = getattr(mod, comp)
+    except ImportError as e:
+        _logger.error(e)
+    except AttributeError as e:
+        _logger.error(e)
+    except:
+        _logger.error("Unexpected error: %s", _sys.exc_info()[0])
+    return mod
+
 class TestConfigError(RuntimeError):
     pass
 

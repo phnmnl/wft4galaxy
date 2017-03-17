@@ -15,6 +15,7 @@ import sys as _sys
 from .common import TestConfigError
 from .common import ENV_KEY_GALAXY_URL
 from .common import ENV_KEY_GALAXY_API_KEY
+from wft4galaxy.common import load_comparator
 
 from lxml import etree as _etree
 from uuid import uuid1 as  _uuid1
@@ -1308,7 +1309,7 @@ class WorkflowTestRunner(_unittest.TestCase):
                 config = expected_output_map[output.name]
                 comparator_fn = config.get("comparator", None)
                 _logger.debug("Configured comparator function: %s", comparator_fn)
-                comparator = _load_comparator(comparator_fn) if comparator_fn else base_comparator
+                comparator = load_comparator(comparator_fn) if comparator_fn else base_comparator
                 if comparator:
                     expected_output_filename = config["file"] if _os.path.isabs(config["file"]) \
                         else _os.path.join(base_path, config["file"])
@@ -1679,31 +1680,6 @@ def _parse_dict(elements):
             raise ValueError("Configuration error: %r", elements)
         results[name] = result
     return results
-
-
-def _load_comparator(fully_qualified_comparator_function):
-    """
-    Utility function responsible for dynamically loading a comparator function
-    given its fully qualified name.
-
-    :type fully_qualified_comparator_function: str
-    :param fully_qualified_comparator_function: fully qualified name of a comparator function
-
-    :return: a callable reference to the loaded comparator function
-    """
-    mod = None
-    try:
-        components = fully_qualified_comparator_function.split('.')
-        mod = __import__(components[0])
-        for comp in components[1:]:
-            mod = getattr(mod, comp)
-    except ImportError as e:
-        _logger.error(e)
-    except AttributeError as e:
-        _logger.error(e)
-    except:
-        _logger.error("Unexpected error: %s", _sys.exc_info()[0])
-    return mod
 
 
 def base_comparator(actual_output_filename, expected_output_filename):
