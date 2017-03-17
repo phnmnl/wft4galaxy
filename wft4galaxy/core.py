@@ -643,7 +643,7 @@ class WorkflowLoader(object):
         """
         if not self._galaxy_instance:
             # initialize the galaxy instance
-            self._initialize(_get_galaxy_instance(galaxy_url, galaxy_api_key))
+            self._initialize(_common._get_galaxy_instance(galaxy_url, galaxy_api_key))
 
     def _initialize(self, galaxy_instance):
         if not self._galaxy_instance:
@@ -846,7 +846,7 @@ class WorkflowTestSuiteRunner(object):
         self._workflow_test_results = []
         self._galaxy_instance = None
         # initialize the galaxy instance
-        self._galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
+        self._galaxy_instance = _common._get_galaxy_instance(galaxy_url, galaxy_api_key)
         # initialize the workflow loader
         self._workflow_loader = WorkflowLoader.get_instance(self._galaxy_instance)
 
@@ -1062,7 +1062,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         :return: a :class:`WorkflowTestRunner` instance
         """
         # initialize the galaxy instance
-        galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
+        galaxy_instance = _common._get_galaxy_instance(galaxy_url, galaxy_api_key)
         workflow_loader = WorkflowLoader.get_instance(galaxy_instance)
         # return the runner instance
         return WorkflowTestRunner(galaxy_instance, workflow_loader, workflow_test_config)
@@ -1432,7 +1432,7 @@ class WorkflowTestResult(object):
 
 def cleanup_test_workflows(galaxy_url=None, galaxy_api_key=None):
     _logger.debug("Cleaning workflow library ...")
-    galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
+    galaxy_instance = _common._get_galaxy_instance(galaxy_url, galaxy_api_key)
     workflow_loader = WorkflowLoader.get_instance(galaxy_instance)
     wflist = galaxy_instance.workflows.list()
     workflows = [w for w in wflist if WorkflowTestCase.DEFAULT_WORKFLOW_NAME_PREFIX in w.name]
@@ -1442,7 +1442,7 @@ def cleanup_test_workflows(galaxy_url=None, galaxy_api_key=None):
 
 def cleanup_test_workflow_data(galaxy_url=None, galaxy_api_key=None):
     _logger.debug("Cleaning saved histories ...")
-    galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
+    galaxy_instance = _common._get_galaxy_instance(galaxy_url, galaxy_api_key)
     hslist = galaxy_instance.histories.list()
     for history in [h for h in hslist if WorkflowTestCase.DEFAULT_HISTORY_NAME_PREFIX in h.name]:
         galaxy_instance.histories.delete(history.id)
@@ -1462,7 +1462,7 @@ def _get_workflow_info(filename, galaxy_url, galaxy_api_key, tool_folder=DEFAULT
     outputs = {}
 
     # setup galaxy instance
-    galaxy_instance = _get_galaxy_instance(galaxy_url, galaxy_api_key)
+    galaxy_instance = _common._get_galaxy_instance(galaxy_url, galaxy_api_key)
     galaxy_tool_client = _ToolClient(galaxy_instance.gi)  # get the non-object version of the GI
 
     if not _os.path.exists(DEFAULT_TOOLS_FOLDER):
@@ -1611,44 +1611,6 @@ def _process_tool_param_element(input_el, tool_params):
                 conditional_options.insert(len(conditional_options),
                                            when_el.get("value"),
                                            when_options)
-
-
-def configure_galaxy_instance(galaxy_url, galaxy_api_key):
-    _os.environ[ENV_KEY_GALAXY_URL] = galaxy_url
-    _os.environ[ENV_KEY_GALAXY_API_KEY] = galaxy_api_key
-
-
-def _get_galaxy_instance(galaxy_url=None, galaxy_api_key=None):
-    """
-    Private utility function to instantiate and configure a :class:`bioblend.GalaxyInstance`
-
-    :type galaxy_url: str
-    :param galaxy_url: the URL of the Galaxy server
-
-    :type galaxy_api_key: str
-    :param galaxy_api_key: a registered Galaxy API KEY
-
-    :rtype: :class:`bioblend.objects.GalaxyInstance`
-    :return: a new :class:`bioblend.objects.GalaxyInstance` instance
-    """
-    # configure `galaxy_url`
-    if galaxy_url is None:
-        if ENV_KEY_GALAXY_URL not in _os.environ:
-            raise TestConfigError("Galaxy URL not defined!  Use --server or the environment variable {} "
-                                  "or specify it in the test configuration".format(ENV_KEY_GALAXY_URL))
-        else:
-            galaxy_url = _os.environ[ENV_KEY_GALAXY_URL]
-
-    # configure `galaxy_api_key`
-    if galaxy_api_key is None:
-        if ENV_KEY_GALAXY_API_KEY not in _os.environ:
-            raise TestConfigError("Galaxy API key not defined!  Use --api-key or the environment variable {} "
-                                  "or specify it in the test configuration".format(ENV_KEY_GALAXY_API_KEY))
-        else:
-            galaxy_api_key = _os.environ[ENV_KEY_GALAXY_API_KEY]
-
-    # initialize the galaxy instance
-    return ObjGalaxyInstance(galaxy_url, galaxy_api_key)
 
 
 def _load_configuration(config_filename):

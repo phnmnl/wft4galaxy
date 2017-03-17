@@ -9,6 +9,7 @@ import jinja2 as _jinja2
 import logging as _logging
 import argparse as _argparse
 
+import wft4galaxy.common
 from wft4galaxy import core as _wft4core
 from wft4galaxy.common import Configuration
 from wft4galaxy.common import TestConfigError
@@ -87,7 +88,7 @@ def generate_template(config):
 
 
 def generate_test_case(config):
-    gi = _wft4core._get_galaxy_instance(config["galaxy_url"], config["galaxy_api_key"])
+    gi = wft4galaxy.common._get_galaxy_instance(config["galaxy_url"], config["galaxy_api_key"])
 
     # get history object
     h = gi.histories.get(config["history-name"])
