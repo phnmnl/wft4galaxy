@@ -5,6 +5,7 @@ import sys as _sys
 import jinja2 as _jinja2
 import logging as _logging
 import argparse as _argparse
+from dateutil.parser import parse as _date_parser
 
 # wft4galaxy dependencies
 import wft4galaxy.core as _core
@@ -80,7 +81,7 @@ def generate_template(config):
 
 def generate_test_case(config):
     # instantiate the history wrapper
-    hw = _wrapper.History(config["history-name"],
+    hw = _wrapper.History(config["history-id"],
                           galaxy_url=config["galaxy_url"], galaxy_api_key=config["galaxy_api_key"])
 
     # set the output folder
@@ -124,6 +125,43 @@ def generate_test_case(config):
 
     # write the definition file
     write_test_suite_definition_file(_os.path.join(output_folder, config["file"]), suite)
+
+
+def _get_history_id(config):
+    result = None
+    gi = _common.get_galaxy_instance(config["galaxy_url"], config["galaxy_api_key"])
+    _logger.info("Loading Galaxy history info ...")
+    candidate_histories = [h for h in gi.histories.list() if config["history-name"] in h.name]
+    candidate_count = len(candidate_histories)
+    if candidate_count == 0:
+        print("\n No history found with name: \"{0}\"".format(config["history-name"]))
+    elif candidate_count == 1:
+        result = candidate_histories[0].id
+    else:
+        while True:
+            print("\nNOTICE:".ljust(10),
+                  "More than one history matches the name \"{0}\".".format(config["history-name"]))
+            print("".ljust(9), "Please select one of the following options:\n")
+
+            for opt, h in enumerate(candidate_histories):
+                print("".ljust(3), "{0})".format(opt + 1).ljust(4), h.name.ljust(30),
+                      "".ljust(4), "create-time:", _date_parser(h.wrapped["create_time"]).strftime("%Y-%m-%d %H:%M:%S"))
+            print("\n".ljust(4), "0)".ljust(4), "Exit")
+
+            try:
+                choice = input("\n ==> Choice: ")
+                if choice in range(0, candidate_count + 1):
+                    if choice > 0:
+                        result = candidate_histories[choice - 1].id
+                        print(result)
+                    break
+            except NameError:
+                print("\nWARNING: ".ljust(10), "Your choice is not valid!!!")
+            except SyntaxError:
+                print("\nWARNING: ".ljust(10), "Your choice is not valid!!!")
+            else:
+                print("\nWARNING: ".ljust(10), "Your choice is not valid!!!")
+    return result
 
 
 def _make_parser():
@@ -188,7 +226,10 @@ def main(args=None):
         if options.command == _TEMPLATE_CMD:
             generate_template(config)
         elif options.command == _TEST_CMD:
-            generate_test_case(config)
+            history_id = _get_history_id(config)
+            if history_id is not None:
+                config["history-id"] = history_id
+                generate_test_case(config)
     except Exception as e:
         _logger.error(e)
         if _logger.isEnabledFor(_logging.DEBUG):
