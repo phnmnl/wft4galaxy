@@ -85,7 +85,7 @@ def generate_test_case(config):
     h = gi.histories.get(config["history-name"])
 
     # instantiate the history wrapper
-    hw = _common.HistoryWrapper(h)
+    hw = _wrapper.HistoryWrapper(h)
 
     # set the output folder
     output_folder = _os.path.abspath(config["output_folder"])
