@@ -53,7 +53,7 @@ setup(
     entry_points={'console_scripts': [
         'wft4galaxy = wft4galaxy.app.runner:main',
         'wft4galaxy-wizard = wft4galaxy.app.wizard:main',
-        'wft4galaxy-docker = wft4galaxy.utils.docker_runner:run'
+        'wft4galaxy-docker = wft4galaxy.app.docker:main'
     ]},
     cmdclass={
         "clean": Clean
