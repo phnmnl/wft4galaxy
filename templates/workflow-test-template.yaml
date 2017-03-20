@@ -18,7 +18,7 @@ workflows:
   {{ wf.name }}:
 
     # worflow definition file (i.e., `.ga`file)
-    file: "{{ wf.file }}"
+    file: "{{ wf.filename }}"
 
     # input section
     #######################################################################################
@@ -26,11 +26,11 @@ workflows:
     {% for _input in wf.inputs.values() %}
 
       # short form
-      # {{ _input.name }}: "{{ _input.file }}"
+      # {{ _input.name }}: "{{ _input.file[0] }}"
 
       # extended form
       {{ _input.name }}:
-        file: "{{ _input.file }}"
+        file: "{{ _input.file[0] }}"
         type: "{{ _input.type }}"
     {% endfor %}
 
