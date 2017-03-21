@@ -49,11 +49,10 @@ setup(
     },
     package_data={'templates': ['*']},
     packages=["wft4galaxy", "wft4galaxy.comparators", "wft4galaxy.app", "templates"],
-    scripts=['utils/docker/wft4galaxy-docker'],
     entry_points={'console_scripts': [
         'wft4galaxy = wft4galaxy.app.runner:main',
         'wft4galaxy-wizard = wft4galaxy.app.wizard:main',
-        'wft4galaxy-docker = wft4galaxy.app.docker:main'
+        'wft4galaxy-docker = wft4galaxy.app.docker_runner:main'
     ]},
     cmdclass={
         "clean": Clean
