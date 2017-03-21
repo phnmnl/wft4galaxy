@@ -6,12 +6,10 @@ import argparse as _argparse
 import traceback as _traceback
 import subprocess as _subprocess
 
-# logger instance
+# configure logger
 _logger = _logging.getLogger("WorkflowTest")
 _logger.setLevel(_logging.INFO)
-# logger formatted
 _logFormatter = _logging.Formatter("%(asctime)s [wft4galaxy-docker] [%(levelname)-5.5s]  %(message)s")
-# log to console
 _consoleHandler = _logging.StreamHandler()
 _consoleHandler.setFormatter(_logFormatter)
 _logger.addHandler(_consoleHandler)
@@ -316,7 +314,7 @@ def main():
         exit_code = ctr.run(options)
         _logger.debug("Docker container terminated with %d exit code", exit_code)
 
-        # report the Docker continaer exit code
+        # report the Docker container exit code
         _sys.exit(exit_code)
 
     except Exception, e:
