@@ -290,7 +290,11 @@ class NonInteractiveContainer(Container):
         # write Docker output
         try:
             for o in p.stdout:
-                _sys.stdout.write(o)
+                try:
+                    # in Python3 stdout.write takes strings
+                    _sys.stdout.buffer.write(o)
+                except AttributeError:
+                    _sys.stdout.write(o)
         except Exception:
             if options and options.debug:
                 _traceback.print_exc()
