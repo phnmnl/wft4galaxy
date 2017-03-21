@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import print_function
+
 import os as _os
 import sys as _sys
 import logging as _logging
@@ -13,6 +15,13 @@ _logFormatter = _logging.Formatter("%(asctime)s [wft4galaxy-docker] [%(levelname
 _consoleHandler = _logging.StreamHandler()
 _consoleHandler.setFormatter(_logFormatter)
 _logger.addHandler(_consoleHandler)
+
+# try to load modules required for running container interactively
+try:
+    import docker as _docker
+    import dockerpty as _dockerpty
+except ImportError:
+    _logger.debug("Packages 'docker' and 'dockerpty' are not available")
 
 # Exit codes
 _SUCCESS_EXIT = 0
@@ -179,9 +188,6 @@ class InteractiveContainer(Container):
         if options.entrypoint == "runtest":
             raise ValueError("You cannot use the entrypoint 'runtest' in interactive mode!")
         try:
-            import docker as _docker
-            import dockerpty as _dockerpty
-
             # volumes
             volumes = self._parse_volumes(options.volume)
 
@@ -207,13 +213,13 @@ class InteractiveContainer(Container):
             client.remove_container(container["Id"])
             _logger.info("Removed Docker container %s", container["Id"])
             return _SUCCESS_EXIT
-        except ImportError:
-            print ("\n ERROR: To use wft4galaxy-docker in development mode "
-                   "you need to install 'docker' and 'dockerpty' Python libries \n"
-                   "\tType \"pip install docker dockerpty\" to install the required libraries.")
+        except NameError:
+            print("\n ERROR: To use wft4galaxy-docker in development mode "
+                  "you need to install 'docker' and 'dockerpty' Python libries \n"
+                  "\tType \"pip install docker dockerpty\" to install the required libraries.")
             return _FAILURE_EXIT
-        except Exception, e:
-            print ("\n ERROR: Unable to start the Docker container: {0}".format(e.message))
+        except Exception as e:
+            print("\n ERROR: Unable to start the Docker container: {0}".format(str(e)))
             return _FAILURE_EXIT
 
 
@@ -317,8 +323,8 @@ def main():
         # report the Docker container exit code
         _sys.exit(exit_code)
 
-    except Exception, e:
-        print "\nERROR: {0}".format(e.message)
+    except Exception as e:
+        print("\nERROR: {0}".format(str(e)))
         if options and options.debug:
             _traceback.print_exc()
         _sys.exit(_FAILURE_EXIT)
