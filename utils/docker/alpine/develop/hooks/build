@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+
+# load git/docker info
+source "../../image-config.sh"
+
+# update the base image
+base_image="${git_repo_owner}\/wft4galaxy-minimal:${docker_tag}"
+echo "Updating Base image to \"${base_image}\""
+sed -i.back "s/FROM.*/FROM ${base_image}/" Dockerfile
+
+# build the Docker image
+docker build -t ${IMAGE_NAME} .
+
+# restore the original Dockerfile
+git checkout -- Dockerfile
