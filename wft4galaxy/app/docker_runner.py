@@ -227,14 +227,23 @@ class InteractiveContainer(Container):
             ports = self._parse_ports(options.port)
 
             # environment
-            environment = {"GALAXY_URL": options.server, "GALAXY_API_KEY": options.api_key}
+            environment = ["GALAXY_URL={0}".format(_os.environ["GALAXY_URL"]),
+                           "GALAXY_API_KEY={0}".format(_os.environ["GALAXY_API_KEY"])]
 
+            # command
+            command = [
+                options.entrypoint,
+                "--server", _os.environ["GALAXY_URL"],
+                "--api-key", _os.environ["GALAXY_API_KEY"]
+            ]
+
+            # create and run Docker containers
             client = _docker.APIClient()
             container = client.create_container(
                 image=self.get_image_name(options),
                 stdin_open=True,
                 tty=True,
-                command=options.entrypoint,
+                command=command,
                 environment=environment,
                 volumes=volumes,
                 ports=list(ports.keys()),
