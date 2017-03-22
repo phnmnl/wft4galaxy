@@ -7,7 +7,7 @@ import logging as _logging
 import argparse as _argparse
 import traceback as _traceback
 import subprocess as _subprocess
-import ConfigParser as _ConfigParser
+from configparser import ConfigParser as _ConfigParser
 
 # configure logger
 _logger = _logging.getLogger("WorkflowTest")
@@ -36,7 +36,7 @@ _properties = None
 try:
     import wft4galaxy as _wft4galaxy
 
-    _properties = _ConfigParser.ConfigParser()
+    _properties = _ConfigParser()
     _properties.read(_os.path.join(_os.path.dirname(_wft4galaxy.__file__), "wft4galaxy.properties"))
 except:
     _logger.debug("No wft4galaxy.properties found! Use default settings!")

@@ -1,10 +1,10 @@
 import os
 import shutil
-import ConfigParser
 import subprocess as _subprocess
 from setuptools import setup
 from distutils.command.clean import clean
 from setuptools.command.build_py import build_py
+from configparser import ConfigParser
 
 
 def update_properties(config):
@@ -54,10 +54,10 @@ class BuildCommand(build_py):
     """Custom build command."""
 
     def run(self):
-        config = ConfigParser.ConfigParser()
+        config = ConfigParser()
         update_properties(config)
 
-        with open("wft4galaxy/wft4galaxy.properties", "wb") as fp:
+        with open("wft4galaxy/wft4galaxy.properties", "w") as fp:
             config.write(fp)
         build_py.run(self)
 
