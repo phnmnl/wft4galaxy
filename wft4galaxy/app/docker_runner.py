@@ -7,6 +7,7 @@ import logging as _logging
 import argparse as _argparse
 import traceback as _traceback
 import subprocess as _subprocess
+import ConfigParser as _ConfigParser
 
 # configure logger
 _logger = _logging.getLogger("WorkflowTest")
@@ -30,12 +31,25 @@ _FAILURE_EXIT = -1
 # Jupyter port
 DEFAULT_JUPYTER_PORT = 9876
 
+# try to load wft4galaxy.properties
+_properties = None
+try:
+    import wft4galaxy as _wft4galaxy
+
+    _properties = _ConfigParser.ConfigParser()
+    _properties.read(_os.path.join(_os.path.dirname(_wft4galaxy.__file__), "wft4galaxy.properties"))
+except:
+    _logger.debug("No wft4galaxy.properties found! Use default settings!")
+
 # Docker image settings
 DOCKER_IMAGE_SETTINGS = {
     "registry": None,
-    "repository": "crs4",
-    "production": "wft4galaxy",
-    "develop": "wft4galaxy-dev"
+    "repository": _properties.get("Docker", "repository") \
+        if _properties is not None and _properties.has_option("Docker", "repository") else "crs4",
+    "tag": _properties.get("Docker", "tag") \
+        if _properties is not None and _properties.has_option("Docker", "tag") else "develop",
+    "production": "wft4galaxy-minimal",
+    "develop": "wft4galaxy-develop"
 }
 
 # Docker container settings
