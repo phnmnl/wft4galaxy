@@ -1,17 +1,24 @@
 import os
 import shutil
-import subprocess as _subprocess
 from setuptools import setup
+import subprocess as _subprocess
 from distutils.command.clean import clean
 from setuptools.command.build_py import build_py
 from configparser import ConfigParser
 
 
+def _run_cmd(cmd):
+    if hasattr(_subprocess, "run"):
+        return _subprocess.run(cmd, stdout=_subprocess.PIPE).stdout.decode("utf-8").strip("\n")
+    else:
+        return _subprocess.check_output(cmd).strip("\n")
+
+
 def update_properties(config):
-    repo_url = _subprocess.check_output(['git', 'config', '--get', 'remote.origin.url']).strip("\n")
-    branch = _subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip("\n")
-    tags = _subprocess.check_output(['git', 'show-ref', '--tags', '-s']).strip("\n")
-    last_commit = _subprocess.check_output(['git', 'log', '--format=%H', '-n', '1']).strip("\n")
+    repo_url = _run_cmd(['git', 'config', '--get', 'remote.origin.url'])
+    branch = _run_cmd(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+    tags = _run_cmd(['git', 'show-ref', '--tags', '-s'])
+    last_commit = _run_cmd(['git', 'log', '--format=%H', '-n', '1'])
 
     # extract Git repository info
     if repo_url.startswith("git@"):
@@ -31,7 +38,7 @@ def update_properties(config):
 
     # docker tag
     if last_commit in tags:
-        tag = _subprocess.check_output(['git', 'describe', '--contains', last_commit]).strip("\n")
+        tag = _run_cmd(['git', 'describe', '--contains', last_commit])
         docker_tag = "alpine-{0}".format(tag)
     else:
         docker_tag = "alpine-{0}".format(branch)
