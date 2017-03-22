@@ -72,6 +72,10 @@ class _CommandLineHelper:
 
     def setup(self):
         main_parser = _argparse.ArgumentParser(add_help=True)
+        main_parser.add_argument('--registry', help='Alternative Docker registry', default=None)
+        main_parser.add_argument('--repository', default=None,
+                                 help='Alternative Docker repository containing the "wft4galaxy" Docker image')
+        main_parser.add_argument('--image', help='Alternative "wft4galaxy" Docker image <NAME:TAG>', default=None)
         main_parser.add_argument('--server', help='Galaxy server URL', default=_os.environ["GALAXY_URL"])
         main_parser.add_argument('--api-key', help='Galaxy server API KEY', default=_os.environ["GALAXY_API_KEY"])
         main_parser.add_argument('-p', '--port', help='Docker port to expose', action="append", default=[])
@@ -140,16 +144,31 @@ class ContainerRunner:
 
 
 class Container():
-    def get_container_config(self, options):
-        return DOCKER_CONTAINER_SETTINGS["entrypoints"][options.entrypoint]
+    # def get_container_config(self, options):
+    #     return DOCKER_CONTAINER_SETTINGS["entrypoints"][options.entrypoint]
 
-    def get_image_name(self, config):
+    def get_image_name(self, options):
         img_name_parts = []
-        if DOCKER_IMAGE_SETTINGS["registry"]:
+        # base default config
+        config = DOCKER_CONTAINER_SETTINGS["entrypoints"][options.entrypoint]
+        # set registry
+        if options.registry is not None:
+            img_name_parts.append(options.registry)
+        elif DOCKER_IMAGE_SETTINGS["registry"]:
             img_name_parts.append(DOCKER_IMAGE_SETTINGS["registry"])
-        img_name_parts.append(DOCKER_IMAGE_SETTINGS["repository"])
-        img_name_parts.append(config[2])
-        return "/".join(img_name_parts)
+        # set repository
+        if options.repository:
+            img_name_parts.append(options.repository)
+        else:
+            img_name_parts.append(DOCKER_IMAGE_SETTINGS["repository"])
+        # set image name
+        if options.image:
+            img_name_parts.append(options.image)
+        else:
+            img_name_parts.append("{0}:{1}".format(config[2], DOCKER_IMAGE_SETTINGS["tag"]))
+        docker_image_name = "/".join(img_name_parts)
+        _logger.debug("Using Docker image: %s", docker_image_name)
+        return docker_image_name
 
 
 class InteractiveContainer(Container):
@@ -184,7 +203,6 @@ class InteractiveContainer(Container):
         :param options: 
         :return: 
         """
-        ctn_config = self.get_container_config(options)
         if options.entrypoint == "runtest":
             raise ValueError("You cannot use the entrypoint 'runtest' in interactive mode!")
         try:
@@ -199,7 +217,7 @@ class InteractiveContainer(Container):
 
             client = _docker.APIClient()
             container = client.create_container(
-                image=self.get_image_name(ctn_config),
+                image=self.get_image_name(options),
                 stdin_open=True,
                 tty=True,
                 command=options.entrypoint,
@@ -234,8 +252,6 @@ class NonInteractiveContainer(Container):
         :param options: 
         :return: 
         """
-        ctn_config = self.get_container_config(options)
-
         ## extract folder of the configuration file
         options.volume.append(_os.path.abspath(_os.path.dirname(options.file)) + ":/data_input")
         options.volume.append(_os.path.abspath(_os.path.dirname(options.output)) + ":/data_output")
@@ -255,7 +271,7 @@ class NonInteractiveContainer(Container):
         cmd.extend(["-e", "GALAXY_URL={0}".format(options.server or _os.environ["GALAXY_URL"])])
         cmd.extend(["-e", "GALAXY_API_KEY={0}".format(options.api_key or _os.environ["GALAXY_API_KEY"])])
         # image
-        cmd.append(self.get_image_name(ctn_config))
+        cmd.append(self.get_image_name(options))
         # entrypoint
         # TODO: update the entrypoint of the Docker container
         cmd.append("wft4galaxy")
