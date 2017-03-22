@@ -16,9 +16,9 @@ Workflow
     :members:
 
 
-WorkflowTestConfiguration
+WorkflowTestCase
 =========================
-.. autoclass:: wft4galaxy.WorkflowTestConfiguration
+.. autoclass:: wft4galaxy.WorkflowTestCase
     :members:
 
 

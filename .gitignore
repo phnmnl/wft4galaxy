@@ -1,4 +1,5 @@
 **/.DS_Store
+**/EGG-INFO
 **/*.pyc
 **/.ipynb_checkpoints/
 .idea
