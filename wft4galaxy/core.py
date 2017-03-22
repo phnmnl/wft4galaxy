@@ -1055,6 +1055,16 @@ class WorkflowTestRunner(_unittest.TestCase):
         :rtype: :class:`WorkflowTestResult`
         :return: the :class:`WorkflowTestResult` instance which represents the test result
         """
+        # update test settings
+        if enable_logger is None:
+            enable_logger = self._workflow_test_config.enable_logger
+        if enable_debug is None:
+            enable_debug = self._workflow_test_config.enable_debug
+        if disable_cleanup is None:
+            disable_cleanup = self._workflow_test_config.disable_cleanup
+        if disable_assertions is None:
+            disable_assertions = self._workflow_test_config.disable_assertions
+
         # update logger
         if enable_logger or enable_debug:
             _logging.disable(_logging.NOTSET)
@@ -1069,23 +1079,23 @@ class WorkflowTestRunner(_unittest.TestCase):
         workflow = self.get_galaxy_workflow()
 
         # output folder
-        if not output_folder:
+        if output_folder is None:
             output_folder = self._workflow_test_config.output_folder
 
         # check input_map
-        if not inputs:
+        if inputs is None:
             if len(self._workflow_test_config.inputs) > 0:
                 inputs = self._workflow_test_config.inputs
             else:
                 raise ValueError("No input configured !!!")
 
         # check params
-        if not params:
+        if params is None:
             params = self._workflow_test_config.params
             _logger.debug("Using default params")
 
         # check expected_output_map
-        if not expected_outputs:
+        if expected_outputs is None:
             if len(self._workflow_test_config.expected_outputs) > 0:
                 expected_outputs = self._workflow_test_config.expected_outputs
             else:
