@@ -17,8 +17,17 @@ def _run_cmd(cmd):
 def update_properties(config):
     repo_url = _run_cmd(['git', 'config', '--get', 'remote.origin.url'])
     branch = _run_cmd(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
-    tags = _run_cmd(['git', 'show-ref', '--tags', '-s'])
     last_commit = _run_cmd(['git', 'log', '--format=%H', '-n', '1'])
+
+    # get tags
+    tags = []
+    try:
+        # Git repository could not contain tags
+        # and the following command fails in such a case.
+        # We simply ignore this failure
+        tags = _run_cmd(['git', 'show-ref', '--tags', '-s'])
+    except:
+        pass
 
     # extract Git repository info
     if repo_url.startswith("git@"):
