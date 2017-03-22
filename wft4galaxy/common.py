@@ -21,6 +21,7 @@ except NameError:
 
 _log_format = '%(asctime)s %(levelname)s: %(message)s'
 _logger = _logging.getLogger("WorkflowTest")
+_logging.basicConfig(format=_log_format)
 
 
 class TestConfigError(RuntimeError):

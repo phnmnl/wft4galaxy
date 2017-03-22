@@ -831,8 +831,11 @@ class WorkflowTestSuiteRunner(object):
             config.disable_assertions = disable_assertions
         # update logger level
         if config.enable_logger or config.enable_debug:
+            _logging.disable(_logging.NOTSET)
             logger_level = _logging.DEBUG if config.enable_debug else _logging.INFO
             _logger.setLevel(logger_level)
+        else:
+            _logging.disable(_logging.INFO)
 
     def run_tests(self, suite_config, tests=None, enable_logger=None,
                   enable_debug=None, disable_cleanup=None, disable_assertions=None):
@@ -1054,7 +1057,10 @@ class WorkflowTestRunner(_unittest.TestCase):
         """
         # update logger
         if enable_logger or enable_debug:
+            _logging.disable(_logging.NOTSET)
             _logger.setLevel(_logging.DEBUG if enable_debug else _logging.INFO)
+        else:
+            _logging.disable(_logging.INFO)
 
         # set basepath
         base_path = self._base_path if not base_path else base_path

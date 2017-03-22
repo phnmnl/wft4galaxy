@@ -126,8 +126,6 @@ def run_tests(filename,
 
 
 def main():
-    # Since we're running as the main executable, configure the logger
-    _logging.basicConfig(format=_common._log_format)
     try:
         parser = _make_parser()
         options = _parse_cli_arguments(parser, _sys.argv[1:])
