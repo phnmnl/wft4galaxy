@@ -10,4 +10,4 @@ build
 dist
 results
 wft4galaxy.egg-info
-
+wft4galaxy/wft4galaxy.properties
