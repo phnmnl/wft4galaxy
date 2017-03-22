@@ -237,7 +237,7 @@ class InteractiveContainer(Container):
                 command=options.entrypoint,
                 environment=environment,
                 volumes=volumes,
-                ports=ports.keys(),
+                ports=list(ports.keys()),
                 host_config=client.create_host_config(port_bindings=ports)
             )
             _logger.info("Started Docker container %s", container["Id"])
