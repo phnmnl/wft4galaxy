@@ -3,11 +3,11 @@ from __future__ import print_function
 
 import os as _os
 import sys as _sys
+import json as _json
 import logging as _logging
 import argparse as _argparse
 import traceback as _traceback
 import subprocess as _subprocess
-from configparser import ConfigParser as _ConfigParser
 
 # configure logger
 _logger = _logging.getLogger("WorkflowTest")
@@ -36,18 +36,19 @@ _properties = None
 try:
     import wft4galaxy as _wft4galaxy
 
-    _properties = _ConfigParser()
-    _properties.read(_os.path.join(_os.path.dirname(_wft4galaxy.__file__), "wft4galaxy.properties"))
+    with open(_os.path.join(_os.path.dirname(_wft4galaxy.__file__), "wft4galaxy.properties")) as fp:
+        _properties = _json.load(fp)
+        _logger.debug("wft4galaxy.properties: %r", _properties)
 except:
     _logger.debug("No wft4galaxy.properties found! Use default settings!")
 
 # Docker image settings
 DOCKER_IMAGE_SETTINGS = {
     "registry": None,
-    "repository": _properties.get("Docker", "repository") \
-        if _properties is not None and _properties.has_option("Docker", "repository") else "crs4",
-    "tag": _properties.get("Docker", "tag") \
-        if _properties is not None and _properties.has_option("Docker", "tag") else "develop",
+    "repository": _properties["Docker"]["repository"] \
+        if _properties is not None and "Docker" in _properties and "repository" in _properties["Docker"] else "crs4",
+    "tag": _properties["Docker"]["tag"] \
+        if _properties is not None and "Docker" in _properties and "tag" in _properties["Docker"] else "develop",
     "production": "wft4galaxy-minimal",
     "develop": "wft4galaxy-develop"
 }

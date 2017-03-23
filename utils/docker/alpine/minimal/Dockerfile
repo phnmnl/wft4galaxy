@@ -33,7 +33,7 @@ RUN apk update && apk add \
     && rm -rf /var/cache/apk/*
 
 # install ipython
-RUN pip install --upgrade pip configparser
+RUN pip install --upgrade pip
 
 # setup bash custom prompt (PS1)
 RUN echo "parse_git_branch() {" >> ${HOME}/.bashrc

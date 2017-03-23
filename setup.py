@@ -2,9 +2,9 @@ import os
 import shutil
 from setuptools import setup
 import subprocess as _subprocess
+from json import dump as _json_dump
 from distutils.command.clean import clean
 from setuptools.command.build_py import build_py
-from configparser import ConfigParser
 
 
 def _run_cmd(cmd):
@@ -53,28 +53,30 @@ def update_properties(config):
         docker_tag = "alpine-{0}".format(branch)
 
     # Git repository info
-    config.add_section("Repository")
-    config.set("Repository", "url", repo_url)
-    config.set("Repository", "branch", branch)
-    config.set("Repository", "owner", owner)
-    config.set("Repository", "repo", repo)
-    config.set("Repository", "last commit", last_commit)
+    config["Repository"] = {
+        "url": repo_url,
+        "branch": branch,
+        "owner": owner,
+        "repo": repo,
+        "last commit": last_commit
+    }
 
     # Docker info
-    config.add_section("Docker")
-    config.set("Docker", "repository", owner)
-    config.set("Docker", "tag", docker_tag)
+    config["Docker"] = {
+        "repository": owner,
+        "tag": docker_tag
+    }
 
 
 class BuildCommand(build_py):
     """Custom build command."""
 
     def run(self):
-        config = ConfigParser()
+        config = dict()
         update_properties(config)
 
         with open("wft4galaxy/wft4galaxy.properties", "w") as fp:
-            config.write(fp)
+            _json_dump(config, fp, indent=4)
         build_py.run(self)
 
 
