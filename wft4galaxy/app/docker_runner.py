@@ -10,8 +10,8 @@ import subprocess as _subprocess
 
 # configure logger
 _logFormat = "%(asctime)s [wft4galaxy-docker] [%(levelname)-5.5s]  %(message)s"
-_logger = _logging.getLogger("wft4galaxy-docker")
 _logging.basicConfig(format=_logFormat)
+_logger = _logging.getLogger("wft4galaxy-docker")
 _logger.setLevel(_logging.INFO)
 
 # try to load modules required for running container interactively
@@ -201,10 +201,10 @@ class Container():
             p = _subprocess.Popen(["docker", "pull", docker_image_name],
                                   shell=False, close_fds=False, stdout=_subprocess.PIPE)
             try:
-                for o in p.stdout:
-                    if isinstance(o, bytes):
-                        o = o.decode("utf-8")
-                    _logger.info(o.rstrip())
+                for line in p.stdout:
+                    if isinstance(line, bytes):
+                        line = line.decode("utf-8")
+                    _logger.info(line.rstrip())
             except Exception as e:
                 if options and options.debug:
                     _logger.exception(e)
@@ -363,10 +363,10 @@ class NonInteractiveContainer(Container):
                               stdin=_subprocess.PIPE, stdout=_subprocess.PIPE)
         # write Docker output
         try:
-            for o in p.stdout:
-                if isinstance(o, bytes):
-                    o = o.decode("utf-8")
-                _sys.stdout.write(o)
+            for line in p.stdout:
+                if isinstance(line, bytes):
+                    line = line.decode("utf-8")
+                _sys.stdout.write(line)
         except Exception as e:
             if options and options.debug:
                 _logger.exception(e)
