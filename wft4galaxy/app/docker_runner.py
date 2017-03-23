@@ -80,10 +80,10 @@ DEFAULT_WORKFLOW_CONFIG = {
 
 
 class _CommandLineHelper:
-    def __init__(self):
-        self._parser, self._entrypoint_parsers = self.setup()
+    def __init__(self, omit_subparsers=False):
+        self._parser, self._entrypoint_parsers = self.setup(omit_subparsers)
 
-    def setup(self):
+    def setup(self, omit_subparsers=False):
         main_parser = _argparse.ArgumentParser(add_help=True, formatter_class=_argparse.RawTextHelpFormatter)
         main_parser.add_argument('--registry', help='Alternative Docker registry', default=None)
         main_parser.add_argument('--repository', default=None,
@@ -110,17 +110,29 @@ class _CommandLineHelper:
         epilog = "NOTICE: Type \"{0} -h\" to see the global options.".format(main_parser.prog)
 
         # add entrypoint subparsers
-        entrypoint_parsers = {}
-        entrypoint_subparsers_factory = \
-            main_parser.add_subparsers(title="Container entrypoint", dest="entrypoint",
-                                       description="Available entrypoints for the 'wft4galaxy' Docker image.",
-                                       help="Choose one of the following options:")
-        for ep_name, ep_help, ep_image in DOCKER_CONTAINER_SETTINGS["entrypoints"].values():
-            entrypoint_parsers[ep_name] = \
-                entrypoint_subparsers_factory.add_parser(ep_name, help=ep_help, epilog=epilog)
+        entrypoint_parsers = None
+        if omit_subparsers:
+            main_parser.add_argument('--entrypoint', help='Absolute path of a log file.', default="runtest")
+        else:
+            entrypoint_parsers = {}
+            entrypoint_subparsers_factory = \
+                main_parser.add_subparsers(title="Container entrypoint", dest="entrypoint",
+                                           description="Available entrypoints for the 'wft4galaxy' Docker image.",
+                                           help="Choose one of the following options:")
+            for ep_name, ep_help, ep_image in DOCKER_CONTAINER_SETTINGS["entrypoints"].values():
+                entrypoint_parsers[ep_name] = \
+                    entrypoint_subparsers_factory.add_parser(ep_name, help=ep_help, epilog=epilog)
 
-        # add wft4galaxy options
-        wft4g_parser = entrypoint_parsers["runtest"]
+            # add bash options
+            entrypoint_parsers["bash"].add_argument("cmd", nargs="*", help="BASH commands")
+
+            # add jupyter options
+            entrypoint_parsers["jupyter"].add_argument("--web-port", default=DEFAULT_JUPYTER_PORT, type=int,
+                                                       help="Jupyter port (default is {0})".format(
+                                                           DEFAULT_JUPYTER_PORT))
+
+        # add wft4galaxy options to a subparser or directly to the main_parser
+        wft4g_parser = main_parser if omit_subparsers else entrypoint_parsers["runtest"]
         wft4g_parser.add_argument("-f", "--file",
                                   default=DEFAULT_CONFIG_FILENAME,
                                   help="YAML configuration file of workflow tests (default is \"{0}\")"
@@ -132,13 +144,6 @@ class _CommandLineHelper:
         wft4g_parser.add_argument('--disable-cleanup', help='Disable cleanup', action='store_true')
         wft4g_parser.add_argument('--disable-assertions', help='Disable assertions', action='store_true')
         wft4g_parser.add_argument("test", help="Workflow Test Name", nargs="*")
-
-        # add bash options
-        entrypoint_parsers["bash"].add_argument("cmd", nargs="*", help="BASH commands")
-
-        # add jupyter options
-        entrypoint_parsers["jupyter"].add_argument("--web-port", default=DEFAULT_JUPYTER_PORT, type=int,
-                                                   help="Jupyter port (default is {0})".format(DEFAULT_JUPYTER_PORT))
 
         return main_parser, entrypoint_parsers
 
@@ -407,8 +412,25 @@ def _logger_setup(options):
 def main():
     options = None
     try:
+        # arguments set
+        args = set(_sys.argv[1:])
+
+        # check if we need to print help
+        print_help = len(args & set(["-h", "--help"])) != 0
+
+        # check at list one entrypoint is specified
+        # if not, it is assumed to be "runtest"
+        omit_subparsers = len(args & set(DOCKER_CONTAINER_SETTINGS["entrypoints"])) == 0 and not print_help
+
+        # initialize the CLI helper
+        p = _CommandLineHelper(omit_subparsers=omit_subparsers)
+
+        # print help and exit
+        if print_help:
+            p.print_help()
+            _sys.exit(_SUCCESS_EXIT)
+
         # parse cli options/arguments
-        p = _CommandLineHelper()
         options = p.parse_args()
 
         # update logger
