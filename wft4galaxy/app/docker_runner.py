@@ -352,14 +352,12 @@ class NonInteractiveContainer(Container):
         # write Docker output
         try:
             for o in p.stdout:
-                try:
-                    # in Python3 stdout.write takes strings
-                    _sys.stdout.buffer.write(o)
-                except AttributeError:
-                    _sys.stdout.write(o)
-        except Exception:
+                if isinstance(o, bytes):
+                    o = o.decode("utf-8")
+                _sys.stdout.write(o)
+        except Exception as e:
             if options and options.debug:
-                _traceback.print_exc()
+                _logger.exception(e)
 
         # wait for termination and report the exit code
         return p.wait()
@@ -386,6 +384,9 @@ def main():
 
         # update logger
         _logger_setup(options)
+
+        # log Python version
+        _logger.debug("Python version: %s", _sys.version)
 
         # run container
         ctr = ContainerRunner()

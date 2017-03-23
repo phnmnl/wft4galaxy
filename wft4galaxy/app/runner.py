@@ -81,6 +81,9 @@ def _configure_test(galaxy_url, galaxy_api_key, suite, output_folder, tests,
         _logger_level = _logging.DEBUG if suite.enable_debug else _logging.INFO
         _logger.setLevel(_logger_level)
 
+    # log Python version
+    _logger.debug("Python version: %s", _sys.version)
+
     # log the current configuration
     _logger.info("Configuration: %r", suite)
 
