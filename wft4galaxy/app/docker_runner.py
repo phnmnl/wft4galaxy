@@ -91,6 +91,8 @@ class _CommandLineHelper:
         main_parser.add_argument('--repository', default=None,
                                  help='Alternative Docker repository containing the "wft4galaxy" Docker image')
         main_parser.add_argument('--image', help='Alternative "wft4galaxy" Docker image <NAME:TAG>', default=None)
+        main_parser.add_argument('--local', action="store_true", default=False,
+                                 help='Force to use the local version of the required Docker image')
         main_parser.add_argument('--server', help='Galaxy server URL', default=_os.environ["GALAXY_URL"])
         main_parser.add_argument('--api-key', help='Galaxy server API KEY', default=_os.environ["GALAXY_API_KEY"])
         main_parser.add_argument('-p', '--port', help='Docker port to expose', action="append", default=[])
@@ -159,10 +161,7 @@ class ContainerRunner:
 
 
 class Container():
-    # def get_container_config(self, options):
-    #     return DOCKER_CONTAINER_SETTINGS["entrypoints"][options.entrypoint]
-
-    def get_image_name(self, options):
+    def get_image_name(self, options, pull_latest=True):
         img_name_parts = []
         # base default config
         config = DOCKER_CONTAINER_SETTINGS["entrypoints"][options.entrypoint]
@@ -183,6 +182,22 @@ class Container():
             img_name_parts.append("{0}:{1}".format(config[2], DOCKER_IMAGE_SETTINGS["tag"]))
         docker_image_name = "/".join(img_name_parts)
         _logger.debug("Using Docker image: %s", docker_image_name)
+
+        if pull_latest:
+            _logger.info("Updating Docker imge '{0}'".format(docker_image_name))
+            p = _subprocess.Popen(["docker", "pull", docker_image_name], shell=False, close_fds=True,
+                                  stdin=_subprocess.PIPE, stdout=_subprocess.PIPE)
+            try:
+                for o in p.stdout:
+                    if isinstance(o, bytes):
+                        o = o.decode("utf-8")
+                    _logger.info("{0}".format(o).rstrip())
+            except Exception as e:
+                if options and options.debug:
+                    _logger.exception(e)
+        else:
+            _logger.info("Using the local version of the Docker image '{0}'".format(docker_image_name))
+
         return docker_image_name
 
 
@@ -221,6 +236,10 @@ class InteractiveContainer(Container):
         if options.entrypoint == "runtest":
             raise ValueError("You cannot use the entrypoint 'runtest' in interactive mode!")
         try:
+
+            # prepare the Docker image (updating it if required)
+            docker_image = self.get_image_name(options, not options.local)
+
             # volumes
             volumes = self._parse_volumes(options.volume)
 
@@ -241,7 +260,7 @@ class InteractiveContainer(Container):
             # create and run Docker containers
             client = _docker.APIClient()
             container = client.create_container(
-                image=self.get_image_name(options),
+                image=docker_image,
                 stdin_open=True,
                 tty=True,
                 command=command,
@@ -280,6 +299,9 @@ class NonInteractiveContainer(Container):
         options.volume.append(_os.path.abspath(_os.path.dirname(options.file)) + ":/data_input")
         options.volume.append(_os.path.abspath(_os.path.dirname(options.output)) + ":/data_output")
 
+        # prepare the Docker image (updating it if required)
+        docker_image = self.get_image_name(options, not options.local)
+
         ########################################################
         # build docker cmd
         ########################################################
@@ -295,7 +317,7 @@ class NonInteractiveContainer(Container):
         cmd.extend(["-e", "GALAXY_URL={0}".format(options.server or _os.environ["GALAXY_URL"])])
         cmd.extend(["-e", "GALAXY_API_KEY={0}".format(options.api_key or _os.environ["GALAXY_API_KEY"])])
         # image
-        cmd.append(self.get_image_name(options))
+        cmd.append(docker_image)
         # entrypoint
         # TODO: update the entrypoint of the Docker container
         cmd.append("wft4galaxy")
