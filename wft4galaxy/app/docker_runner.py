@@ -50,7 +50,8 @@ DOCKER_IMAGE_SETTINGS = {
     "tag": _properties["Docker"]["tag"] \
         if _properties is not None and "Docker" in _properties and "tag" in _properties["Docker"] else "develop",
     "production": "wft4galaxy-minimal",
-    "develop": "wft4galaxy-develop"
+    "develop": "wft4galaxy-develop",
+    "supported_os": ["alpine", "ubuntu"]
 }
 
 # Docker container settings
@@ -91,6 +92,11 @@ class _CommandLineHelper:
         main_parser.add_argument('--repository', default=None,
                                  help='Alternative Docker repository containing the "wft4galaxy" Docker image')
         main_parser.add_argument('--image', help='Alternative "wft4galaxy" Docker image <NAME:TAG>', default=None)
+        main_parser.add_argument('--os', choices=DOCKER_IMAGE_SETTINGS["supported_os"],
+                                 help='Base OS of the Docker image (default: "{0}"). \n'
+                                      'Ignored when the "--image" option is specified.'
+                                 .format(DOCKER_IMAGE_SETTINGS["supported_os"][0]),
+                                 default=DOCKER_IMAGE_SETTINGS["supported_os"][0])
         main_parser.add_argument('--local', action="store_true", default=False,
                                  help='Force to use the local version of the required Docker image')
         main_parser.add_argument('--server', help='Galaxy server URL', default=_os.environ["GALAXY_URL"])
@@ -179,7 +185,14 @@ class Container():
         if options.image:
             img_name_parts.append(options.image)
         else:
-            img_name_parts.append("{0}:{1}".format(config[2], DOCKER_IMAGE_SETTINGS["tag"]))
+            repo_ref = "develop"
+            if _properties is not None and "Repository" in _properties:
+                repo_tag = _properties["Repository"]["tag"] if "tag" in _properties["Repository"] else None
+                repo_branch = _properties["Repository"]["branch"] \
+                    if "branch" in _properties["Repository"] else "develop"
+                repo_ref = repo_tag if repo_tag is not None else repo_branch
+            image_tag = "{0}-{1}".format(options.os or "alpine", repo_ref)
+            img_name_parts.append("{0}:{1}".format(config[2], image_tag))
         docker_image_name = "/".join(img_name_parts)
         _logger.debug("Using Docker image: %s", docker_image_name)
 

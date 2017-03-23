@@ -45,7 +45,8 @@ def update_properties(config):
     else:
         raise ValueError("Unknown Git repository scheme")
 
-    # docker tag
+    # git & docker tag
+    tag = None
     if last_commit in tags:
         tag = _run_cmd(['git', 'describe', '--contains', last_commit])
         docker_tag = "alpine-{0}".format(tag)
@@ -58,7 +59,8 @@ def update_properties(config):
         "branch": branch,
         "owner": owner,
         "repo": repo,
-        "last commit": last_commit
+        "last commit": last_commit,
+        "tag": tag
     }
 
     # Docker info
