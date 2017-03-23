@@ -88,7 +88,7 @@ class _CommandLineHelper:
     def setup(self):
         main_parser = _argparse.ArgumentParser(add_help=True, formatter_class=_argparse.RawTextHelpFormatter)
         main_parser.add_argument('--registry', help='Alternative Docker registry', default=None)
-        main_parser.add_argument('--repository', dest="REPO", default=None,
+        main_parser.add_argument('--repository', default=None,
                                  help='Alternative Docker repository \n'
                                       'containing the "wft4galaxy" Docker image')
         main_parser.add_argument('--image', help='Alternative "wft4galaxy" Docker image <NAME:TAG>', default=None)
