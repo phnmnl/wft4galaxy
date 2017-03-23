@@ -6,7 +6,6 @@ import sys as _sys
 import json as _json
 import logging as _logging
 import argparse as _argparse
-import traceback as _traceback
 import subprocess as _subprocess
 
 # configure logger
@@ -289,17 +288,17 @@ class InteractiveContainer(Container):
             client.remove_container(container["Id"])
             _logger.info("Removed Docker container %s", container["Id"])
             return _SUCCESS_EXIT
-        except NameError:
+        except NameError as ne:
             print("\n ERROR: To use wft4galaxy-docker in development mode "
                   "you need to install 'docker' and 'dockerpty' Python libries \n"
                   "\tType \"pip install docker dockerpty\" to install the required libraries.")
             if options and options.debug:
-                _traceback.print_exc()
+                _logger.exception(ne)
             return _FAILURE_EXIT
         except Exception as e:
             print("\n ERROR: Unable to start the Docker container: {0}".format(str(e)))
             if options and options.debug:
-                _traceback.print_exc()
+                _logger.exception(e)
             return _FAILURE_EXIT
 
 
@@ -413,7 +412,7 @@ def main():
     except Exception as e:
         print("\nERROR: {0}".format(str(e)))
         if options and options.debug:
-            _traceback.print_exc()
+            _logger.exception(e)
         _sys.exit(_FAILURE_EXIT)
 
 
