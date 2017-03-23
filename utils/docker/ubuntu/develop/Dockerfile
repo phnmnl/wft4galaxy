@@ -1,4 +1,4 @@
-FROM crs4/wft4galaxy:ubuntu
+FROM crs4/wft4galaxy-develop:ubuntu-develop
 
 # metadata
 MAINTAINER PhenoMeNal-H2020 Project ( phenomenal-h2020-users@googlegroups.com )
