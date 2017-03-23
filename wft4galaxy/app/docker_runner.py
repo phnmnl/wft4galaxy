@@ -58,10 +58,10 @@ DOCKER_IMAGE_SETTINGS = {
 DOCKER_CONTAINER_SETTINGS = {
     "modes": ("production", "develop"),
     "entrypoints": {
-        "runtest": ("runtest", 'Execute the wft4galaxy tool as entrypoint', DOCKER_IMAGE_SETTINGS["production"]),
-        "bash": ("bash", 'Execute the BASH shell as entrypoint', DOCKER_IMAGE_SETTINGS["develop"]),
-        "ipython": ("ipython", 'Execute the ipython as entrypoint', DOCKER_IMAGE_SETTINGS["develop"]),
-        "jupyter": ("jupyter", 'Execute the jupyter as entrypoint', DOCKER_IMAGE_SETTINGS["develop"])
+        "runtest": ("runtest", 'Execute the "wft4galaxy" tool as entrypoint', DOCKER_IMAGE_SETTINGS["production"]),
+        "bash": ("bash", 'Execute the "Bash" shell as entrypoint', DOCKER_IMAGE_SETTINGS["develop"]),
+        "ipython": ("ipython", 'Execute the "Ipython" shell as entrypoint', DOCKER_IMAGE_SETTINGS["develop"]),
+        "jupyter": ("jupyter", 'Execute the "Jupyter" server as entrypoint', DOCKER_IMAGE_SETTINGS["develop"])
     }
 }
 # WorkflowTest configuration defaults
@@ -87,10 +87,11 @@ class _CommandLineHelper:
         self._parser, self._entrypoint_parsers = self.setup()
 
     def setup(self):
-        main_parser = _argparse.ArgumentParser(add_help=True)
+        main_parser = _argparse.ArgumentParser(add_help=True, formatter_class=_argparse.RawTextHelpFormatter)
         main_parser.add_argument('--registry', help='Alternative Docker registry', default=None)
-        main_parser.add_argument('--repository', default=None,
-                                 help='Alternative Docker repository containing the "wft4galaxy" Docker image')
+        main_parser.add_argument('--repository', dest="REPO", default=None,
+                                 help='Alternative Docker repository \n'
+                                      'containing the "wft4galaxy" Docker image')
         main_parser.add_argument('--image', help='Alternative "wft4galaxy" Docker image <NAME:TAG>', default=None)
         main_parser.add_argument('--os', choices=DOCKER_IMAGE_SETTINGS["supported_os"],
                                  help='Base OS of the Docker image (default: "{0}"). \n'
@@ -98,7 +99,8 @@ class _CommandLineHelper:
                                  .format(DOCKER_IMAGE_SETTINGS["supported_os"][0]),
                                  default=DOCKER_IMAGE_SETTINGS["supported_os"][0])
         main_parser.add_argument('--local', action="store_true", default=False,
-                                 help='Force to use the local version of the required Docker image')
+                                 help='Force to use the local version '
+                                      'of the required Docker image')
         main_parser.add_argument('--server', help='Galaxy server URL', default=_os.environ["GALAXY_URL"])
         main_parser.add_argument('--api-key', help='Galaxy server API KEY', default=_os.environ["GALAXY_API_KEY"])
         main_parser.add_argument('-p', '--port', help='Docker port to expose', action="append", default=[])
@@ -112,9 +114,9 @@ class _CommandLineHelper:
         # add entrypoint subparsers
         entrypoint_parsers = {}
         entrypoint_subparsers_factory = \
-            main_parser.add_subparsers(title="Container entrypoint",
-                                       description="entrypoint", dest="entrypoint",
-                                       help="Available entrypoints of the Docker container")
+            main_parser.add_subparsers(title="Container entrypoint", dest="entrypoint",
+                                       description="Available entrypoints for the 'wft4galaxy' Docker image.",
+                                       help="Choose one of the following options:")
         for ep_name, ep_help, ep_image in DOCKER_CONTAINER_SETTINGS["entrypoints"].values():
             entrypoint_parsers[ep_name] = \
                 entrypoint_subparsers_factory.add_parser(ep_name, help=ep_help, epilog=epilog)
@@ -198,13 +200,13 @@ class Container():
 
         if pull_latest:
             _logger.info("Updating Docker imge '{0}'".format(docker_image_name))
-            p = _subprocess.Popen(["docker", "pull", docker_image_name], shell=False, close_fds=True,
-                                  stdin=_subprocess.PIPE, stdout=_subprocess.PIPE)
+            p = _subprocess.Popen(["docker", "pull", docker_image_name],
+                                  shell=False, close_fds=False, stdout=_subprocess.PIPE)
             try:
                 for o in p.stdout:
                     if isinstance(o, bytes):
                         o = o.decode("utf-8")
-                    _logger.info("{0}".format(o).rstrip())
+                    _logger.info(o.rstrip())
             except Exception as e:
                 if options and options.debug:
                     _logger.exception(e)
