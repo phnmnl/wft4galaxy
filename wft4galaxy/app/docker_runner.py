@@ -9,12 +9,10 @@ import argparse as _argparse
 import subprocess as _subprocess
 
 # configure logger
-_logger = _logging.getLogger("WorkflowTest")
+_logFormat = "%(asctime)s [wft4galaxy-docker] [%(levelname)-5.5s]  %(message)s"
+_logger = _logging.getLogger("wft4galaxy-docker")
+_logging.basicConfig(format=_logFormat)
 _logger.setLevel(_logging.INFO)
-_logFormatter = _logging.Formatter("%(asctime)s [wft4galaxy-docker] [%(levelname)-5.5s]  %(message)s")
-_consoleHandler = _logging.StreamHandler()
-_consoleHandler.setFormatter(_logFormatter)
-_logger.addHandler(_consoleHandler)
 
 # try to load modules required for running container interactively
 try:
@@ -106,6 +104,7 @@ class _CommandLineHelper:
         main_parser.add_argument('-v', '--volume', help='Docker volume to mount', type=str, action="append", default=[])
         main_parser.add_argument('--enable-logger', help='Enable log messages', action='store_true')
         main_parser.add_argument('--debug', help='Enable debug mode', action='store_true')
+        main_parser.add_argument('--log-file', help='Absolute path of a log file.', default=None)
 
         # reference to the global options
         epilog = "NOTICE: Type \"{0} -h\" to see the global options.".format(main_parser.prog)
@@ -378,10 +377,10 @@ class NonInteractiveContainer(Container):
 
 def _logger_setup(options):
     # add file logs
-    log_file = None
-    if log_file:
-        fileHandler = _logging.FileHandler(log_file)
-        fileHandler.setFormatter(_logFormatter)
+    if options.log_file:
+        _logger.info("Enabling LOG file: '%s'", options.log_file)
+        fileHandler = _logging.FileHandler(options.log_file)
+        fileHandler.setFormatter(_logging.Formatter(_logFormat))
         _logger.addHandler(fileHandler)
     if options.debug:
         _logger.setLevel(_logging.DEBUG)
