@@ -3,11 +3,11 @@
 source set-bioblend-env.sh "$@"
 
 ENTRYPOINT=$1
-if [[ ! ${ENTRYPOINT} =~ ^(bash|wft4galaxy|ipython|jupyter)$  ]]; then
+if [[ ! ${ENTRYPOINT} =~ ^(bash|wft4galaxy|runtest|ipython|jupyter)$  ]]; then
   ENTRYPOINT="bash"
 fi
 
-if [[ ${ENTRYPOINT} == "wft4galaxy" ]]; then
+if [[ ${ENTRYPOINT} == "wft4galaxy" ]] || [[ ${ENTRYPOINT} == "runtest" ]]; then
     wft4galaxy ${WFT4GALAXY_OPTS}
 elif [[ ${ENTRYPOINT} == "ipython" ]]; then
 		ipython ${WFT4GALAXY_OPTS}

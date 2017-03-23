@@ -334,7 +334,6 @@ class NonInteractiveContainer(Container):
         # image
         cmd.append(docker_image)
         # entrypoint
-        # TODO: update the entrypoint of the Docker container
         cmd.append("wft4galaxy")
         # log debug option
         if options.debug:
