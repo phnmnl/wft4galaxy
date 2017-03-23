@@ -98,8 +98,8 @@ class _CommandLineHelper:
         main_parser.add_argument('--local', action="store_true", default=False,
                                  help='Force to use the local version '
                                       'of the required Docker image')
-        main_parser.add_argument('--server', help='Galaxy server URL', default=_os.environ["GALAXY_URL"])
-        main_parser.add_argument('--api-key', help='Galaxy server API KEY', default=_os.environ["GALAXY_API_KEY"])
+        main_parser.add_argument('--server', help='Galaxy server URL', default=None)
+        main_parser.add_argument('--api-key', help='Galaxy server API KEY', default=None)
         main_parser.add_argument('-p', '--port', help='Docker port to expose', action="append", default=[])
         main_parser.add_argument('-v', '--volume', help='Docker volume to mount', type=str, action="append", default=[])
         main_parser.add_argument('--enable-logger', help='Enable log messages', action='store_true')
@@ -260,14 +260,14 @@ class InteractiveContainer(Container):
             ports = self._parse_ports(options.port)
 
             # environment
-            environment = ["GALAXY_URL={0}".format(_os.environ["GALAXY_URL"]),
-                           "GALAXY_API_KEY={0}".format(_os.environ["GALAXY_API_KEY"])]
+            environment = ["GALAXY_URL={0}".format(options.server),
+                           "GALAXY_API_KEY={0}".format(options.api_key)]
 
             # command
             command = [
                 options.entrypoint,
-                "--server", _os.environ["GALAXY_URL"],
-                "--api-key", _os.environ["GALAXY_API_KEY"]
+                "--server", options.server,
+                "--api-key", options.api_key
             ]
 
             # create and run Docker containers
@@ -327,8 +327,8 @@ class NonInteractiveContainer(Container):
         for p in options.port:
             cmd += ["-p", p]
         # Galaxy environment variables
-        cmd.extend(["-e", "GALAXY_URL={0}".format(options.server or _os.environ["GALAXY_URL"])])
-        cmd.extend(["-e", "GALAXY_API_KEY={0}".format(options.api_key or _os.environ["GALAXY_API_KEY"])])
+        cmd.extend(["-e", "GALAXY_URL={0}".format(options.server)])
+        cmd.extend(["-e", "GALAXY_API_KEY={0}".format(options.api_key)])
         # image
         cmd.append(docker_image)
         # entrypoint
@@ -337,8 +337,8 @@ class NonInteractiveContainer(Container):
         if options.debug:
             cmd.append("--debug")
         # Galaxy settings server (redundant)
-        cmd += ["--server ", options.server]  # or _os.environ["GALAXY_URL"]]
-        cmd += ["--api-key ", options.api_key]  # or _os.environ["GALAXY_API_KEY"]]
+        cmd += ["--server ", options.server]
+        cmd += ["--api-key ", options.api_key]
         # configuration file
         cmd += ["-f", "/data_input/" + _os.path.basename(options.file)]
         # output folder
@@ -375,6 +375,23 @@ class NonInteractiveContainer(Container):
         return p.wait()
 
 
+def _set_galaxy_env(options):
+    ENV_KEY_GALAXY_URL = "GALAXY_URL"
+    if options.server is None:
+        if ENV_KEY_GALAXY_URL in _os.environ:
+            options.server = _os.environ[ENV_KEY_GALAXY_URL]
+        else:
+            raise ValueError("Galaxy URL not defined! "
+                             "Use --server or the environment variable {}.\n".format(ENV_KEY_GALAXY_URL))
+    ENV_KEY_GALAXY_API_KEY = "GALAXY_API_KEY"
+    if options.api_key is None:
+        if ENV_KEY_GALAXY_API_KEY in _os.environ:
+            options.api_key = _os.environ[ENV_KEY_GALAXY_API_KEY]
+        else:
+            raise ValueError("Galaxy API key not defined! "
+                             "Use --api-key or the environment variable {}.\n".format(ENV_KEY_GALAXY_API_KEY))
+
+
 def _logger_setup(options):
     # add file logs
     if options.log_file:
@@ -396,6 +413,9 @@ def main():
 
         # update logger
         _logger_setup(options)
+
+        # set galaxy_env
+        _set_galaxy_env(options)
 
         # log Python version
         _logger.debug("Python version: %s", _sys.version)
