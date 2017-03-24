@@ -3,7 +3,7 @@
 set -e
 
 # set default repo owner
-DEFAULT_REPO_OWNER="phnmnl"
+DEFAULT_REPO="phnmnl/wft4galaxy"
 
 # set default repo owner
 DEFAULT_REPO_BRANCH="develop"
@@ -13,15 +13,15 @@ DEFAULT_TARGET_FOLDER="/usr/local/bin"
 
 # print usage
 function print_usage(){
-    echo -e "\nUSAGE: ${0} [--owner <REPO_OWNER>] [--branch <REPO_BRANCH>] [TARGET_FOLDER]"
+    echo -e "\nUSAGE: ${0} [--repo <REPOSITORY>] [--branch <REPOSITORY_BRANCH>] [TARGET_FOLDER]"
     echo -e "\n\t Options:"
-    echo -e "\t - TARGET_FOLDER: the path where to store the wft4galaxy-docker script (default: \"${DEFAULT_TARGET_FOLDER}\")"
-    echo -e "\t - REPO_OWNER:    the owner name of the GitHub repository (default: \"${DEFAULT_REPO_OWNER}\")"
-    echo -e "\t - REPO_BRANCH:   the branch name of the GitHub repository (default: \"${DEFAULT_REPO_BRANCH}\")"
+    echo -e "\t - REPOSITORY:        the name of the GitHub repository (default: \"${DEFAULT_REPO}\")"
+    echo -e "\t - REPOSITORY_BRANCH: the branch name of the GitHub repository (default: \"${DEFAULT_REPO_BRANCH}\")"
+    echo -e "\t - TARGET_FOLDER:     the path where to store the wft4galaxy-docker script (default: \"${DEFAULT_TARGET_FOLDER}\")"
 }
 
 # set default values
-REPO_OWNER=${DEFAULT_REPO_OWNER}
+REPO=${DEFAULT_REPO}
 REPO_BRANCH=${DEFAULT_REPO_BRANCH}
 TARGET_FOLDER=${DEFAULT_TARGET_FOLDER}
 
@@ -40,12 +40,12 @@ while [ -n "$1" ]; do
     # Parse current opt
     while [ x"$OPT" != x"-" ] ; do
             case "$OPT" in
-                  --owner=* )
-                          REPO_OWNER="${OPT#*=}"
+                  --repo=* )
+                          REPO="${OPT#*=}"
                           shift
                           ;;
-                  --owner )
-                          REPO_OWNER="$2"
+                  --repo )
+                          REPO="$2"
                           shift
                           ;;
                   --branch=* )
@@ -85,14 +85,14 @@ elif [[ ${#ARGS[@]} -gt 1 ]]; then
 fi
 
 # set source script
-SOURCE_SCRIPT="https://raw.githubusercontent.com/${REPO_OWNER}/wft4galaxy/${REPO_BRANCH}/wft4galaxy/app/docker_runner.py"
+SOURCE_SCRIPT="https://raw.githubusercontent.com/${REPO}/${REPO_BRANCH}/wft4galaxy/app/docker_runner.py"
 
 # download script
 TEMP_SCRIPT="/tmp/wft4galaxy-docker"
 STATUS_CODE=$(curl --silent --output ${TEMP_SCRIPT} --write-out "%{http_code}" ${SOURCE_SCRIPT})
 if [[ ${STATUS_CODE} -ne 200 ]]; then
     echo -e "\nERROR: Script ${SOURCE_SCRIPT} not found!"
-    echo -e "       Check if you are using the proper repository OWNER and BRANCH."
+    echo -e "       Check if you are using the proper REPOSITORY and BRANCH."
     print_usage
     exit -1
 else
