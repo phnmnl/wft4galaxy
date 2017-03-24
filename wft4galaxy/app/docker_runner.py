@@ -48,7 +48,8 @@ DOCKER_IMAGE_SETTINGS = {
         if _properties is not None and "Docker" in _properties and "tag" in _properties["Docker"] else "develop",
     "production": "wft4galaxy-minimal",
     "develop": "wft4galaxy-develop",
-    "supported_os": ["alpine", "ubuntu"]
+    "supported_os": ["alpine", "ubuntu"],
+    "default_version": "develop"
 }
 
 # Docker container settings
@@ -85,19 +86,24 @@ class _CommandLineHelper:
 
     def setup(self, omit_subparsers=False):
         main_parser = _argparse.ArgumentParser(add_help=True, formatter_class=_argparse.RawTextHelpFormatter)
-        main_parser.add_argument('--registry', help='Alternative Docker registry', default=None)
-        main_parser.add_argument('--repository', default=None,
-                                 help='Alternative Docker repository \n'
-                                      'containing the "wft4galaxy" Docker image')
-        main_parser.add_argument('--image', help='Alternative "wft4galaxy" Docker image <NAME:TAG>', default=None)
+        main_parser.add_argument('--registry', help='Alternative Docker registry (default is "DockerHub")',
+                                 default=None)
+        main_parser.add_argument('--repository', default=None, metavar="REPO", dest="repository",
+                                 help='Alternative Docker repository containing '
+                                      'the "wft4galaxy" Docker image (default is "crs4")')
+        main_parser.add_argument('--version', default=None,
+                                 help='Alternative version of the "wft4galaxy" Docker image'
+                                      '(default is "{}")'.format(DOCKER_IMAGE_SETTINGS["default_version"]))
+        main_parser.add_argument('--image', help='Alternative "wft4galaxy" Docker image name '
+                                                 'specified as NAME:TAG', default=None)
         main_parser.add_argument('--os', choices=DOCKER_IMAGE_SETTINGS["supported_os"],
-                                 help='Base OS of the Docker image (default: "{0}"). \n'
-                                      'Ignored when the "--image" option is specified.'
+                                 help='Base OS of the Docker image (default is "{0}" and '
+                                      'it is ignored when the "--image" option is specified)'
                                  .format(DOCKER_IMAGE_SETTINGS["supported_os"][0]),
                                  default=DOCKER_IMAGE_SETTINGS["supported_os"][0])
-        main_parser.add_argument('--local', action="store_true", default=False,
-                                 help='Force to use the local version '
-                                      'of the required Docker image')
+        main_parser.add_argument('--skip-update', action="store_true", default=False,
+                                 help='Skip the update of the "wft4galaxy" Docker image '
+                                      'and use the local version if it is available')
         main_parser.add_argument('--server', help='Galaxy server URL', default=None)
         main_parser.add_argument('--api-key', help='Galaxy server API KEY', default=None)
         main_parser.add_argument('-p', '--port', help='Docker port to expose', action="append", default=[])
@@ -171,7 +177,7 @@ class ContainerRunner:
 
 
 class Container():
-    def get_image_name(self, options, pull_latest=True):
+    def get_image_name(self, options, skip_update=False):
         img_name_parts = []
         # base default config
         config = DOCKER_CONTAINER_SETTINGS["entrypoints"][options.entrypoint]
@@ -189,18 +195,33 @@ class Container():
         if options.image:
             img_name_parts.append(options.image)
         else:
-            repo_ref = "develop"
-            if _properties is not None and "Repository" in _properties:
-                repo_tag = _properties["Repository"]["tag"] if "tag" in _properties["Repository"] else None
-                repo_branch = _properties["Repository"]["branch"] \
-                    if "branch" in _properties["Repository"] else "develop"
-                repo_ref = repo_tag if repo_tag is not None else repo_branch
-            image_tag = "{0}-{1}".format(options.os or "alpine", repo_ref)
+
+            # try to use the version provided by user
+            version = options.version
+
+            # if the user doesn't provide a version
+            if version is None:
+                # if wft4galaxy has installed, try to use its metadata
+                if _properties is not None and "Repository" in _properties:
+                    # if the installed version has tag, use it
+                    version = _properties["Repository"]["tag"] if "tag" in _properties["Repository"] else None
+                    # if the installed version has not a tag, use the branch of the Git repository as version
+                    if version is None \
+                            and _properties["Repository"]["branch"] and "branch" in _properties["Repository"]:
+                        version = _properties["Repository"]["branch"]
+
+            # build the image tag
+            image_tag = "{0}-{1}".format(options.os or "alpine", version or DOCKER_IMAGE_SETTINGS["default_version"])
+            # build the image name
             img_name_parts.append("{0}:{1}".format(config[2], image_tag))
+
+        # build the fully qualified Docker image name
         docker_image_name = "/".join(img_name_parts)
         _logger.debug("Using Docker image: %s", docker_image_name)
 
-        if pull_latest:
+        # if the user doesn't disable this option,
+        # try to pull the last version the required image
+        if not skip_update:
             _logger.info("Updating Docker imge '{0}'".format(docker_image_name))
             p = _subprocess.Popen(["docker", "pull", docker_image_name], shell=False, close_fds=False)
             try:
@@ -251,7 +272,7 @@ class InteractiveContainer(Container):
         try:
 
             # prepare the Docker image (updating it if required)
-            docker_image = self.get_image_name(options, not options.local)
+            docker_image = self.get_image_name(options, options.skip_update)
 
             # volumes
             volumes = self._parse_volumes(options.volume)
@@ -319,7 +340,7 @@ class NonInteractiveContainer(Container):
             _os.path.abspath(_os.path.dirname(options.output)), container_output_path))
 
         # prepare the Docker image (updating it if required)
-        docker_image = self.get_image_name(options, not options.local)
+        docker_image = self.get_image_name(options, options.skip_update)
 
         ########################################################
         # build docker cmd
