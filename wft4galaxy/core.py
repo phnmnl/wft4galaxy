@@ -769,6 +769,9 @@ class WorkflowTestSuiteRunner(object):
         self._workflow_runners = []
         self._workflow_test_results = []
         self._galaxy_instance = None
+        # log file
+        self._fileHandler = None
+        self._log_file = None
         # initialize the galaxy instance
         self._galaxy_instance = _common.get_galaxy_instance(galaxy_url, galaxy_api_key)
         # initialize the workflow loader
@@ -834,6 +837,13 @@ class WorkflowTestSuiteRunner(object):
             _logging.disable(_logging.NOTSET)
             logger_level = _logging.DEBUG if config.enable_debug else _logging.INFO
             _logger.setLevel(logger_level)
+            # config log file
+            _common.makedirs(config.output_folder)
+            self._log_file = _os.path.join(config.output_folder, "{0}.log".format(str(_uuid1())))
+            _logger.debug("Enabling LOG file: '%s'", self._log_file)
+            self._fileHandler = _logging.FileHandler(self._log_file)
+            self._fileHandler.setFormatter(_logging.Formatter(_common._log_format))
+            _logger.addHandler(self._fileHandler)
         else:
             _logging.disable(_logging.INFO)
 
@@ -938,6 +948,11 @@ class WorkflowTestSuiteRunner(object):
         """
         for runner in self._workflow_runners:
             runner.cleanup()
+        if self._fileHandler is not None and self._log_file is not None:
+            _logger.removeHandler(self._fileHandler)
+            self._fileHandler.close()
+            _logger.debug("Removing log file: %s", self._log_file)
+            _os.remove(self._log_file)
         # remove output folder if empty
         if output_folder and _os.path.exists(output_folder) and \
                 _os.path.isdir(output_folder) and len(_os.listdir(output_folder)) == 0:
