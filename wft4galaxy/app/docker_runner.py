@@ -91,7 +91,7 @@ class _CommandLineHelper:
         main_parser.add_argument('--repository', default=None, metavar="REPO", dest="repository",
                                  help='Alternative Docker repository containing '
                                       'the "wft4galaxy" Docker image (default is "crs4")')
-        main_parser.add_argument('--version', default=None,
+        main_parser.add_argument('--version', default=None, metavar="VERSION",
                                  help='Alternative version of the "wft4galaxy" Docker image'
                                       '(default is "{}")'.format(DOCKER_IMAGE_SETTINGS["default_version"]))
         main_parser.add_argument('--image', help='Alternative "wft4galaxy" Docker image name '
@@ -106,8 +106,8 @@ class _CommandLineHelper:
                                       'and use the local version if it is available')
         main_parser.add_argument('--server', help='Galaxy server URL', default=None)
         main_parser.add_argument('--api-key', help='Galaxy server API KEY', default=None)
-        main_parser.add_argument('-p', '--port', help='Docker port to expose', action="append", default=[])
-        main_parser.add_argument('-v', '--volume', help='Docker volume to mount', type=str, action="append", default=[])
+        main_parser.add_argument('--port', help='Docker port to expose', action="append", default=[])
+        main_parser.add_argument('--volume', help='Docker volume to mount', type=str, action="append", default=[])
         main_parser.add_argument('--debug', help='Enable debug mode', action='store_true')
 
         # reference to the global options
