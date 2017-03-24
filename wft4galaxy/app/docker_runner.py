@@ -308,9 +308,15 @@ class NonInteractiveContainer(Container):
         :param options: 
         :return: 
         """
-        ## extract folder of the configuration file
-        options.volume.append(_os.path.abspath(_os.path.dirname(options.file)) + ":/data_input")
-        options.volume.append(_os.path.abspath(_os.path.dirname(options.output)) + ":/data_output")
+        # set absolute path of container mount points for IO
+        container_input_path = _os.path.join("/", "data_input")
+        container_output_path = _os.path.join("/", "data_output")
+
+        # extract folder of the configuration file
+        options.volume.append("{0}:{1}".format(
+            _os.path.abspath(_os.path.dirname(options.file)), container_input_path))
+        options.volume.append("{0}:{1}".format(
+            _os.path.abspath(_os.path.dirname(options.output)), container_output_path))
 
         # prepare the Docker image (updating it if required)
         docker_image = self.get_image_name(options, not options.local)
@@ -343,9 +349,9 @@ class NonInteractiveContainer(Container):
         cmd += ["--server ", options.server]
         cmd += ["--api-key ", options.api_key]
         # configuration file
-        cmd += ["-f", "/data_input/" + _os.path.basename(options.file)]
+        cmd += ["-f", _os.path.join(container_input_path, _os.path.basename(options.file))]
         # output folder
-        cmd += ["-o", options.output]
+        cmd += ["-o", _os.path.join(container_output_path, options.output)]
         # cleanup option
         if options.disable_cleanup:
             cmd.append("--disable-cleanup")
