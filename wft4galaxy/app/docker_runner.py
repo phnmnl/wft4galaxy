@@ -102,9 +102,7 @@ class _CommandLineHelper:
         main_parser.add_argument('--api-key', help='Galaxy server API KEY', default=None)
         main_parser.add_argument('-p', '--port', help='Docker port to expose', action="append", default=[])
         main_parser.add_argument('-v', '--volume', help='Docker volume to mount', type=str, action="append", default=[])
-        main_parser.add_argument('--enable-logger', help='Enable log messages', action='store_true')
         main_parser.add_argument('--debug', help='Enable debug mode', action='store_true')
-        main_parser.add_argument('--log-file', help='Absolute path of a log file.', default=None)
 
         # reference to the global options
         epilog = "NOTICE: Type \"{0} -h\" to see the global options.".format(main_parser.prog)
@@ -141,6 +139,7 @@ class _CommandLineHelper:
                                   default=DEFAULT_OUTPUT_FOLDER,
                                   help="Absolute path of the output folder (default is \"{0}\")"
                                   .format(DEFAULT_OUTPUT_FOLDER))
+        wft4g_parser.add_argument('--enable-logger', help='Enable log messages', action='store_true')
         wft4g_parser.add_argument('--disable-cleanup', help='Disable cleanup', action='store_true')
         wft4g_parser.add_argument('--disable-assertions', help='Disable assertions', action='store_true')
         wft4g_parser.add_argument("test", help="Workflow Test Name", nargs="*")
@@ -203,16 +202,12 @@ class Container():
 
         if pull_latest:
             _logger.info("Updating Docker imge '{0}'".format(docker_image_name))
-            p = _subprocess.Popen(["docker", "pull", docker_image_name],
-                                  shell=False, close_fds=False, stdout=_subprocess.PIPE)
+            p = _subprocess.Popen(["docker", "pull", docker_image_name], shell=False, close_fds=False)
             try:
-                for line in p.stdout:
-                    if isinstance(line, bytes):
-                        line = line.decode("utf-8")
-                    _logger.info(line.rstrip())
-            except Exception as e:
-                if options and options.debug:
-                    _logger.exception(e)
+                p.communicate()
+            except KeyboardInterrupt:
+                print("\n")
+                _logger.warn("Pull of Docker image %s interrupted by user", docker_image_name)
         else:
             _logger.info("Using the local version of the Docker image '{0}'".format(docker_image_name))
 
@@ -300,7 +295,7 @@ class InteractiveContainer(Container):
                   "\tType \"pip install docker dockerpty\" to install the required libraries.\n")
             return _FAILURE_EXIT
         except Exception as e:
-            print("\n ERROR: Unable to start the Docker container: {0}".format(str(e)))
+            _logger.error("ERROR: Unable to start the Docker container: {0}".format(str(e)))
             if options and options.debug:
                 _logger.exception(e)
             return _FAILURE_EXIT
@@ -338,6 +333,9 @@ class NonInteractiveContainer(Container):
         cmd.append(docker_image)
         # entrypoint
         cmd.append("wft4galaxy")
+        # enable logger option
+        if options.enable_logger:
+            cmd.append("--enable-logger")
         # log debug option
         if options.debug:
             cmd.append("--debug")
@@ -364,20 +362,14 @@ class NonInteractiveContainer(Container):
         #########################################################
 
         # launch the Docker container
-        p = _subprocess.Popen(cmd, shell=False, close_fds=False,
-                              stdin=_subprocess.PIPE, stdout=_subprocess.PIPE)
-        # write Docker output
+        p = _subprocess.Popen(cmd, stdout=_subprocess.PIPE)
         try:
-            for line in p.stdout:
-                if isinstance(line, bytes):
-                    line = line.decode("utf-8")
-                _sys.stdout.write(line)
-        except Exception as e:
-            if options and options.debug:
-                _logger.exception(e)
-
-        # wait for termination and report the exit code
-        return p.wait()
+            # wait for termination and report the exit code
+            return p.wait()
+        except KeyboardInterrupt:
+            p.kill()
+            _logger.warn("wft4galaxy terminated by user")
+            return _FAILURE_EXIT
 
 
 def _set_galaxy_env(options):
@@ -395,18 +387,6 @@ def _set_galaxy_env(options):
         else:
             raise ValueError("Galaxy API key not defined! "
                              "Use --api-key or the environment variable {}.\n".format(ENV_KEY_GALAXY_API_KEY))
-
-
-def _logger_setup(options):
-    # add file logs
-    if options.log_file:
-        _logger.info("Enabling LOG file: '%s'", options.log_file)
-        fileHandler = _logging.FileHandler(options.log_file)
-        fileHandler.setFormatter(_logging.Formatter(_logFormat))
-        _logger.addHandler(fileHandler)
-    if options.debug:
-        _logger.setLevel(_logging.DEBUG)
-    _logger.debug("Command line options %r", options)
 
 
 def main():
@@ -432,9 +412,11 @@ def main():
 
         # parse cli options/arguments
         options = p.parse_args()
+        _logger.debug("Command line options %r", options)
 
         # update logger
-        _logger_setup(options)
+        if options.debug:
+            _logger.setLevel(_logging.DEBUG)
 
         # set galaxy_env
         _set_galaxy_env(options)
@@ -451,7 +433,7 @@ def main():
         _sys.exit(exit_code)
 
     except Exception as e:
-        print("\nERROR: {0}".format(str(e)))
+        _logger.error("ERROR: {0}".format(str(e)))
         if options and options.debug:
             _logger.exception(e)
         _sys.exit(_FAILURE_EXIT)
