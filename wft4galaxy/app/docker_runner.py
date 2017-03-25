@@ -57,6 +57,10 @@ DOCKER_CONTAINER_SETTINGS = {
     "modes": ("production", "develop"),
     "entrypoints": {
         "runtest": ("runtest", 'Execute the "wft4galaxy" tool as entrypoint', DOCKER_IMAGE_SETTINGS["production"]),
+        "generate-template": ("wizard", 'Execute the "generate-template" wizard '
+                                        'command as entrypoint', DOCKER_IMAGE_SETTINGS["production"]),
+        "generate-test": ("wizard", 'Execute the "generate-test" wizard '
+                                    'command as entrypoint', DOCKER_IMAGE_SETTINGS["production"]),
         "bash": ("bash", 'Execute the "Bash" shell as entrypoint', DOCKER_IMAGE_SETTINGS["develop"]),
         "ipython": ("ipython", 'Execute the "Ipython" shell as entrypoint', DOCKER_IMAGE_SETTINGS["develop"]),
         "jupyter": ("jupyter", 'Execute the "Jupyter" server as entrypoint', DOCKER_IMAGE_SETTINGS["develop"])
@@ -111,7 +115,7 @@ class _CommandLineHelper:
         main_parser.add_argument('--debug', help='Enable debug mode', action='store_true')
 
         # reference to the global options
-        epilog = "NOTICE: Type \"{0} -h\" to see the global options.".format(main_parser.prog)
+        epilog = "NOTICE: Type \"{0} -h\" to see the global options.".format("wft4galaxy-docker")
 
         # add entrypoint subparsers
         entrypoint_parsers = None
@@ -123,7 +127,8 @@ class _CommandLineHelper:
                 main_parser.add_subparsers(title="Container entrypoint", dest="entrypoint",
                                            description="Available entrypoints for the 'wft4galaxy' Docker image.",
                                            help="Choose one of the following options:")
-            for ep_name, ep_help, ep_image in DOCKER_CONTAINER_SETTINGS["entrypoints"].values():
+            for ep_name in DOCKER_CONTAINER_SETTINGS["entrypoints"].keys():
+                ep_cmd, ep_help, ep_image = DOCKER_CONTAINER_SETTINGS["entrypoints"][ep_name]
                 entrypoint_parsers[ep_name] = \
                     entrypoint_subparsers_factory.add_parser(ep_name, help=ep_help, epilog=epilog)
 
@@ -134,6 +139,23 @@ class _CommandLineHelper:
             entrypoint_parsers["jupyter"].add_argument("--web-port", default=DEFAULT_JUPYTER_PORT, type=int,
                                                        help="Jupyter port (default is {0})".format(
                                                            DEFAULT_JUPYTER_PORT))
+
+            # add generate-test options
+            entrypoint_parsers["generate-test"].add_argument("history", help="History name")
+            entrypoint_parsers["generate-test"].add_argument(
+                "-o", "--output", dest="output", default="test-config",
+                help="absolute path of the output folder (default is \"test-config\")")
+            entrypoint_parsers["generate-test"].add_argument(
+                "-f", "--file", default="workflow-test-suite.yml",
+                help="YAML configuration file of workflow tests (default is\"workflow-test-suite.yml\"")
+
+            # add generate-test options
+            entrypoint_parsers["generate-template"].add_argument(
+                "-o", "--output", dest="output", default="test-config",
+                help="absolute path of the output folder (default is \"test-config\")")
+            entrypoint_parsers["generate-template"].add_argument(
+                "-f", "--file", default="workflow-test-suite.yml",
+                help="YAML configuration file of workflow tests (default is\"workflow-test-suite.yml\"")
 
         # add wft4galaxy options to a subparser or directly to the main_parser
         wft4g_parser = main_parser if omit_subparsers else entrypoint_parsers["runtest"]
@@ -170,7 +192,7 @@ class _CommandLineHelper:
 class ContainerRunner:
     @staticmethod
     def run(options):
-        if options.entrypoint == "runtest":
+        if options.entrypoint in ("runtest", "generate-test", "generate-template"):
             return NonInteractiveContainer().run(options)
         else:
             return InteractiveContainer().run(options)
@@ -359,10 +381,7 @@ class NonInteractiveContainer(Container):
         # image
         cmd.append(docker_image)
         # entrypoint
-        cmd.append("wft4galaxy")
-        # enable logger option
-        if options.enable_logger:
-            cmd.append("--enable-logger")
+        cmd.append(DOCKER_CONTAINER_SETTINGS["entrypoints"][options.entrypoint][0])
         # log debug option
         if options.debug:
             cmd.append("--debug")
@@ -370,18 +389,34 @@ class NonInteractiveContainer(Container):
         cmd += ["--server ", options.server]
         cmd += ["--api-key ", options.api_key]
         # configuration file
-        cmd += ["-f", _os.path.join(container_input_path, _os.path.basename(options.file))]
+        cmd += ["-f",
+                options.file if options.entrypoint in ("generate-test", "generate-template")
+                else _os.path.join(container_input_path, _os.path.basename(options.file))]
         # output folder
         cmd += ["-o", _os.path.join(container_output_path, options.output)]
-        # cleanup option
-        if options.disable_cleanup:
-            cmd.append("--disable-cleanup")
-        # assertion option
-        if options.disable_assertions:
-            cmd.append("--disable-assertions")
 
-        # add test filter
-        cmd += options.test
+        # wft4galaxy entrypoint specific options
+        if options.entrypoint in ("wft4galaxy", "runtest"):
+            # enable logger option
+            if options.enable_logger:
+                cmd.append("--enable-logger")
+            # cleanup option
+            if options.disable_cleanup:
+                cmd.append("--disable-cleanup")
+            # assertion option
+            if options.disable_assertions:
+                cmd.append("--disable-assertions")
+
+            # add test filter
+            cmd += options.test
+
+        # append "wizard" subcommand
+        if options.entrypoint in ("generate-test", "generate-template"):
+            cmd.append(options.entrypoint)
+
+        # 'generate-test' entrypoint specific options
+        if options.entrypoint == "generate-test":
+            cmd.append(options.history)
 
         # output the Docker command (just for debugging)
         _logger.debug("Command parts: %r", cmd)
@@ -433,17 +468,19 @@ def main():
         p = _CommandLineHelper(omit_subparsers=omit_subparsers)
 
         # print help and exit
-        if print_help:
+        if print_help and omit_subparsers:
             p.print_help()
             _sys.exit(_SUCCESS_EXIT)
 
         # parse cli options/arguments
         options = p.parse_args()
-        _logger.debug("Command line options %r", options)
 
         # update logger
         if options.debug:
             _logger.setLevel(_logging.DEBUG)
+
+        # print CLI options
+        _logger.debug("Command line options %r", options)
 
         # set galaxy_env
         _set_galaxy_env(options)
