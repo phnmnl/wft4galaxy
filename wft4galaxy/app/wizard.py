@@ -131,16 +131,16 @@ def _get_history_info(config):
     result = None
     gi = _common.get_galaxy_instance(config["galaxy_url"], config["galaxy_api_key"])
     _logger.info("Loading Galaxy history info ...")
-    candidate_histories = [h for h in gi.histories.list() if config["history-name"] in h.name]
+    candidate_histories = [h for h in gi.histories.list() if config["history"] in h.name]
     candidate_count = len(candidate_histories)
     if candidate_count == 0:
-        print("\n No history found with name: \"{0}\"".format(config["history-name"]))
+        print("\n No history found with name: \"{0}\"".format(config["history"]))
     elif candidate_count == 1:
         result = candidate_histories[0]
     else:
         while True:
             print("\nNOTICE:".ljust(10),
-                  "More than one history matches the name \"{0}\".".format(config["history-name"]))
+                  "More than one history matches the name \"{0}\".".format(config["history"]))
             print("".ljust(9), "Please select one of the following options:\n")
 
             for opt, h in enumerate(candidate_histories):
@@ -201,7 +201,7 @@ def _make_parser():
                                                         epilog=epilog)
 
     # test_parser.add_argument('workflow-name', help='Workflow name')
-    test_parser.add_argument('history-name', help='History name')
+    test_parser.add_argument('history', help='History name')
 
     template_parser = command_subparsers_factory.add_parser(_TEMPLATE_CMD,
                                                             help="Generate a test definition template",
