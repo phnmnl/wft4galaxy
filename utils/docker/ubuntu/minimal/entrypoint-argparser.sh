@@ -15,8 +15,8 @@ while [ -n "$1" ]; do
     # Parse current opt
     while [ x"$OPT" != x"-" ] ; do
             case "$OPT" in
-                  bash | ipython | jupyter | wft4galaxy )
-                          WFT4GALAXY_ENTRYPOINT="$1"
+              bash | ipython | jupyter | wft4galaxy | runtest | wizard )
+                          ENTRYPOINT="$1"
                           ;;
                   --server=* )
                           GALAXY_SERVER="${OPT#*=}"
@@ -57,5 +57,5 @@ export GALAXY_URL=${GALAXY_SERVER}
 export GALAXY_API_KEY=${GALAXY_API_KEY}
 
 # export wft4galaxy arguments
-export WFT4GALAXY_ENTRYPOINT=${WFT4GALAXY_ENTRYPOINT}
-export WFT4GALAXY_OPTS=${OTHER_OPTS}
+export ENTRYPOINT
+export ENTRYPOINT_ARGS=${OTHER_OPTS}

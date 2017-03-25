@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
 
-source set-bioblend-env.sh "$@"
+source entrypoint-argparser.sh "$@"
 
-ENTRYPOINT=$1
-if [[ ! ${ENTRYPOINT} =~ ^(bash|wft4galaxy|runtest|ipython|jupyter)$  ]]; then
-  ENTRYPOINT="bash"
+if [[ ! ${ENTRYPOINT} =~ ^(bash|ipython|jupyter|wft4galaxy|runtest|wizard)$ ]]; then
+    echo -e "\nERROR: Command \"${ENTRYPOINT_ARGS} \" not supported !"
+    echo -e "       Supported commands: bash | ipython| jupyter | wft4galaxy | runtest | wizard \n"
+    exit -1
 fi
 
 if [[ ${ENTRYPOINT} == "wft4galaxy" ]] || [[ ${ENTRYPOINT} == "runtest" ]]; then
-    wft4galaxy ${WFT4GALAXY_OPTS}
+    wft4galaxy ${ENTRYPOINT_ARGS}
+elif [[ ${ENTRYPOINT} == "wizard" ]]; then
+    wft4galaxy-wizard ${ENTRYPOINT_ARGS}
 elif [[ ${ENTRYPOINT} == "ipython" ]]; then
-		ipython ${WFT4GALAXY_OPTS}
+	ipython ${ENTRYPOINT_ARGS}
 elif [[ ${ENTRYPOINT} == "jupyter" ]]; then
-		ipython notebook --ip=$(hostname) --no-browser --port 8888 ${WFT4GALAXY_OPTS}
+	ipython notebook --ip=$(hostname) --no-browser --port 8888 ${ENTRYPOINT_ARGS}
 else
-	  /bin/bash ${WFT4GALAXY_OPTS}
+    /bin/bash ${ENTRYPOINT_ARGS}
 fi
