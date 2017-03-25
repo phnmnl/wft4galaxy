@@ -576,7 +576,7 @@ class History(object):
 
             wf["steps"][str(index)] = {
                 "annotation": "",
-                "content_id": tool.name,
+                "content_id": tool.id,
                 "id": index,
                 "input_connections": input_connections,
                 "inputs": inputs,
@@ -588,7 +588,7 @@ class History(object):
                     "top": p_top
                 },
                 "tool_errors": None,
-                "tool_id": tool.name,
+                "tool_id": tool.id,
                 "tool_state": _json.dumps(params),
                 "tool_version": tool.version,
                 "type": "tool",
