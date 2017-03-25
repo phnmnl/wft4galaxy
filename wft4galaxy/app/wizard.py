@@ -127,7 +127,7 @@ def generate_test_case(config):
     write_test_suite_definition_file(_os.path.join(output_folder, config["file"]), suite)
 
 
-def _get_history_id(config):
+def _get_history_info(config):
     result = None
     gi = _common.get_galaxy_instance(config["galaxy_url"], config["galaxy_api_key"])
     _logger.info("Loading Galaxy history info ...")
@@ -136,7 +136,7 @@ def _get_history_id(config):
     if candidate_count == 0:
         print("\n No history found with name: \"{0}\"".format(config["history-name"]))
     elif candidate_count == 1:
-        result = candidate_histories[0].id
+        result = candidate_histories[0]
     else:
         while True:
             print("\nNOTICE:".ljust(10),
@@ -234,7 +234,7 @@ def main(args=None):
         if options.command == _TEMPLATE_CMD:
             generate_template(config)
         elif options.command == _TEST_CMD:
-            history = _get_history_id(config)
+            history = _get_history_info(config)
             if history is not None:
                 _logger.info("Selected history: %s (id: %r)", history.name, history.id)
                 config["history-id"] = history.id
