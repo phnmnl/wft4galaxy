@@ -38,7 +38,7 @@ def write_test_suite_definition_file(output_file, suite_config):
     j2_env = _jinja2.Environment(loader=_jinja2.FileSystemLoader(_TEMPLATE_DIR), trim_blocks=True)
     try:
         file_content = j2_env.get_template('workflow-test-template.yaml').render(config=suite_config)
-        _logger.debug("==>Output file:\n%s", file_content)
+        _logger.debug("Workflow test definition file:%s\n\n%s", output_file, file_content)
         with open(output_file, "w") as out:
             out.write(file_content)
     except _jinja2.exceptions.UndefinedError as e:
@@ -54,10 +54,12 @@ def make_dir_structure(output_folder):
 
 def download_dataset(datasets, output_folder, labels=None):
     for ds in datasets:
-        ds_in_filename = _os.path.join(output_folder,
-                                       "{0}.{1}".format(labels[ds.id], ds.file_ext) if labels is not None else ds.name)
-        with open(ds_in_filename, "wb") as ds_in_fp:
+        ds_filename = _os.path.join(output_folder,
+                                    "{0}.{1}".format(labels[ds.id], ds.file_ext) if labels is not None else ds.name)
+        _logger.debug("Downloading dataset \"%s\" from \"%s\" ...", ds.id, ds.wrapped["url"])
+        with open(ds_filename, "wb") as ds_in_fp:
             ds.download(ds_in_fp)
+        _logger.debug("Dataset \"%s\" downloaded to \"%s\: done", ds.id, ds_filename)
 
 
 def generate_template(config):
@@ -75,7 +77,9 @@ def generate_template(config):
     # make directory structure of the test definition
     make_dir_structure(output_folder)
     # write the definition file
+    _logger.info("Writing workflow test definition file to %s ...", output_filename)
     write_test_suite_definition_file(output_filename, suite)
+    _logger.debug("Writing workflow test definition file to %s: done", output_filename)
     _logger.info("Test definition template folder correctly generated.\n ===> See folder: %s", output_folder)
 
 
@@ -95,11 +99,15 @@ def generate_test_case(config):
     wf_def = hw.extract_workflow(workflow_definition_filename)
 
     # download input datasets
+    _logger.info("Downloading input datasets...")
     download_dataset(hw.input_datasets.values(), _os.path.join(output_folder, DEFAULT_INPUTS_FOLDER))
+    _logger.info("Downloading input datasets: done")
 
     # download output datasets
+    _logger.info("Downloading output datasets...")
     download_dataset(hw.output_datasets.values(), _os.path.join(output_folder, DEFAULT_EXPECTED_FOLDER),
                      labels=hw.output_dataset_labels)
+    _logger.info("Downloading output datasets: done")
 
     # load the wf wrapper
     wf = _wrapper.Workflow.load(workflow_definition_filename)
@@ -124,7 +132,11 @@ def generate_test_case(config):
     suite.add_workflow_test(cfg)
 
     # write the definition file
-    write_test_suite_definition_file(_os.path.join(output_folder, config["file"]), suite)
+    _logger.info("Saving workflow test definition ...")
+    wf_test_file = _os.path.join(output_folder, config["file"])
+    write_test_suite_definition_file(wf_test_file, suite)
+    _logger.debug("Workflow test definition saved to %s", wf_test_file)
+    _logger.info("Saving workflow test definition: done")
 
 
 def _get_history_info(config):
@@ -229,8 +241,9 @@ def main(args=None):
         # update defaults
         _common.configure_env_galaxy_server_instance(config, options)
         # log the configuration
-        _logger.info("Configuration...")
-        print(_common.pformat(config))
+        if options.enable_debug:
+            _logger.debug("Configuration...")
+            print(_common.pformat(config))
         if options.command == _TEMPLATE_CMD:
             generate_template(config)
         elif options.command == _TEST_CMD:

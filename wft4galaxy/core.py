@@ -605,11 +605,15 @@ class WorkflowLoader(object):
         """
         if not self._galaxy_instance:
             raise RuntimeError("WorkflowLoader not initialized")
+        _logger.debug("Loading workflow definition from file: %s", workflow_filename)
         with open(workflow_filename) as f:
             wf_json = _json_load(f)
+        _logger.debug("Workflow definition loaded from file: done")
         wf_json["name"] = WorkflowTestCase.DEFAULT_WORKFLOW_NAME_PREFIX \
                           + (workflow_name if workflow_name else wf_json["name"])
+        _logger.debug("Uploading the Workflow to the Galaxy instance ...")
         wf = self._galaxy_instance.workflows.import_new(wf_json)
+        _logger.debug("Uploading the Workflow to the Galaxy instance: done")
         self._workflows[wf.id] = wf
         return wf
 
@@ -1179,7 +1183,8 @@ class WorkflowTestRunner(_unittest.TestCase):
                 _logger.error(error_msg)
 
         else:
-            error_msg = "Some workflow tools are not available in Galaxy: {0}".format(", ".join(missing_tools))
+            error_msg = "Some workflow tools are not available in Galaxy: {0}".format(
+                ", ".join(["{0} (ver. {1})".format(t[0], t[1]) for t in missing_tools]))
             errors.append(error_msg)
 
         # instantiate the result object
@@ -1218,6 +1223,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         workflow = self.get_galaxy_workflow() if not workflow else workflow
         available_tools = self._galaxy_instance.tools.list()
         missing_tools = []
+        _logger.debug("Available tools: %s", ", ".join(["{0}, {1}".format(t.id, t.version) for t in available_tools]))
         for order, step in _iteritems(workflow.steps):
             if step.tool_id and len([t for t in available_tools
                                      if t.id == step.tool_id and t.version == step.tool_version]) == 0:

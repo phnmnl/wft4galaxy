@@ -85,7 +85,7 @@ def _configure_test(galaxy_url, galaxy_api_key, suite, output_folder, tests,
     _logger.debug("Python version: %s", _sys.version)
 
     # log the current configuration
-    _logger.info("Configuration: %r", suite)
+    _logger.info("Configuration: %s", suite)
 
 
 def run_tests(filename,
