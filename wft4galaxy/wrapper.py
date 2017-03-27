@@ -1,14 +1,14 @@
 from __future__ import print_function
+from future.utils import iteritems as _iteritems
 
 import os as _os
 import sys as _sys
 import uuid as _uuid
 import json as _json
+import operator as _operator
 import collections as _collections
-from future.utils import iteritems as _iteritems
 
 from bioblend import ConnectionError
-from future.utils import iteritems as _iteritems
 from ruamel.yaml import round_trip_dump as _round_trip_dump
 from ruamel.yaml.comments import CommentedMap as _CommentedMap
 
@@ -494,9 +494,8 @@ class History(object):
         p_top = 0
 
         # process steps
-        for hds_id, hds in _iteritems(self.input_datasets):
-            job = self.creating_jobs[hds.id]
-            index = len(wf["steps"])
+        inputs = {k: v for k, v in _iteritems(self._input_order_map) if k in self.input_datasets}
+        for hds_id, index in sorted(_iteritems(inputs), key=_operator.itemgetter(1)):
             input_name = self.input_dataset_labels[hds_id]
             input_description = ""
             p_top += v_step
