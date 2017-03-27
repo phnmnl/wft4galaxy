@@ -427,6 +427,9 @@ class History(object):
         not_ordered_inputs = list(self.input_datasets)
         input_datasets = _collections.OrderedDict()
 
+        inputs = list(self.input_datasets)
+        self._input_order_map = {x: inputs.index(x) for x in inputs}
+
         # determine the job level
         _logger.debug("Processing JOB levels ...")
         for job_id, job in _iteritems(self.processing_jobs):
@@ -440,18 +443,21 @@ class History(object):
                     in_id = job.wrapped["inputs"][name]["id"]
                     if in_id in not_ordered_inputs:
                         input_datasets[in_id] = self.input_datasets[in_id]
+                        if in_id not in self.input_datasets:
+                            self._input_order_map[in_id] = len(self.input_datasets) + self.processing_job_levels[job_id]
                         not_ordered_inputs.remove(in_id)
             # add intermediate inputs
-            intermediate_inputs.extend([x["id"] for x in job.wrapped["outputs"].values()
-                                        if x["id"] not in self.output_datasets])
+            for x in job.wrapped["outputs"].values():
+                if x["id"] not in self.output_datasets:
+                    intermediate_inputs.append(x["id"])
+                    if x["id"] not in self.input_datasets:
+                        self._input_order_map[x["id"]] = len(self.input_datasets) + self.processing_job_levels[job_id]
         _logger.debug("JOB levels processing: done")
 
         # copy remaining inputs
         for ds_in in not_ordered_inputs:
             input_datasets[ds_in] = self.input_datasets[ds_in]
         self.input_datasets = input_datasets
-        inputs = list(self.input_datasets) + intermediate_inputs
-        self._input_order_map = {x: inputs.index(x) for x in inputs}
 
         _logger.info("Processing extra info: done")
 
@@ -568,6 +574,8 @@ class History(object):
                     "name": job_output_name,
                     "type": tool_outputs[job_output_name]["format"]
                 })
+                # TODO: check if exists cryteria for detecting if an output
+                #       is a workflow output or a simple intermediate output
                 workflow_outputs.append({
                     "label": job_output_name,
                     "output_name": job_output_name,
