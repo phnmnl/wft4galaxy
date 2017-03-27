@@ -9,7 +9,7 @@ import wft4galaxy.core as _core
 import wft4galaxy.common as _common
 
 # set logger
-_logger = _common._logger
+_logger = _common.default_logger
 
 
 def _make_parser():

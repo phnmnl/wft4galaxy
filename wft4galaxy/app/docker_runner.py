@@ -9,10 +9,12 @@ import argparse as _argparse
 import subprocess as _subprocess
 
 # configure logger
-_logFormat = "%(asctime)s [wft4galaxy-docker] [%(levelname)-5.5s]  %(message)s"
-_logging.basicConfig(format=_logFormat)
-_logger = _logging.getLogger("wft4galaxy-docker")
-_logger.setLevel(_logging.INFO)
+_log_format = "%(asctime)s [wft4galaxy-docker] [%(levelname)-5.5s]  %(message)s"
+_logger = _logging.getLogger("WorkflowTest-Docker")
+_logger_handler = _logging.StreamHandler()
+_logger_formatter = _logging.Formatter(_log_format)
+_logger_handler.setFormatter(_logger_formatter)
+_logger.addHandler(_logger_handler)
 
 # try to load modules required for running container interactively
 try:
@@ -424,8 +426,9 @@ class NonInteractiveContainer(Container):
         #########################################################
 
         # launch the Docker container
-        p = _subprocess.Popen(cmd, stdout=_subprocess.PIPE)
+        p = _subprocess.Popen(cmd, close_fds=False)
         try:
+            p.communicate()
             # wait for termination and report the exit code
             return p.wait()
         except KeyboardInterrupt:

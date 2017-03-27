@@ -1,7 +1,9 @@
 import os as _os
 import sys as _sys
-from wft4galaxy.common import _logger
+from wft4galaxy import common as _common
 from difflib import unified_diff as _unified_diff
+
+_logger = _common.default_logger
 
 
 def load_comparator(fully_qualified_comparator_function):

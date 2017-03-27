@@ -28,10 +28,13 @@ _TEMPLATE_CMD = "generate-template"
 _TEMPLATE_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), _os.pardir, _os.pardir, "templates")
 
 # configure module logger
-LogFormat = '%(asctime)s %(levelname)s: %(message)s'
-_logging.basicConfig(format=LogFormat)
-_logger = _logging.getLogger("WorkflowTest")
-_logger.setLevel(_logging.INFO)
+_logger = _common.default_logger
+
+# fix an issue related to the output buffering
+# when the wizard is running within a Docker container
+if _sys.version_info[0] == 2:
+    _logger.debug("Disabling output buffering...")
+    _sys.stdout = _os.fdopen(_sys.stdout.fileno(), 'w', 0)
 
 
 def write_test_suite_definition_file(output_file, suite_config):
@@ -222,9 +225,6 @@ def _make_parser():
 
 
 def main(args=None):
-    # default configuration of the logger
-    # _logging.basicConfig(format=LogFormat)
-
     # set args
     args = args if args else _sys.argv[1:]
     try:

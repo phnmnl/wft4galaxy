@@ -19,7 +19,7 @@ import wft4galaxy.common as _common
 import wft4galaxy.comparators as _comparators
 
 # set logger
-_logger = _common._logger
+_logger = _common.default_logger
 
 
 class FileFormats(object):

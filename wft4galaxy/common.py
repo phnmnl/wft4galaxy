@@ -12,16 +12,20 @@ from bioblend.galaxy.objects import GalaxyInstance as ObjGalaxyInstance
 ENV_KEY_GALAXY_URL = "GALAXY_URL"
 ENV_KEY_GALAXY_API_KEY = "GALAXY_API_KEY"
 
+# configure logger
+_log_format = "%(asctime)s [wft4galaxy] [%(levelname)-5.5s]  %(message)s"
+default_logger = _logging.getLogger("WorkflowTest")
+_logger_handler = _logging.StreamHandler()
+_logger_formatter = _logging.Formatter(_log_format)
+_logger_handler.setFormatter(_logger_formatter)
+default_logger.addHandler(_logger_handler)
+
 # map `StandardError` to `Exception` to allow compatibility both with Python2 and Python3
 RunnerStandardError = Exception
 try:
     RunnerStandardError = StandardError
 except NameError:
     pass
-
-_log_format = '%(asctime)s %(levelname)s: %(message)s'
-_logger = _logging.getLogger("WorkflowTest")
-_logging.basicConfig(format=_log_format)
 
 
 class TestConfigError(RuntimeError):

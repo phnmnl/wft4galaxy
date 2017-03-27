@@ -21,7 +21,7 @@ import wft4galaxy.common as _common
 # set logger
 from wft4galaxy.common import TestConfigError
 
-_logger = _common._logger
+_logger = _common.default_logger
 
 # Default folder where tool configuration is downloaded
 DEFAULT_TOOLS_FOLDER = ".tools"
