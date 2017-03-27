@@ -30,11 +30,13 @@ _TEMPLATE_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), _os.
 # configure module logger
 _logger = _common.default_logger
 
+
 # fix an issue related to the output buffering
 # when the wizard is running within a Docker container
-if _sys.version_info[0] == 2:
-    _logger.debug("Disabling output buffering...")
-    _sys.stdout = _os.fdopen(_sys.stdout.fileno(), 'w', 0)
+def disable_output_buffering():
+    if _sys.version_info[0] == 2:
+        _logger.debug("Disabling output buffering...")
+        _sys.stdout = _os.fdopen(_sys.stdout.fileno(), 'w', 0)
 
 
 def write_test_suite_definition_file(output_file, suite_config):
@@ -228,6 +230,9 @@ def main(args=None):
     # set args
     args = args if args else _sys.argv[1:]
     try:
+        # disable output buffering
+        disable_output_buffering()
+
         # process CLI args and opts
         parser = _make_parser()
         options = parser.parse_args(args)
