@@ -20,7 +20,9 @@ def _make_parser():
     parser.add_argument('--enable-logger', help='Enable log messages', action='store_true', default=None)
     parser.add_argument('--debug', help='Enable debug mode', action='store_true', default=None)
     parser.add_argument('--disable-cleanup', help='Disable cleanup', action='store_true', default=None)
-    parser.add_argument('--disable-assertions', help='Disable assertions', action='store_true', default=None)
+    parser.add_argument('--disable-assertions', help='When running interactively, use it to disable assertions allowing '
+                        'you to run multiple test cases without stopping on the first error',
+                        action='store_true', default=None)
     parser.add_argument('-o', '--output', help='absolute path of the output folder')
     parser.add_argument('-f', '--file', default=_core.WorkflowTestCase.DEFAULT_CONFIG_FILENAME,
                         help='YAML configuration file of workflow tests (default is {0})'.format(
