@@ -21,7 +21,7 @@ import wft4galaxy.common as _common
 # set logger
 from wft4galaxy.common import TestConfigError
 
-_logger = _common.default_logger
+_logger = _common.LoggerManager.get_logger(__name__)
 
 # Default folder where tool configuration is downloaded
 DEFAULT_TOOLS_FOLDER = ".tools"
@@ -37,6 +37,7 @@ class Workflow(object):
         self.inputs = inputs
         self.params = params
         self.outputs = outputs
+        self._logger = _common.LoggerManager.get_logger(self.__class__.__name__)
 
     def show_inputs(self, stream=_sys.stdout):
         """
@@ -266,11 +267,14 @@ class History(object):
     def __init__(self, history_id, galaxy_url=None, galaxy_api_key=None):
         super(History, self).__init__()
 
+        # configure logger
+        self._logger = _common.LoggerManager.get_logger(self)
+
         # set the Galaxy instance
         self._gi = _common.get_galaxy_instance(galaxy_url, galaxy_api_key)
 
         # set wrapped history
-        _logger.info("Loading history %s info", history_id)
+        self._logger.info("Loading history %s info", history_id)
         self._history = self._gi.histories.get(history_id)
 
         # job info
@@ -303,9 +307,9 @@ class History(object):
         self.intermediate_dataset_labels = {}
 
         # process history
-        _logger.info("Processing history info...")
+        self._logger.info("Processing history info...")
         self._process_history()
-        _logger.info("History info processing: done")
+        self._logger.info("History info processing: done")
 
     @property
     def jobs(self):
@@ -314,9 +318,9 @@ class History(object):
     def _get_job(self, job_id):
         if job_id not in self._jobs:
             try:
-                _logger.debug("Loading job %s info...", job_id)
+                self._logger.debug("Loading job %s info...", job_id)
                 self._jobs[job_id] = self._gi.jobs.get(job_id, full_details=True)
-                _logger.debug("Loading job %s info: done", job_id)
+                self._logger.debug("Loading job %s info: done", job_id)
             except ConnectionError as e:
                 raise TestConfigError("Unable to retrieve job info !")
         return self._jobs[job_id]
@@ -328,9 +332,9 @@ class History(object):
     def _get_tool(self, tool_id):
         if not tool_id in self._tools:
             try:
-                _logger.debug("Loading tool %s info...", tool_id)
+                self._logger.debug("Loading tool %s info...", tool_id)
                 self._tools[tool_id] = self._gi.tools.get(tool_id, io_details=True)
-                _logger.debug("Loading tool %s info: done", tool_id)
+                self._logger.debug("Loading tool %s info: done", tool_id)
             except ConnectionError as e:
                 raise TestConfigError("Unable to retrieve tool info !")
         return self._tools[tool_id]
@@ -353,7 +357,7 @@ class History(object):
         # process jobs chain (through their created datasets)
         for ds in self.datasets:
 
-            _logger.info("Processing dataset %s ... ", ds.id)
+            self._logger.info("Processing dataset %s ... ", ds.id)
 
             # load job info
             creating_job = self._get_job(ds.wrapped["creating_job"])
@@ -391,9 +395,9 @@ class History(object):
                     self.job_input_ids[creating_job.id] = list(job_inputs)
                     self.job_output_ids[creating_job.id] = list(job_outputs)
 
-            _logger.info("Process dataset %s: done ", ds.id)
+            self._logger.info("Process dataset %s: done ", ds.id)
 
-        _logger.info("Processing extra info...")
+        self._logger.info("Processing extra info...")
 
         # Auxiliary function which computes the label for a given dataset
         def __set_label(labels, ds_id, info_matrix, label=None, prefix=None):
@@ -431,7 +435,7 @@ class History(object):
         self._input_order_map = {x: inputs.index(x) for x in inputs}
 
         # determine the job level
-        _logger.debug("Processing JOB levels ...")
+        self._logger.debug("Processing JOB levels ...")
         for job_id, job in _iteritems(self.processing_jobs):
             # compute and set the job level
             self.processing_job_levels[job_id] = self.compute_processing_job_level(job_id)
@@ -452,14 +456,14 @@ class History(object):
                     intermediate_inputs.append(x["id"])
                     if x["id"] not in self.input_datasets:
                         self._input_order_map[x["id"]] = len(self.input_datasets) + self.processing_job_levels[job_id]
-        _logger.debug("JOB levels processing: done")
+        self._logger.debug("JOB levels processing: done")
 
         # copy remaining inputs
         for ds_in in not_ordered_inputs:
             input_datasets[ds_in] = self.input_datasets[ds_in]
         self.input_datasets = input_datasets
 
-        _logger.info("Processing extra info: done")
+        self._logger.info("Processing extra info: done")
 
     def compute_processing_job_level(self, job_id):
         level = 0
@@ -477,7 +481,7 @@ class History(object):
             workflow_name = "Workflow extracted from history {0}".format(self._history.id)
 
         # start
-        _logger.info("Extracting Workflow from history...")
+        self._logger.info("Extracting Workflow from history...")
 
         # wf object representation
         wf = _collections.OrderedDict({
@@ -605,12 +609,12 @@ class History(object):
 
         # save workflow
         if filename is not None:
-            _logger.info("Saving workflow to file...")
+            self._logger.info("Saving workflow to file...")
             with open(filename, "w") as fp:
-                _logger.debug("Workflow file path: %s", filename)
+                self._logger.debug("Workflow file path: %s", filename)
                 _json.dump(wf, fp, indent=4)
-            _logger.info("Saving workflow to file: done")
+            self._logger.info("Saving workflow to file: done")
 
         # extraction wf end
-        _logger.info("Extracting Workflow from history: done")
+        self._logger.info("Extracting Workflow from history: done")
         return wf

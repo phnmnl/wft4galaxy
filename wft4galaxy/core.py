@@ -19,7 +19,7 @@ import wft4galaxy.common as _common
 import wft4galaxy.comparators as _comparators
 
 # set logger
-_logger = _common.default_logger
+_logger = _common.LoggerManager.get_logger(__name__)
 
 
 class FileFormats(object):
@@ -726,6 +726,8 @@ class WorkflowTestSuite(object):
                 galaxy_api_key=file_configuration.get("galaxy_api_key"),
                 enable_logger=file_configuration.get("enable_logger", False),
                 enable_debug=file_configuration.get("enable_debug", False),
+                disable_cleanup=file_configuration.get("disable_cleanup", False),
+                disable_assertions=file_configuration.get("disable_assertions", False),
                 output_folder=output_folder \
                               or file_configuration.get("output_folder") \
                               or WorkflowTestCase.DEFAULT_OUTPUT_FOLDER
@@ -773,9 +775,8 @@ class WorkflowTestSuiteRunner(object):
         self._workflow_runners = []
         self._workflow_test_results = []
         self._galaxy_instance = None
-        # log file
-        self._fileHandler = None
-        self._log_file = None
+        # log file handler
+        self._file_handler = None
         # initialize the galaxy instance
         self._galaxy_instance = _common.get_galaxy_instance(galaxy_url, galaxy_api_key)
         # initialize the workflow loader
@@ -838,18 +839,11 @@ class WorkflowTestSuiteRunner(object):
             config.disable_assertions = disable_assertions
         # update logger level
         if config.enable_logger or config.enable_debug:
-            _logging.disable(_logging.NOTSET)
-            logger_level = _logging.DEBUG if config.enable_debug else _logging.INFO
-            _logger.setLevel(logger_level)
-            # config log file
-            _common.makedirs(config.output_folder)
-            self._log_file = _os.path.join(config.output_folder, "{0}.log".format(str(_uuid1())))
-            _logger.debug("Enabling LOG file: '%s'", self._log_file)
-            self._fileHandler = _logging.FileHandler(self._log_file)
-            self._fileHandler.setFormatter(_logging.Formatter(_common._log_format))
-            _logger.addHandler(self._fileHandler)
+            _common.LoggerManager.update_log_level(_logging.DEBUG if config.enable_debug else _logging.INFO)
+            if config.disable_cleanup:
+                self._file_handler = _common.LoggerManager.enable_log_to_file(output_folder=config.output_folder)
         else:
-            _logging.disable(_logging.INFO)
+            _common.LoggerManager.update_log_level(_logging.ERROR)
 
     def run_tests(self, suite_config, tests=None, enable_logger=None,
                   enable_debug=None, disable_cleanup=None, disable_assertions=None):
@@ -952,11 +946,8 @@ class WorkflowTestSuiteRunner(object):
         """
         for runner in self._workflow_runners:
             runner.cleanup()
-        if self._fileHandler is not None and self._log_file is not None:
-            _logger.removeHandler(self._fileHandler)
-            self._fileHandler.close()
-            _logger.debug("Removing log file: %s", self._log_file)
-            _os.remove(self._log_file)
+        if self._file_handler is not None:
+            _common.LoggerManager.remove_file_handler(self._file_handler, True)
         # remove output folder if empty
         if output_folder and _os.path.exists(output_folder) and \
                 _os.path.isdir(output_folder) and len(_os.listdir(output_folder)) == 0:
@@ -984,6 +975,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         self._test_cases = {}
         self._test_uuid = None
         self._galaxy_workflow = None
+        self._file_handler = None
 
         setattr(self, "test_" + workflow_test_config.name, self.run_test)
         super(WorkflowTestRunner, self).__init__("test_" + workflow_test_config.name)
@@ -1084,13 +1076,6 @@ class WorkflowTestRunner(_unittest.TestCase):
         if disable_assertions is None:
             disable_assertions = self._workflow_test_config.disable_assertions
 
-        # update logger
-        if enable_logger or enable_debug:
-            _logging.disable(_logging.NOTSET)
-            _logger.setLevel(_logging.DEBUG if enable_debug else _logging.INFO)
-        else:
-            _logging.disable(_logging.INFO)
-
         # set basepath
         base_path = self._base_path if not base_path else base_path
 
@@ -1100,6 +1085,14 @@ class WorkflowTestRunner(_unittest.TestCase):
         # output folder
         if output_folder is None:
             output_folder = self._workflow_test_config.output_folder
+
+        # update logger
+        if enable_logger or enable_debug:
+            _common.LoggerManager.update_log_level(_logging.DEBUG if enable_debug else _logging.INFO)
+            if disable_cleanup:
+                self._file_handler = _common.LoggerManager.enable_log_to_file(output_folder=output_folder)
+        else:
+            _common.LoggerManager.update_log_level(_logging.ERROR)
 
         # check input_map
         if inputs is None:
@@ -1200,6 +1193,11 @@ class WorkflowTestRunner(_unittest.TestCase):
         # cleanup
         if not disable_cleanup:
             self.cleanup(output_folder)
+
+        # disable file logger
+        if self._file_handler is not None:
+            _common.LoggerManager.remove_file_handler(self._file_handler, not disable_cleanup)
+            self._file_handler = None
 
         # raise error message
         if error_msg:

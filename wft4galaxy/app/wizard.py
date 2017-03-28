@@ -28,7 +28,7 @@ _TEMPLATE_CMD = "generate-template"
 _TEMPLATE_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), _os.pardir, _os.pardir, "templates")
 
 # configure module logger
-_logger = _common.default_logger
+_logger = _common.LoggerManager.get_logger(__name__)
 
 
 # fix an issue related to the output buffering
@@ -238,9 +238,11 @@ def main(args=None):
         options = parser.parse_args(args)
         config = _common.Configuration(vars(options))
 
-        # enable debug mode
-        if options.enable_debug:
-            _logger.setLevel(_logging.DEBUG)
+        # setup logging
+        _common.LoggerManager.configure_logging(
+            level=_logging.DEBUG if options.enable_debug else _logging.INFO,
+            show_logger_name=True if options.enable_debug else False)
+
         # log the configuration
         _logger.debug("CLI config %r", config)
         # update defaults

@@ -9,7 +9,7 @@ import wft4galaxy.core as _core
 import wft4galaxy.common as _common
 
 # set logger
-_logger = _common.default_logger
+_logger = _common.LoggerManager.get_logger(__name__)
 
 
 def _make_parser():
@@ -17,10 +17,10 @@ def _make_parser():
     parser.add_argument("test", help="Workflow Test Name", nargs="*")
     parser.add_argument('--server', help='Galaxy server URL', dest="galaxy_url")
     parser.add_argument('--api-key', help='Galaxy server API KEY', dest="galaxy_api_key")
-    parser.add_argument('--enable-logger', help='Enable log messages', action='store_true')
-    parser.add_argument('--debug', help='Enable debug mode', action='store_true')
-    parser.add_argument('--disable-cleanup', help='Disable cleanup', action='store_true')
-    parser.add_argument('--disable-assertions', help='Disable assertions', action='store_true')
+    parser.add_argument('--enable-logger', help='Enable log messages', action='store_true', default=None)
+    parser.add_argument('--debug', help='Enable debug mode', action='store_true', default=None)
+    parser.add_argument('--disable-cleanup', help='Disable cleanup', action='store_true', default=None)
+    parser.add_argument('--disable-assertions', help='Disable assertions', action='store_true', default=None)
     parser.add_argument('-o', '--output', help='absolute path of the output folder')
     parser.add_argument('-f', '--file', default=_core.WorkflowTestCase.DEFAULT_CONFIG_FILENAME,
                         help='YAML configuration file of workflow tests (default is {0})'.format(
@@ -71,15 +71,13 @@ def _configure_test(galaxy_url, galaxy_api_key, suite, output_folder, tests,
     if disable_assertions is not None:
         suite.disable_assertions = disable_assertions
 
-    # FIXME: do we need this ?
     for test_config in suite.workflow_tests.values():
         test_config.disable_cleanup = suite.disable_cleanup
         test_config.disable_assertions = suite.disable_assertions
 
     # enable the logger with the proper detail level
     if suite.enable_logger or suite.enable_debug:
-        _logger_level = _logging.DEBUG if suite.enable_debug else _logging.INFO
-        _logger.setLevel(_logger_level)
+        _common.LoggerManager.update_log_level(_logging.DEBUG if suite.enable_debug else _logging.INFO)
 
     # log Python version
     _logger.debug("Python version: %s", _sys.version)
@@ -130,8 +128,17 @@ def run_tests(filename,
 
 def main():
     try:
+        # parse arguments
         parser = _make_parser()
         options = _parse_cli_arguments(parser, _sys.argv[1:])
+
+        # setup logging
+        _common.LoggerManager.configure_logging(
+            level=_logging.DEBUG if options.debug else _logging.INFO if options.enable_logger else _logging.ERROR,
+            show_logger_name=True if options.debug else False
+        )
+
+        # run tests and collect exit code
         code = run_tests(filename=options.file,
                          galaxy_url=options.galaxy_url,
                          galaxy_api_key=options.galaxy_api_key,
@@ -141,6 +148,8 @@ def main():
                          disable_assertions=options.disable_assertions,
                          disable_cleanup=options.disable_cleanup,
                          tests=options.test)
+
+        # report exit code to the system
         _sys.exit(code)
     except _common.RunnerStandardError as e:
         # in some cases we exit with an exception even for rather "normal"
