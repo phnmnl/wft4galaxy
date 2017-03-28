@@ -16,6 +16,11 @@ image_type=$(basename "$(pwd)")
 # infer base_os from the containing folder
 base_os=$(basename $(dirname "$(pwd)"))
 
+# map the git phnmnl repository to the Crs4 DockerHub repository
+if [[ ${git_repo_owner} == "phnmnl" ]]; then
+    git_repo_owner="crs4"
+fi
+
 # get Docker image tag
 tagged_version="false"
 docker_tag="${base_os}-${git_branch}"

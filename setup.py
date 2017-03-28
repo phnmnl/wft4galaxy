@@ -45,6 +45,10 @@ def update_properties(config):
     else:
         raise ValueError("Unknown Git repository scheme")
 
+    # map the git phnmnl repository to the Crs4 DockerHub repository
+    if owner == "phnmnl":
+        owner = "crs4"
+
     # git & docker tag
     tag = None
     if last_commit in tags:
