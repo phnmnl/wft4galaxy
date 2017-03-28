@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+# load git/docker info
+source "../../image-config.sh"
+
+# build the Docker image
+docker build --build-arg git_branch=${git_branch} --build-arg git_url=${git_url} -t ${IMAGE_NAME} .

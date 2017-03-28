@@ -19,7 +19,7 @@ import wft4galaxy.common as _common
 import wft4galaxy.comparators as _comparators
 
 # set logger
-_logger = _common._logger
+_logger = _common.LoggerManager.get_logger(__name__)
 
 
 class FileFormats(object):
@@ -605,11 +605,15 @@ class WorkflowLoader(object):
         """
         if not self._galaxy_instance:
             raise RuntimeError("WorkflowLoader not initialized")
+        _logger.debug("Loading workflow definition from file: %s", workflow_filename)
         with open(workflow_filename) as f:
             wf_json = _json_load(f)
+        _logger.debug("Workflow definition loaded from file: done")
         wf_json["name"] = WorkflowTestCase.DEFAULT_WORKFLOW_NAME_PREFIX \
                           + (workflow_name if workflow_name else wf_json["name"])
+        _logger.debug("Uploading the Workflow to the Galaxy instance ...")
         wf = self._galaxy_instance.workflows.import_new(wf_json)
+        _logger.debug("Uploading the Workflow to the Galaxy instance: done")
         self._workflows[wf.id] = wf
         return wf
 
@@ -722,6 +726,8 @@ class WorkflowTestSuite(object):
                 galaxy_api_key=file_configuration.get("galaxy_api_key"),
                 enable_logger=file_configuration.get("enable_logger", False),
                 enable_debug=file_configuration.get("enable_debug", False),
+                disable_cleanup=file_configuration.get("disable_cleanup", False),
+                disable_assertions=file_configuration.get("disable_assertions", False),
                 output_folder=output_folder \
                               or file_configuration.get("output_folder") \
                               or WorkflowTestCase.DEFAULT_OUTPUT_FOLDER
@@ -769,6 +775,8 @@ class WorkflowTestSuiteRunner(object):
         self._workflow_runners = []
         self._workflow_test_results = []
         self._galaxy_instance = None
+        # log file handler
+        self._file_handler = None
         # initialize the galaxy instance
         self._galaxy_instance = _common.get_galaxy_instance(galaxy_url, galaxy_api_key)
         # initialize the workflow loader
@@ -831,8 +839,11 @@ class WorkflowTestSuiteRunner(object):
             config.disable_assertions = disable_assertions
         # update logger level
         if config.enable_logger or config.enable_debug:
-            logger_level = _logging.DEBUG if config.enable_debug else _logging.INFO
-            _logger.setLevel(logger_level)
+            _common.LoggerManager.update_log_level(_logging.DEBUG if config.enable_debug else _logging.INFO)
+            if config.disable_cleanup:
+                self._file_handler = _common.LoggerManager.enable_log_to_file(output_folder=config.output_folder)
+        else:
+            _common.LoggerManager.update_log_level(_logging.ERROR)
 
     def run_tests(self, suite_config, tests=None, enable_logger=None,
                   enable_debug=None, disable_cleanup=None, disable_assertions=None):
@@ -935,6 +946,8 @@ class WorkflowTestSuiteRunner(object):
         """
         for runner in self._workflow_runners:
             runner.cleanup()
+        if self._file_handler is not None:
+            _common.LoggerManager.remove_file_handler(self._file_handler, True)
         # remove output folder if empty
         if output_folder and _os.path.exists(output_folder) and \
                 _os.path.isdir(output_folder) and len(_os.listdir(output_folder)) == 0:
@@ -962,6 +975,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         self._test_cases = {}
         self._test_uuid = None
         self._galaxy_workflow = None
+        self._file_handler = None
 
         setattr(self, "test_" + workflow_test_config.name, self.run_test)
         super(WorkflowTestRunner, self).__init__("test_" + workflow_test_config.name)
@@ -1052,9 +1066,15 @@ class WorkflowTestRunner(_unittest.TestCase):
         :rtype: :class:`WorkflowTestResult`
         :return: the :class:`WorkflowTestResult` instance which represents the test result
         """
-        # update logger
-        if enable_logger or enable_debug:
-            _logger.setLevel(_logging.DEBUG if enable_debug else _logging.INFO)
+        # update test settings
+        if enable_logger is None:
+            enable_logger = self._workflow_test_config.enable_logger
+        if enable_debug is None:
+            enable_debug = self._workflow_test_config.enable_debug
+        if disable_cleanup is None:
+            disable_cleanup = self._workflow_test_config.disable_cleanup
+        if disable_assertions is None:
+            disable_assertions = self._workflow_test_config.disable_assertions
 
         # set basepath
         base_path = self._base_path if not base_path else base_path
@@ -1063,23 +1083,31 @@ class WorkflowTestRunner(_unittest.TestCase):
         workflow = self.get_galaxy_workflow()
 
         # output folder
-        if not output_folder:
+        if output_folder is None:
             output_folder = self._workflow_test_config.output_folder
 
+        # update logger
+        if enable_logger or enable_debug:
+            _common.LoggerManager.update_log_level(_logging.DEBUG if enable_debug else _logging.INFO)
+            if disable_cleanup:
+                self._file_handler = _common.LoggerManager.enable_log_to_file(output_folder=output_folder)
+        else:
+            _common.LoggerManager.update_log_level(_logging.ERROR)
+
         # check input_map
-        if not inputs:
+        if inputs is None:
             if len(self._workflow_test_config.inputs) > 0:
                 inputs = self._workflow_test_config.inputs
             else:
                 raise ValueError("No input configured !!!")
 
         # check params
-        if not params:
+        if params is None:
             params = self._workflow_test_config.params
             _logger.debug("Using default params")
 
         # check expected_output_map
-        if not expected_outputs:
+        if expected_outputs is None:
             if len(self._workflow_test_config.expected_outputs) > 0:
                 expected_outputs = self._workflow_test_config.expected_outputs
             else:
@@ -1148,7 +1176,8 @@ class WorkflowTestRunner(_unittest.TestCase):
                 _logger.error(error_msg)
 
         else:
-            error_msg = "Some workflow tools are not available in Galaxy: {0}".format(", ".join(missing_tools))
+            error_msg = "Some workflow tools are not available in Galaxy: {0}".format(
+                ", ".join(["{0} (ver. {1})".format(t[0], t[1]) for t in missing_tools]))
             errors.append(error_msg)
 
         # instantiate the result object
@@ -1164,6 +1193,11 @@ class WorkflowTestRunner(_unittest.TestCase):
         # cleanup
         if not disable_cleanup:
             self.cleanup(output_folder)
+
+        # disable file logger
+        if self._file_handler is not None:
+            _common.LoggerManager.remove_file_handler(self._file_handler, not disable_cleanup)
+            self._file_handler = None
 
         # raise error message
         if error_msg:
@@ -1187,6 +1221,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         workflow = self.get_galaxy_workflow() if not workflow else workflow
         available_tools = self._galaxy_instance.tools.list()
         missing_tools = []
+        _logger.debug("Available tools: %s", ", ".join(["{0}, {1}".format(t.id, t.version) for t in available_tools]))
         for order, step in _iteritems(workflow.steps):
             if step.tool_id and len([t for t in available_tools
                                      if t.id == step.tool_id and t.version == step.tool_version]) == 0:

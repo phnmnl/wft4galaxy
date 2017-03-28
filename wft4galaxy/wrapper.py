@@ -1,14 +1,14 @@
 from __future__ import print_function
+from future.utils import iteritems as _iteritems
 
 import os as _os
 import sys as _sys
 import uuid as _uuid
 import json as _json
+import operator as _operator
 import collections as _collections
-from future.utils import iteritems as _iteritems
 
 from bioblend import ConnectionError
-from future.utils import iteritems as _iteritems
 from ruamel.yaml import round_trip_dump as _round_trip_dump
 from ruamel.yaml.comments import CommentedMap as _CommentedMap
 
@@ -21,7 +21,7 @@ import wft4galaxy.common as _common
 # set logger
 from wft4galaxy.common import TestConfigError
 
-_logger = _common._logger
+_logger = _common.LoggerManager.get_logger(__name__)
 
 # Default folder where tool configuration is downloaded
 DEFAULT_TOOLS_FOLDER = ".tools"
@@ -37,6 +37,7 @@ class Workflow(object):
         self.inputs = inputs
         self.params = params
         self.outputs = outputs
+        self._logger = _common.LoggerManager.get_logger(self.__class__.__name__)
 
     def show_inputs(self, stream=_sys.stdout):
         """
@@ -99,6 +100,9 @@ def _get_workflow_info(filename, galaxy_url, galaxy_api_key, tool_folder=DEFAULT
     inputs = []
     params = _CommentedMap()
     outputs = {}
+
+    # loading wf info start
+    _logger.debug("Loading workflow definition from %s file...", filename)
 
     # setup galaxy instance
     galaxy_instance = _common.get_galaxy_instance(galaxy_url, galaxy_api_key)
@@ -170,6 +174,10 @@ def _get_workflow_info(filename, galaxy_url, galaxy_api_key, tool_folder=DEFAULT
             for output in step["workflow_outputs"]:
                 outputs[str(sid)][output["uuid"]] = output
 
+    # loading wf info end
+    _logger.debug("Workflow definition loaded from %s file...", filename)
+
+    # return loaded info
     return wf_config, inputs, params, outputs
 
 
@@ -259,10 +267,14 @@ class History(object):
     def __init__(self, history_id, galaxy_url=None, galaxy_api_key=None):
         super(History, self).__init__()
 
+        # configure logger
+        self._logger = _common.LoggerManager.get_logger(self)
+
         # set the Galaxy instance
         self._gi = _common.get_galaxy_instance(galaxy_url, galaxy_api_key)
 
         # set wrapped history
+        self._logger.info("Loading history %s info", history_id)
         self._history = self._gi.histories.get(history_id)
 
         # job info
@@ -295,7 +307,9 @@ class History(object):
         self.intermediate_dataset_labels = {}
 
         # process history
+        self._logger.info("Processing history info...")
         self._process_history()
+        self._logger.info("History info processing: done")
 
     @property
     def jobs(self):
@@ -304,7 +318,9 @@ class History(object):
     def _get_job(self, job_id):
         if job_id not in self._jobs:
             try:
+                self._logger.debug("Loading job %s info...", job_id)
                 self._jobs[job_id] = self._gi.jobs.get(job_id, full_details=True)
+                self._logger.debug("Loading job %s info: done", job_id)
             except ConnectionError as e:
                 raise TestConfigError("Unable to retrieve job info !")
         return self._jobs[job_id]
@@ -316,7 +332,9 @@ class History(object):
     def _get_tool(self, tool_id):
         if not tool_id in self._tools:
             try:
+                self._logger.debug("Loading tool %s info...", tool_id)
                 self._tools[tool_id] = self._gi.tools.get(tool_id, io_details=True)
+                self._logger.debug("Loading tool %s info: done", tool_id)
             except ConnectionError as e:
                 raise TestConfigError("Unable to retrieve tool info !")
         return self._tools[tool_id]
@@ -338,6 +356,8 @@ class History(object):
 
         # process jobs chain (through their created datasets)
         for ds in self.datasets:
+
+            self._logger.info("Processing dataset %s ... ", ds.id)
 
             # load job info
             creating_job = self._get_job(ds.wrapped["creating_job"])
@@ -375,6 +395,10 @@ class History(object):
                     self.job_input_ids[creating_job.id] = list(job_inputs)
                     self.job_output_ids[creating_job.id] = list(job_outputs)
 
+            self._logger.info("Process dataset %s: done ", ds.id)
+
+        self._logger.info("Processing extra info...")
+
         # Auxiliary function which computes the label for a given dataset
         def __set_label(labels, ds_id, info_matrix, label=None, prefix=None):
             if label is not None:
@@ -407,7 +431,11 @@ class History(object):
         not_ordered_inputs = list(self.input_datasets)
         input_datasets = _collections.OrderedDict()
 
+        inputs = list(self.input_datasets)
+        self._input_order_map = {x: inputs.index(x) for x in inputs}
+
         # determine the job level
+        self._logger.debug("Processing JOB levels ...")
         for job_id, job in _iteritems(self.processing_jobs):
             # compute and set the job level
             self.processing_job_levels[job_id] = self.compute_processing_job_level(job_id)
@@ -419,17 +447,23 @@ class History(object):
                     in_id = job.wrapped["inputs"][name]["id"]
                     if in_id in not_ordered_inputs:
                         input_datasets[in_id] = self.input_datasets[in_id]
+                        if in_id not in self.input_datasets:
+                            self._input_order_map[in_id] = len(self.input_datasets) + self.processing_job_levels[job_id]
                         not_ordered_inputs.remove(in_id)
             # add intermediate inputs
-            intermediate_inputs.extend([x["id"] for x in job.wrapped["outputs"].values()
-                                        if x["id"] not in self.output_datasets])
+            for x in job.wrapped["outputs"].values():
+                if x["id"] not in self.output_datasets:
+                    intermediate_inputs.append(x["id"])
+                    if x["id"] not in self.input_datasets:
+                        self._input_order_map[x["id"]] = len(self.input_datasets) + self.processing_job_levels[job_id]
+        self._logger.debug("JOB levels processing: done")
 
         # copy remaining inputs
         for ds_in in not_ordered_inputs:
             input_datasets[ds_in] = self.input_datasets[ds_in]
         self.input_datasets = input_datasets
-        inputs = list(self.input_datasets) + intermediate_inputs
-        self._input_order_map = {x: inputs.index(x) for x in inputs}
+
+        self._logger.info("Processing extra info: done")
 
     def compute_processing_job_level(self, job_id):
         level = 0
@@ -445,6 +479,11 @@ class History(object):
     def extract_workflow(self, filename=None, workflow_name=None, v_step=100, h_step=400):
         if workflow_name is None:
             workflow_name = "Workflow extracted from history {0}".format(self._history.id)
+
+        # start
+        self._logger.info("Extracting Workflow from history...")
+
+        # wf object representation
         wf = _collections.OrderedDict({
             "a_galaxy_workflow": "true",
             "annotation": "",
@@ -459,9 +498,8 @@ class History(object):
         p_top = 0
 
         # process steps
-        for hds_id, hds in _iteritems(self.input_datasets):
-            job = self.creating_jobs[hds.id]
-            index = len(wf["steps"])
+        inputs = {k: v for k, v in _iteritems(self._input_order_map) if k in self.input_datasets}
+        for hds_id, index in sorted(_iteritems(inputs), key=_operator.itemgetter(1)):
             input_name = self.input_dataset_labels[hds_id]
             input_description = ""
             p_top += v_step
@@ -539,6 +577,8 @@ class History(object):
                     "name": job_output_name,
                     "type": tool_outputs[job_output_name]["format"]
                 })
+                # TODO: check if exists cryteria for detecting if an output
+                #       is a workflow output or a simple intermediate output
                 workflow_outputs.append({
                     "label": job_output_name,
                     "output_name": job_output_name,
@@ -547,7 +587,7 @@ class History(object):
 
             wf["steps"][str(index)] = {
                 "annotation": "",
-                "content_id": tool.name,
+                "content_id": tool.id,
                 "id": index,
                 "input_connections": input_connections,
                 "inputs": inputs,
@@ -559,7 +599,7 @@ class History(object):
                     "top": p_top
                 },
                 "tool_errors": None,
-                "tool_id": tool.name,
+                "tool_id": tool.id,
                 "tool_state": _json.dumps(params),
                 "tool_version": tool.version,
                 "type": "tool",
@@ -569,7 +609,12 @@ class History(object):
 
         # save workflow
         if filename is not None:
+            self._logger.info("Saving workflow to file...")
             with open(filename, "w") as fp:
+                self._logger.debug("Workflow file path: %s", filename)
                 _json.dump(wf, fp, indent=4)
+            self._logger.info("Saving workflow to file: done")
 
+        # extraction wf end
+        self._logger.info("Extracting Workflow from history: done")
         return wf

@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 
-source set-bioblend-env.sh "$@"
+source entrypoint-argparser.sh "$@"
 
-ENTRYPOINT=$1
-if [[ ! ${ENTRYPOINT} =~ ^(bash|wft4galaxy)$  ]]; then
-  ENTRYPOINT="wft4galaxy"
+if [[ ! ${ENTRYPOINT} =~ ^(bash|wft4galaxy|runtest|wizard)$  ]]; then
+    echo -e "\nERROR: Command \"${ENTRYPOINT_ARGS} \" not supported !"
+    echo -e "       Supported commands: bash | wft4galaxy | runtest | wizard \n"
+    exit -1
 fi
 
 if [[ ${ENTRYPOINT} == "bash" ]]; then
-    /bin/bash ${WFT4GALAXY_OPTS}
+    /bin/bash ${ENTRYPOINT_ARGS}
+elif [[ ${ENTRYPOINT} == "wizard" ]]; then
+    wft4galaxy-wizard ${ENTRYPOINT_ARGS}
 else
-    wft4galaxy ${WFT4GALAXY_OPTS}
+    wft4galaxy ${ENTRYPOINT_ARGS}
 fi

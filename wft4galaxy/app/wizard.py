@@ -28,17 +28,22 @@ _TEMPLATE_CMD = "generate-template"
 _TEMPLATE_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), _os.pardir, _os.pardir, "templates")
 
 # configure module logger
-LogFormat = '%(asctime)s %(levelname)s: %(message)s'
-_logging.basicConfig(format=LogFormat)
-_logger = _logging.getLogger("WorkflowTest")
-_logger.setLevel(_logging.INFO)
+_logger = _common.LoggerManager.get_logger(__name__)
+
+
+# fix an issue related to the output buffering
+# when the wizard is running within a Docker container
+def disable_output_buffering():
+    if _sys.version_info[0] == 2:
+        _logger.debug("Disabling output buffering...")
+        _sys.stdout = _os.fdopen(_sys.stdout.fileno(), 'w', 0)
 
 
 def write_test_suite_definition_file(output_file, suite_config):
     j2_env = _jinja2.Environment(loader=_jinja2.FileSystemLoader(_TEMPLATE_DIR), trim_blocks=True)
     try:
         file_content = j2_env.get_template('workflow-test-template.yaml').render(config=suite_config)
-        _logger.debug("==>Output file:\n%s", file_content)
+        _logger.debug("Workflow test definition file:%s\n\n%s", output_file, file_content)
         with open(output_file, "w") as out:
             out.write(file_content)
     except _jinja2.exceptions.UndefinedError as e:
@@ -54,10 +59,12 @@ def make_dir_structure(output_folder):
 
 def download_dataset(datasets, output_folder, labels=None):
     for ds in datasets:
-        ds_in_filename = _os.path.join(output_folder,
-                                       "{0}.{1}".format(labels[ds.id], ds.file_ext) if labels is not None else ds.name)
-        with open(ds_in_filename, "wb") as ds_in_fp:
+        ds_filename = _os.path.join(output_folder,
+                                    "{0}.{1}".format(labels[ds.id], ds.file_ext) if labels is not None else ds.name)
+        _logger.debug("Downloading dataset \"%s\" from \"%s\" ...", ds.id, ds.wrapped["url"])
+        with open(ds_filename, "wb") as ds_in_fp:
             ds.download(ds_in_fp)
+        _logger.debug("Dataset \"%s\" downloaded to \"%s\: done", ds.id, ds_filename)
 
 
 def generate_template(config):
@@ -75,7 +82,9 @@ def generate_template(config):
     # make directory structure of the test definition
     make_dir_structure(output_folder)
     # write the definition file
+    _logger.info("Writing workflow test definition file to %s ...", output_filename)
     write_test_suite_definition_file(output_filename, suite)
+    _logger.debug("Writing workflow test definition file to %s: done", output_filename)
     _logger.info("Test definition template folder correctly generated.\n ===> See folder: %s", output_folder)
 
 
@@ -95,11 +104,15 @@ def generate_test_case(config):
     wf_def = hw.extract_workflow(workflow_definition_filename)
 
     # download input datasets
+    _logger.info("Downloading input datasets...")
     download_dataset(hw.input_datasets.values(), _os.path.join(output_folder, DEFAULT_INPUTS_FOLDER))
+    _logger.info("Downloading input datasets: done")
 
     # download output datasets
+    _logger.info("Downloading output datasets...")
     download_dataset(hw.output_datasets.values(), _os.path.join(output_folder, DEFAULT_EXPECTED_FOLDER),
                      labels=hw.output_dataset_labels)
+    _logger.info("Downloading output datasets: done")
 
     # load the wf wrapper
     wf = _wrapper.Workflow.load(workflow_definition_filename)
@@ -124,23 +137,27 @@ def generate_test_case(config):
     suite.add_workflow_test(cfg)
 
     # write the definition file
-    write_test_suite_definition_file(_os.path.join(output_folder, config["file"]), suite)
+    _logger.info("Saving workflow test definition ...")
+    wf_test_file = _os.path.join(output_folder, config["file"])
+    write_test_suite_definition_file(wf_test_file, suite)
+    _logger.debug("Workflow test definition saved to %s", wf_test_file)
+    _logger.info("Saving workflow test definition: done")
 
 
-def _get_history_id(config):
+def _get_history_info(config):
     result = None
     gi = _common.get_galaxy_instance(config["galaxy_url"], config["galaxy_api_key"])
     _logger.info("Loading Galaxy history info ...")
-    candidate_histories = [h for h in gi.histories.list() if config["history-name"] in h.name]
+    candidate_histories = [h for h in gi.histories.list() if config["history"] in h.name]
     candidate_count = len(candidate_histories)
     if candidate_count == 0:
-        print("\n No history found with name: \"{0}\"".format(config["history-name"]))
+        print("\n No history found with name: \"{0}\"".format(config["history"]))
     elif candidate_count == 1:
-        result = candidate_histories[0].id
+        result = candidate_histories[0]
     else:
         while True:
             print("\nNOTICE:".ljust(10),
-                  "More than one history matches the name \"{0}\".".format(config["history-name"]))
+                  "More than one history matches the name \"{0}\".".format(config["history"]))
             print("".ljust(9), "Please select one of the following options:\n")
 
             for opt, h in enumerate(candidate_histories):
@@ -201,7 +218,7 @@ def _make_parser():
                                                         epilog=epilog)
 
     # test_parser.add_argument('workflow-name', help='Workflow name')
-    test_parser.add_argument('history-name', help='History name')
+    test_parser.add_argument('history', help='History name')
 
     template_parser = command_subparsers_factory.add_parser(_TEMPLATE_CMD,
                                                             help="Generate a test definition template",
@@ -210,31 +227,34 @@ def _make_parser():
 
 
 def main(args=None):
-    # default configuration of the logger
-    # _logging.basicConfig(format=LogFormat)
-
     # set args
     args = args if args else _sys.argv[1:]
     try:
+        # disable output buffering
+        disable_output_buffering()
+
         # process CLI args and opts
         parser = _make_parser()
         options = parser.parse_args(args)
         config = _common.Configuration(vars(options))
 
-        # enable debug mode
-        if options.enable_debug:
-            _logger.setLevel(_logging.DEBUG)
+        # setup logging
+        _common.LoggerManager.configure_logging(
+            level=_logging.DEBUG if options.enable_debug else _logging.INFO,
+            show_logger_name=True if options.enable_debug else False)
+
         # log the configuration
         _logger.debug("CLI config %r", config)
         # update defaults
         _common.configure_env_galaxy_server_instance(config, options)
         # log the configuration
-        _logger.info("Configuration...")
-        print(_common.pformat(config))
+        if options.enable_debug:
+            _logger.debug("Configuration...")
+            print(_common.pformat(config))
         if options.command == _TEMPLATE_CMD:
             generate_template(config)
         elif options.command == _TEST_CMD:
-            history = _get_history_id(config)
+            history = _get_history_info(config)
             if history is not None:
                 _logger.info("Selected history: %s (id: %r)", history.name, history.id)
                 config["history-id"] = history.id

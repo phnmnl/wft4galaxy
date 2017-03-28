@@ -3,14 +3,21 @@ FROM ubuntu
 # metadata
 MAINTAINER PhenoMeNal-H2020 Project ( phenomenal-h2020-users@googlegroups.com )
 
-# wft4galaxy branch
-ENV WFT4GALAXY_BRANCH develop
+# allow user defined Git repository
+ARG git_url
+ARG git_branch
 
 # set the term var
 ENV TERM xterm-256color
 
 # wft4galaxy path
 ENV WFT4GALAXY_PATH /opt/wft4galaxy
+
+# set Git repository url
+ENV WFT4GALAXY_REPOSITORY_URL ${git_url:-"https://github.com/phnmnl/wft4galaxy"}
+
+# wft4galaxy branch
+ENV WFT4GALAXY_BRANCH ${git_branch:-develop}
 
 # install base packages
 RUN apt-get update && \
@@ -30,7 +37,7 @@ RUN echo "export CLICOLOR=1" >> ${HOME}/.bashrc
 RUN echo "export LSCOLORS=ExFxBxDxCxegedabagacad" >> ${HOME}/.bashrc
 
 # install wft4galaxy
-RUN git clone -b ${WFT4GALAXY_BRANCH} https://github.com/phnmnl/wft4galaxy ${WFT4GALAXY_PATH} \
+RUN git clone -b ${WFT4GALAXY_BRANCH} ${WFT4GALAXY_REPOSITORY_URL} ${WFT4GALAXY_PATH} \
     && cd ${WFT4GALAXY_PATH} \
     && python setup.py install
 
@@ -45,7 +52,7 @@ WORKDIR /root
 
 # add container entrypoint
 COPY entrypoint.sh /bin/entrypoint.sh
-COPY set-bioblend-env.sh /usr/local/bin/set-bioblend-env.sh
+COPY entrypoint-argparser.sh /usr/local/bin/entrypoint-argparser.sh
 
 # set the entrypoint
 ENTRYPOINT ["entrypoint.sh"]
