@@ -102,7 +102,8 @@ class LoggerManager(object):
             log_filename = _os.path.join(output_folder, log_filename)
         logger.debug("Enabling LOG file: '%s'", log_filename)
         fileHandler = _logging.FileHandler(log_filename)
-        fileHandler.setFormatter(_logging.Formatter(LoggerManager._format))
+        log_format = LoggerManager.get_string_format(logger.getEffectiveLevel() == _logging.DEBUG)
+        fileHandler.setFormatter(_logging.Formatter(log_format))
         logger.addHandler(fileHandler)
         return fileHandler
 
