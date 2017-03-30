@@ -509,6 +509,8 @@ class WorkflowTestCase(object):
         return config
 
     def run(self, galaxy_url=None, galaxy_api_key=None, disable_cleanup=None, enable_logger=None, enable_debug=None):
+        _common.LoggerManager.configure_logging(
+            _logging.DEBUG if enable_debug is True else _logging.INFO if enable_logger is True else _logging.ERROR)
         runner = WorkflowTestRunner.new_instance(self, galaxy_url, galaxy_api_key)
         return runner.run_test(disable_assertions=True, disable_cleanup=disable_cleanup,
                                enable_logger=enable_logger, enable_debug=enable_debug)
@@ -748,10 +750,12 @@ class WorkflowTestSuite(object):
 
     def run(self, galaxy_url=None, galaxy_api_key=None, tests=None,
             enable_logger=None, enable_debug=None, disable_cleanup=None):
+        _common.LoggerManager.configure_logging(
+            _logging.DEBUG if enable_debug is True else _logging.INFO if enable_logger is True else _logging.ERROR)
         test_suite_runner = WorkflowTestSuiteRunner(galaxy_url, galaxy_api_key)
-        return test_suite_runner.run_test_suite(self, tests=tests,
-                                                enable_logger=enable_logger, enable_debug=enable_debug,
-                                                disable_assertions=True, disable_cleanup=disable_cleanup)
+        return test_suite_runner.run_tests(self, tests=tests, verbosity=2 if enable_logger is True else 0,
+                                           enable_logger=enable_logger, enable_debug=enable_debug,
+                                           disable_assertions=True, disable_cleanup=disable_cleanup)
 
 
 class WorkflowTestSuiteRunner(object):
@@ -845,49 +849,8 @@ class WorkflowTestSuiteRunner(object):
         else:
             _common.LoggerManager.update_log_level(_logging.ERROR)
 
-    def run_tests(self, suite_config, tests=None, enable_logger=None,
+    def run_tests(self, suite_config, tests=None, verbosity=0, enable_logger=None,
                   enable_debug=None, disable_cleanup=None, disable_assertions=None):
-        """
-        Execute tests associated to this suite and return the corresponding results.
-
-        :type suite_config: dict
-        :param suite_config: a suite configuration as produced
-               by the `WorkflowTestCase.load(...)` method
-
-        :type tests: list
-        :param tests: optional list of test names to filter tests defined in ``workflow_tests_config``
-
-        :type enable_logger: bool
-        :param enable_logger: ``True`` to enable INFO messages; ``False`` (default) otherwise.
-
-        :type enable_debug: bool
-        :param enable_debug: ``True`` to enable DEBUG messages; ``False`` (default) otherwise.
-
-        :type disable_cleanup: bool
-        :param disable_cleanup: ``True`` to avoid the clean up of the workflow and history created on the Galaxy server;
-            ``False`` (default) otherwise.
-
-        :type disable_assertions: bool
-        :param disable_assertions: ``True`` to disable assertions during the execution of the workflow test;
-            ``False`` (default) otherwise.
-
-        :rtype: list
-        :return: a list of :class:`WorkflowTestResult` instances
-        """
-        results = []
-        self._suite_setup(suite_config, enable_logger, enable_debug, disable_cleanup, disable_assertions)
-        for test_config in suite_config.workflow_tests.values():
-            if not tests or len(tests) == 0 or test_config.name in tests:
-                runner = self._create_test_runner(test_config, suite_config)
-                result = runner.run_test()
-                results.append(result)
-        # cleanup
-        if not suite_config.disable_cleanup:
-            self.cleanup(suite_config.output_folder)
-        return results
-
-    def run_test_suite(self, suite_config, tests=None, enable_logger=None,
-                       enable_debug=None, disable_cleanup=None, disable_assertions=None):
         """
         Execute tests associated to this suite using the unittest framework.
 
@@ -914,16 +877,23 @@ class WorkflowTestSuiteRunner(object):
         """
         suite = _unittest.TestSuite()
         self._suite_setup(suite_config, enable_logger, enable_debug, disable_cleanup, disable_assertions)
-        for test_config in suite_config.workflow_tests.values():
-            test_config.disable_assertions = False
-            if not tests or len(tests) == 0 or test_config.name in tests:
-                runner = self._create_test_runner(test_config, suite_config)
-                suite.addTest(runner)
-        _RUNNER = _unittest.TextTestRunner(verbosity=2)
-        _RUNNER.run(suite)
+        if verbosity == 0:
+            for test_config in suite_config.workflow_tests.values():
+                if not tests or len(tests) == 0 or test_config.name in tests:
+                    runner = self._create_test_runner(test_config, suite_config)
+                    runner.run_test()
+        else:
+            for test_config in suite_config.workflow_tests.values():
+                test_config.disable_assertions = False
+                if not tests or len(tests) == 0 or test_config.name in tests:
+                    runner = self._create_test_runner(test_config, suite_config)
+                    suite.addTest(runner)
+            _RUNNER = _unittest.TextTestRunner(verbosity=verbosity)
+            _RUNNER.run(suite)
         # cleanup
         if not suite_config.disable_cleanup:
             self.cleanup(suite_config.output_folder)
+        return self._workflow_test_results
 
     def get_workflow_test_results(self, workflow_id=None):
         """
@@ -1067,9 +1037,13 @@ class WorkflowTestRunner(_unittest.TestCase):
         :return: the :class:`WorkflowTestResult` instance which represents the test result
         """
         # update test settings
-        if enable_logger is None:
+        if enable_logger is None \
+                and self._workflow_test_config is not None \
+                and hasattr(self._workflow_test_config, "enable_logger"):
             enable_logger = self._workflow_test_config.enable_logger
-        if enable_debug is None:
+        if enable_debug is None \
+                and self._workflow_test_config is not None \
+                and hasattr(self._workflow_test_config, "enable_debug"):
             enable_debug = self._workflow_test_config.enable_debug
         if disable_cleanup is None:
             disable_cleanup = self._workflow_test_config.disable_cleanup
