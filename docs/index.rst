@@ -20,6 +20,8 @@ Table of Contents (TOC)
     :glob:
 
     Installation <installation>
+    Run a test suite <notebooks/0_basic_usage.ipynb>
+    Dockerized Usage <docker>
 
 
 .. toctree::
@@ -27,9 +29,9 @@ Table of Contents (TOC)
     :caption: Tutorial
     :glob:
 
-    First example <notebooks/1_run_suite_from_cli.ipynb>
+    Define a test-suite from a Workflow <notebooks/1_define_test_suite.ipynb>
+    Define a test-suite from a History <notebooks/2_define_test_suite_from_history.ipynb>
     Programmatic Usage <programmatic-usage>
-    Dockerized Usage <docker>
 
 
 .. toctree::
@@ -37,9 +39,10 @@ Table of Contents (TOC)
     :caption: Resources
     :glob:
 
-    wft4galaxy API <api>
-    Configuration file <config-file>
+    Wizard Tool <wizard-tool>
+    TestSuite Definition file reference <test-definition-file>
     Integration with CI tools <ci-tools-integration>
+    wft4galaxy API <api>
 
 
 Indices and tables

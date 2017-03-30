@@ -1,8 +1,8 @@
-.. _config_file:
+.. _test_definition_file:
 
-######################
-Test Definition File
-######################
+================================
+Test Definition File Reference
+================================
 
 wft4galaxy supports defining tests in both YAML and JSON formats.
 
