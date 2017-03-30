@@ -171,7 +171,6 @@ class _CommandLineHelper:
                                   .format(DEFAULT_OUTPUT_FOLDER))
         wft4g_parser.add_argument('--enable-logger', help='Enable log messages', action='store_true')
         wft4g_parser.add_argument('--disable-cleanup', help='Disable cleanup', action='store_true')
-        wft4g_parser.add_argument('--disable-assertions', help='Disable assertions', action='store_true')
         wft4g_parser.add_argument("test", help="Workflow Test Name", nargs="*")
 
         return main_parser, entrypoint_parsers
@@ -405,10 +404,6 @@ class NonInteractiveContainer(Container):
             # cleanup option
             if options.disable_cleanup:
                 cmd.append("--disable-cleanup")
-            # assertion option
-            if options.disable_assertions:
-                cmd.append("--disable-assertions")
-
             # add test filter
             cmd += options.test
 
