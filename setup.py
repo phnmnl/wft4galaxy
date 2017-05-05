@@ -121,7 +121,7 @@ setup(
     install_requires={
         'setuptools': ['setuptools'],
         'future': ['future>=0.16.0'],
-        'bioblend': ['bioblend>=0.8.0'],
+        'bioblend': ['bioblend'],
         'ruamel.yaml': ['ruamel.yaml'],  # TODO: to be removed in the next release
         'lxml': ['lxml'],
         'pyyaml': ['pyyaml'],
@@ -130,6 +130,7 @@ setup(
         'docker': ['docker>=2.1.0'],
         'dockerpty': ['dockerpty>=0.4.1']
     },
+    dependency_links=['git+https://github.com/galaxyproject/bioblend.git/@master#egg=bioblend-latest'],
     package_data={'wft4galaxy': ['wft4galaxy.properties'], 'templates': ['*']},
     packages=["wft4galaxy", "wft4galaxy.comparators", "wft4galaxy.app", "templates"],
     entry_points={'console_scripts': [
