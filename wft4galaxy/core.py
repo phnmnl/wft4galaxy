@@ -711,8 +711,23 @@ class WorkflowTestResult(object):
         return self.results
 
 
+class WorkflowTestReportGenerator(object):
+    __metaclass__ = ABCMeta
+
+    def generate_report(self, stream, output_format="xml"):
+        raise NotImplementedError()
+
+    def printErrors(self):
+        raise NotImplementedError()
 
 
+class WorkflowTestSuiteResult(WorkflowTestReportGenerator, WorkflowTestResult):
+    def __init__(self, test_case_results):
+        self.test_case_results = test_case_results
+
+
+class WorkflowTestCaseResult(WorkflowTestReportGenerator, WorkflowTestResult):
+    pass
 
 
 def _load_configuration(config_filename):
