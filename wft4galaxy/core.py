@@ -711,22 +711,8 @@ class WorkflowTestResult(object):
         return self.results
 
 
-def cleanup_test_workflows(galaxy_url=None, galaxy_api_key=None):
-    _logger.debug("Cleaning workflow library ...")
-    galaxy_instance = _common.get_galaxy_instance(galaxy_url, galaxy_api_key)
-    workflow_loader = WorkflowLoader.get_instance(galaxy_instance)
-    wflist = galaxy_instance.workflows.list()
-    workflows = [w for w in wflist if WorkflowTestCase.DEFAULT_WORKFLOW_NAME_PREFIX in w.name]
-    for wf in workflows:
-        workflow_loader.unload_workflow(wf.id)
 
 
-def cleanup_test_workflow_data(galaxy_url=None, galaxy_api_key=None):
-    _logger.debug("Cleaning saved histories ...")
-    galaxy_instance = _common.get_galaxy_instance(galaxy_url, galaxy_api_key)
-    hslist = galaxy_instance.histories.list()
-    for history in [h for h in hslist if WorkflowTestCase.DEFAULT_HISTORY_NAME_PREFIX in h.name]:
-        galaxy_instance.histories.delete(history.id)
 
 
 def _load_configuration(config_filename):
