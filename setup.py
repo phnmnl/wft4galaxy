@@ -128,7 +128,8 @@ setup(
         'sphinx_rtd_theme': ['sphinx_rtd_theme'],
         'Jinja2': ['Jinja2>=2.9'],
         'docker': ['docker>=2.1.0'],
-        'dockerpty': ['dockerpty>=0.4.1']
+        'dockerpty': ['dockerpty>=0.4.1'],
+        'xmlrunner': ['xmlrunner']
     },
     dependency_links=['git+https://github.com/galaxyproject/bioblend.git/@master#egg=bioblend-latest'],
     package_data={'wft4galaxy': ['wft4galaxy.properties'], 'templates': ['*']},
