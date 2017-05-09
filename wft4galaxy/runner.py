@@ -86,7 +86,7 @@ class WorkflowTestsRunner():
                        disable_assertions=None, disable_cleanup=None, enable_logger=None, enable_debug=None):
 
         if isinstance(test, _core.WorkflowTestCase):
-            return WorkflowTestRunner(self._galaxy_instance, self._workflow_loader, test)
+            return WorkflowTestCaseRunner(self._galaxy_instance, self._workflow_loader, test)
         elif isinstance(test, _core.WorkflowTestSuite):
             return WorkflowTestSuiteRunner(self._galaxy_instance, self._workflow_loader, test, filter,
                                            # output_folder=output_folder,
@@ -328,7 +328,7 @@ class _ExtendedXMLTestResult(_XMLTestResult):
         stream.write(xml_content)
 
 
-class WorkflowTestRunner(_unittest.TestCase):
+class WorkflowTestCaseRunner(_unittest.TestCase):
     """
     Class responsible for launching a workflow test.
     """
@@ -349,7 +349,7 @@ class WorkflowTestRunner(_unittest.TestCase):
         self.test_result = None
 
         setattr(self, "test_" + workflow_test_config.name, self.run_test)
-        super(WorkflowTestRunner, self).__init__("test_" + workflow_test_config.name)
+        super(WorkflowTestCaseRunner, self).__init__("test_" + workflow_test_config.name)
 
     @property
     def workflow_test_config(self):
@@ -754,7 +754,7 @@ class WorkflowTestSuiteRunner(_unittest.TestSuite):
         :type workflow_test_config: :class:'WorkflowTestConfig'
         :param workflow_test_config:
 
-        :rtype: :class:'WorkflowTestRunner'
+        :rtype: :class:'WorkflowTestCaseRunner'
         :return: the created :class:'WorkflowTestResult' instance
         """
         # update test config
@@ -762,7 +762,7 @@ class WorkflowTestSuiteRunner(_unittest.TestSuite):
                        enable_logger=enable_logger, enable_debug=enable_debug,
                        disable_cleanup=disable_cleanup, disable_assertions=disable_assertions)
         # create a new runner instance
-        runner = WorkflowTestRunner(self.galaxy_instance, self.workflow_loader, workflow_test_config, self)
+        runner = WorkflowTestCaseRunner(self.galaxy_instance, self.workflow_loader, workflow_test_config, self)
         self._workflow_runners.append(runner)
         return runner
 
