@@ -1,3 +1,333 @@
+from future.utils import iteritems as _iteritems
+
+import os as _os
+import sys as _sys
+import six as _six
+import copy as _copy
+import time as _time
+import shutil as _shutil
+import logging as _logging
+import unittest as _unittest
+from uuid import uuid1 as _uuid1
+from abc import ABCMeta, abstractmethod
+from StringIO import StringIO as _StringIO
+
+# XMLRunner utilities
+import xmlrunner as _xmlrunner
+from xmlrunner.result import _XMLTestResult
+
+# wft4galaxy dependencies
+import wft4galaxy.core as _core
+from wft4galaxy import common as _common
+from wft4galaxy import comparators as _comparators
+
+# the encoding name needs to be one of
+# http://www.iana.org/assignments/character-sets/character-sets.xhtml
+UTF8 = 'UTF-8'
+
+# package level logger
+_logger = _common.LoggerManager.get_logger(__name__)
+
+
+class UnsupportedTestCaseException(Exception):
+    """ Represents an unsupported type of TestCase """
+
+
+class UnsupportedOuputFormatException(Exception):
+    """ Represents an format which the report generator doesn't support. """
+
+
+class WorkflowTestsRunner():
+    """
+    Class responsible for running a `WorkflowTestCase` or `WorkflowTestSuite`.
+    """
+
+    def __init__(self, galaxy_url=None, galaxy_api_key=None,
+                 output='.', outsuffix=None, stream=_sys.stderr,
+                 descriptions=True, verbosity=1, elapsed_times=True):
+        self._runner = _ExtendedXMLTestRunner(output='reports', outsuffix=None, stream=_sys.stderr,
+                                              descriptions=True, verbosity=2, elapsed_times=True)
+        self.galaxy_url = galaxy_url
+        self.galaxy_api_key = galaxy_api_key
+
+        # create Galaxy instance here
+        self._galaxy_instance = _common.get_galaxy_instance(galaxy_url, galaxy_api_key)
+
+        # create WorkflowLoader here
+        self._workflow_loader = _common.WorkflowLoader.get_instance(self._galaxy_instance)
+
+        # logger
+        self._logger = _common.LoggerManager.get_logger(self)
+
+    def _setup(self, test, output_folder=None,
+               disable_assertions=None, disable_cleanup=None, enable_logger=None, enable_debug=None):
+        """ Update runner configuration accordingly to the test configuration"""
+
+        if enable_logger is not None:
+            test.enable_logger = enable_logger
+        if enable_debug is not None:
+            test.enable_debug = enable_debug
+        if disable_cleanup is not None:
+            test.disable_cleanup = disable_cleanup
+        if disable_assertions is not None:
+            test.disable_assertions = disable_assertions
+
+        # update output folder
+        self._runner.output = test.output_folder if output_folder is None else output_folder
+
+        # configure logger
+        _common.LoggerManager.configure_logging(_logging.ERROR)
+        if test.enable_logger or test.enable_debug:
+            _common.LoggerManager.configure_logging(_logging.DEBUG if test.enable_debug else _logging.INFO)
+            if test.disable_cleanup:
+                self._file_handler = _common.LoggerManager.enable_log_to_file(output_folder=test.output_folder)
+
+    def _make_wrappers(self, test, filter=None, output_folder=None,
+                       disable_assertions=None, disable_cleanup=None, enable_logger=None, enable_debug=None):
+
+        if isinstance(test, _core.WorkflowTestCase):
+            return WorkflowTestRunner(self._galaxy_instance, self._workflow_loader, test)
+        elif isinstance(test, _core.WorkflowTestSuite):
+            return WorkflowTestSuiteRunner(self._galaxy_instance, self._workflow_loader, test, filter,
+                                           # output_folder=output_folder,
+                                           disable_assertions=disable_assertions, disable_cleanup=disable_cleanup,
+                                           enable_logger=enable_logger, enable_debug=enable_debug)
+        else:
+            raise UnsupportedTestCaseException("{} not supported".format(test.__class__.name))
+
+    def run(self, test, filter=None, output_folder=None, output_format="xml",
+            disable_assertions=None, disable_cleanup=None, enable_logger=None, enable_debug=None):
+
+        # deepcopy to avoid side effects
+        test = _copy.deepcopy(test)
+
+        # update configuration
+        self._setup(test, output_folder=output_folder,
+                    disable_assertions=disable_assertions, disable_cleanup=disable_cleanup,
+                    enable_logger=enable_logger, enable_debug=enable_debug)
+
+        # prepare wrappers
+        self._logger.debug("Creating unittest wrappers...")
+        test_wrapper = self._make_wrappers(test, filter, output_folder=output_folder,
+                                           disable_assertions=disable_assertions, disable_cleanup=disable_cleanup,
+                                           enable_logger=enable_logger, enable_debug=enable_debug)
+        self._logger.debug("Creating unittest wrappers: done")
+
+        # run tests
+        test_result = None
+        try:
+            result = self._runner.run(test_wrapper, output_format=output_format)
+
+            test_result = test_wrapper.test_result
+            if isinstance(test_wrapper, WorkflowTestSuiteRunner):
+                test_result = _core.WorkflowTestSuiteResult(test_wrapper.test_result)
+
+            test_result.__class__ = type('Impl', (
+                _core.WorkflowTestSuiteResult, _WorkflowTestResultReporterImpl, _core.WorkflowTestResult),
+                                         {"_test_result": result})
+        except Exception as e:
+            self._logger.error(e)
+
+        finally:
+            if not test.disable_cleanup:
+                test_wrapper.cleanup(test.output_folder)
+
+        # build and return the result wrapper
+        return test_result
+
+
+class _WorkflowTestResultReporterImpl(_core.WorkflowTestReportGenerator):
+    """ Concrete class which implements the `generate_report` method."""
+
+    def __init__(self, test_result=None):
+        super(_WorkflowTestResultReporterImpl, self).__init__()
+        self._test_result = test_result
+        setattr(self, "generate_report", self.generate_report)
+
+    def generate_report(self, output_file, output_format="xml"):
+        self._test_result.generate_report(output_file, output_format)
+
+
+class _ExtendedXMLTestRunner(_xmlrunner.XMLTestRunner):
+    """ Extends the XMLTestRunner to offer a custom XMLUnit support """
+
+    def __init__(self, output='.', outsuffix=None, stream=_sys.stderr,
+                 descriptions=True, verbosity=2, elapsed_times=True):
+        super(_ExtendedXMLTestRunner, self).__init__(output, outsuffix, stream, descriptions, verbosity, elapsed_times)
+        self.encoding = UTF8
+        self.report_stream = self.stream
+
+    def _make_result(self, output_format="xml"):
+        """
+        Creates a TestResult object which will be used to store
+        information about the executed tests.
+        """
+        return _ExtendedXMLTestResult(
+            stream=self.report_stream, descriptions=self.descriptions,
+            verbosity=self.verbosity, elapsed_times=self.elapsed_times
+        )
+
+    def run(self, test, output_format=None):
+        """
+            Runs the given test case or test suite.
+        """
+        report_data = None
+        try:
+            # Prepare the test execution
+            self._patch_standard_output()
+            result = self._make_result(output_format)
+
+            # Print a nice header
+            self.report_stream.writeln()
+            self.report_stream.writeln('Running tests...')
+            self.report_stream.writeln(result.separator2)
+
+            # Execute tests
+            start_time = _time.time()
+            test(result)
+            stop_time = _time.time()
+            time_taken = stop_time - start_time
+
+            # Print results
+            result.printErrors()
+            self.report_stream.writeln(result.separator2)
+            run = result.testsRun
+            self.report_stream.writeln("Ran %d test%s in %.3fs" % (run, run != 1 and "s" or "", time_taken))
+            self.report_stream.writeln()
+
+            expectedFails = unexpectedSuccesses = skipped = 0
+            try:
+                results = map(len, (result.expectedFailures,
+                                    result.unexpectedSuccesses,
+                                    result.skipped))
+            except AttributeError:
+                pass
+            else:
+                expectedFails, unexpectedSuccesses, skipped = results
+
+            # Error traces
+            infos = []
+            if not result.wasSuccessful():
+                self.report_stream.write("FAILED")
+                failed, errored = map(len, (result.failures, result.errors))
+                if failed:
+                    infos.append("failures={0}".format(failed))
+                if errored:
+                    infos.append("errors={0}".format(errored))
+            else:
+                self.report_stream.write("OK")
+
+            if skipped:
+                infos.append("skipped={0}".format(skipped))
+            if expectedFails:
+                infos.append("expected failures={0}".format(expectedFails))
+            if unexpectedSuccesses:
+                infos.append("unexpected successes={0}".format(unexpectedSuccesses))
+
+            if infos:
+                self.report_stream.writeln(" ({0})".format(", ".join(infos)))
+            else:
+                self.report_stream.write("\n")
+
+            # Generate reports
+            if output_format:
+                self.report_stream.writeln()
+                _logger.info('Generating reports (format: \'{}\') ...'.format(output_format))
+                if not _os.path.exists(self.output):
+                    _os.makedirs(self.output)
+                with open(self._output_filename(output_format), "w") as output_file:
+                    result.generate_report(output_file, output_format)
+        finally:
+            self._restore_standard_output()
+
+        return result
+
+    def _restore_standard_output(self):
+        super(_ExtendedXMLTestRunner, self)._restore_standard_output()
+        self.report_stream = self.stream
+
+    def _patch_standard_output(self):
+        super(_ExtendedXMLTestRunner, self)._patch_standard_output()
+        self.report_stream = _DelegateIO(self.stream)
+
+    def _output_filename(self, output_format):
+        suite_name = "WorkflowTestSuite"
+        if self.outsuffix:
+            # not checking with 'is not None', empty means no suffix.
+            suite_name = '%s-%s' % (suite_name, self.outsuffix)
+
+        filename = _os.path.join(
+            self.output,
+            '%s.%s' % (suite_name, output_format))
+
+        _logger.debug("Output FILENAME: %s", filename)
+        return filename
+
+
+class _ExtendedXMLTestResult(_XMLTestResult):
+    """
+    Customize the `xmlrunner._XMLTestResult` class to support new features. 
+    """
+
+    def __init__(self, stream=_sys.stdout, descriptions=1, verbosity=1,
+                 elapsed_times=True, properties=None, infoclass=None):
+        super(_ExtendedXMLTestResult, self).__init__(
+            stream, descriptions, verbosity, elapsed_times, properties, infoclass)
+        # store output handlers
+        self._output_handlers = {}
+        # register base handlers
+        self.register_output_handler("xml", self._generate_xml_report)
+        self.register_output_handler("txt", self._generate_txt_report)
+
+    def register_output_handler(self, output_format, output_handler):
+        self._output_handlers[output_format] = output_handler
+
+    def generate_report(self, stream, output_format="xml"):
+        """
+        Write a report, formatted accordingly to the param `output_format`,
+        to `stream`. Currently supported format are XML and plaintext.
+
+        :param stream: the stream which the report has to be written to. 
+        :param output_format: the format of the report to write.
+        :return: 
+        """
+        try:
+            self._output_handlers[output_format](stream)
+        except KeyError:
+            raise UnsupportedOuputFormatException("'{}' format not supported!".format(output_format))
+
+    def _generate_txt_report(self, stream):
+        """ 
+        Write to `stream` the TEXT report for this `result` instance.
+        """
+        stream.write(self.stream.getvalue())
+
+    def _generate_xml_report(self, stream):
+        """
+        Generate and write to `stream` the XML report for this `result` instance.
+        """
+        from xml.dom.minidom import Document
+        all_results = self._get_info_by_testcase()
+
+        doc = Document()
+        parentElement = doc
+
+        for suite, tests in all_results.items():
+            suite_name = suite
+
+            # Build the XML file
+            testsuite = _XMLTestResult._report_testsuite(
+                suite_name, tests, doc, parentElement, self.properties
+            )
+            xml_content = doc.toprettyxml(
+                indent='\t',
+                encoding=UTF8
+            )
+
+        # Assume that test_runner.output is a stream
+        stream.write(xml_content)
+
+
 class WorkflowTestRunner(_unittest.TestCase):
     """
     Class responsible for launching a workflow test.
@@ -471,6 +801,48 @@ class WorkflowTestSuiteRunner(_unittest.TestSuite):
                 _logger.debug("Deleted empty output folder: '%s'", output_folder)
             except OSError as e:
                 _logger.debug("Deleted empty output folder '%s' failed: ", e.message)
+
+
+class _DelegateIO(object):
+    """
+    This class defines an object that captures whatever is written to a stream or file.
+    """
+
+    def __init__(self, delegate, verbosity=2):
+        self._captured = _StringIO()
+        self.delegate = delegate
+        self.verbosity = verbosity
+
+    def write(self, text):
+        self._captured.write(text)
+        if self.verbosity == 0:
+            self.delegate.write(text)
+
+    def writeln(self, text=None):
+        if text is not None:
+            self._captured.write(text)
+        self._captured.write('\n')
+        if self.verbosity == 0:
+            self.delegate.writeln(text)
+
+    def __getattr__(self, attr):
+        return getattr(self._captured, attr)
+
+
+def _update_config(config, enable_logger=None, output_folder=None,
+                   enable_debug=None, disable_cleanup=None, disable_assertions=None):
+    if enable_logger is not None:
+        config.enable_logger = enable_logger
+    if enable_debug is not None:
+        config.enable_debug = enable_debug
+    if disable_cleanup is not None:
+        config.disable_cleanup = disable_cleanup
+    if disable_assertions is not None:
+        config.disable_assertions = disable_assertions
+    if output_folder is not None:
+        config.output = output_folder
+
+
 def cleanup_test_workflows(galaxy_url=None, galaxy_api_key=None):
     _logger.debug("Cleaning workflow library ...")
     galaxy_instance = _common.get_galaxy_instance(galaxy_url, galaxy_api_key)
