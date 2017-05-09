@@ -1,22 +1,20 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-
-import logging as _logging
-import os as _os
-import shutil as _shutil
-import unittest as _unittest
-from uuid import uuid1 as  _uuid1
-from yaml import dump as _yaml_dump
-from yaml import load as _yaml_load
 from future.utils import iteritems as _iteritems
 from past.builtins import basestring as _basestring
-from json import load as _json_load
+
+import os as _os
+from abc import ABCMeta
+import logging as _logging
 from json import dumps as _json_dumps
+from uuid import uuid1 as  _uuid1
+
+from yaml import dump as _yaml_dump
+from yaml import load as _yaml_load
 
 # wft4galaxy dependencies
 import wft4galaxy.common as _common
-import wft4galaxy.comparators as _comparators
 
 # set logger
 _logger = _common.LoggerManager.get_logger(__name__)
@@ -142,13 +140,18 @@ class WorkflowTestCase(object):
     }
 
     def __init__(self, name=None, base_path=".", workflow_filename="workflow.ga", inputs=None, params=None,
-                 expected_outputs=None, output_folder=None, disable_cleanup=False, disable_assertions=True):
+                 expected_outputs=None, output_folder=None, disable_cleanup=False, disable_assertions=False,
+                 enable_logger=False, enable_debug=False):
+
         # init properties
         self._base_path = None
         self._filename = None
         self._inputs = {}
         self._params = {}
         self._expected_outputs = {}
+
+        self.enable_logger = enable_logger
+        self.enable_debug = enable_debug
 
         # set parameters
         self.name = str(_uuid1()) if not name else name
@@ -468,7 +471,9 @@ class WorkflowTestCase(object):
                                     base_path=wft_base_path, workflow_filename=wft_config["file"],
                                     inputs=wft_config["inputs"], params=wft_config.get("params", {}),
                                     expected_outputs=wft_config["expected"],
-                                    output_folder=wft_output_folder)
+                                    output_folder=wft_output_folder,
+                                    enable_logger=file_configuration.get("enable_logger", False),
+                                    enable_debug=file_configuration.get("enable_debug", False))
         else:
             raise ValueError("Filename '{0}' not found".format(filename))
 
@@ -508,12 +513,14 @@ class WorkflowTestCase(object):
                 f.write(_json_dumps(config, indent=2))
         return config
 
-    def run(self, galaxy_url=None, galaxy_api_key=None, disable_cleanup=None, enable_logger=None, enable_debug=None):
+    def run(self, galaxy_url=None, galaxy_api_key=None, output_folder=None,
+            disable_cleanup=None, enable_logger=None, enable_debug=None):
         _common.LoggerManager.configure_logging(
             _logging.DEBUG if enable_debug is True else _logging.INFO if enable_logger is True else _logging.ERROR)
-        runner = WorkflowTestRunner.new_instance(self, galaxy_url, galaxy_api_key)
-        return runner.run_test(disable_assertions=True, disable_cleanup=disable_cleanup,
-                               enable_logger=enable_logger, enable_debug=enable_debug)
+        import wft4galaxy.runner as _runner
+        return _runner.WorkflowTestsRunner(
+            galaxy_url, galaxy_api_key).run(self, disable_cleanup=disable_cleanup, output_folder=output_folder,
+                                            enable_logger=enable_logger, enable_debug=enable_debug)
 
 
 class WorkflowTestSuite(object):
@@ -622,16 +629,15 @@ class WorkflowTestSuite(object):
         else:
             raise ValueError("Filename '{0}' not found".format(filename))
 
-    def run(self, galaxy_url=None, galaxy_api_key=None, tests=None,
+    def run(self, galaxy_url=None, galaxy_api_key=None, tests=None, output_folder=None,
             enable_logger=None, enable_debug=None, disable_cleanup=None):
         _common.LoggerManager.configure_logging(
             _logging.DEBUG if enable_debug is True else _logging.INFO if enable_logger is True else _logging.ERROR)
-        test_suite_runner = WorkflowTestSuiteRunner(galaxy_url, galaxy_api_key)
-        return test_suite_runner.run_tests(self, tests=tests, verbosity=2 if enable_logger is True else 0,
-                                           enable_logger=enable_logger, enable_debug=enable_debug,
-                                           disable_assertions=True, disable_cleanup=disable_cleanup)
-
-
+        import wft4galaxy.runner as _runner
+        return _runner.WorkflowTestsRunner(
+            galaxy_url, galaxy_api_key).run(self, filter=tests, output_folder=output_folder,
+                                            enable_logger=enable_logger, enable_debug=enable_debug,
+                                            disable_cleanup=disable_cleanup)
 
 
 class WorkflowTestResult(object):
