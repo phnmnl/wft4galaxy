@@ -242,7 +242,8 @@ class WorkflowLoader(object):
             # initialize the galaxy instance
             self._galaxy_instance = galaxy_instance
 
-    def load_workflow(self, workflow_test_config, workflow_name=None, workflow_name_prefix=""):
+    def load_workflow(self, workflow_test_config,
+                      workflow_name=None, workflow_name_prefix="", workflow_name_suffix=""):
         """
         Load the workflow defined in a :class:`WorkflowTestConfig` instance to the configured Galaxy server.
         ``workflow_name`` overrides the default workflow name.
@@ -259,9 +260,11 @@ class WorkflowLoader(object):
         workflow_filename = workflow_test_config.filename \
             if not workflow_test_config.base_path or _os.path.isabs(workflow_test_config.filename) \
             else _os.path.join(workflow_test_config.base_path, workflow_test_config.filename)
-        return self.load_workflow_by_filename(workflow_filename, workflow_name, workflow_name_prefix)
+        return self.load_workflow_by_filename(workflow_filename,
+                                              workflow_name, workflow_name_prefix, workflow_name_suffix)
 
-    def load_workflow_by_filename(self, workflow_filename, workflow_name=None, workflow_name_prefix=""):
+    def load_workflow_by_filename(self, workflow_filename,
+                                  workflow_name=None, workflow_name_prefix="", workflow_name_suffix=""):
         """
         Load the workflow defined within the file named as `workflow_filename` to the connected Galaxy server.
 
@@ -277,8 +280,9 @@ class WorkflowLoader(object):
         with open(workflow_filename) as f:
             wf_json = _json.load(f)
         self._logger.debug("Workflow definition loaded from file: done")
-        wf_json["name"] = workflow_name_prefix \
-                          + (workflow_name if workflow_name else wf_json["name"])
+        wf_json["name"] = "-".join([workflow_name_prefix,
+                                    (workflow_name if workflow_name else wf_json["name"]).replace(" ", ""),
+                                    workflow_name_suffix])
         self._logger.debug("Uploading the Workflow to the Galaxy instance ...")
         wf = self._galaxy_instance.workflows.import_new(wf_json)
         self._logger.debug("Uploading the Workflow to the Galaxy instance: done")
