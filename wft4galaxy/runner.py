@@ -415,8 +415,6 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
         :return: the :class:`WorkflowTestResult` instance which represents the test result
         """
 
-        _logger.debug("TestCase configuration: %r", self._workflow_test_config.__dict__)
-
         # update test settings
         if enable_logger is None \
                 and self._workflow_test_config is not None \
@@ -448,6 +446,10 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
                 self._file_handler = _common.LoggerManager.enable_log_to_file(output_folder=output_folder)
         else:
             _common.LoggerManager.update_log_level(_logging.ERROR)
+
+        _empty_logger.info("")
+        _logger.info("Running workflow testcase: %r", self._workflow_test_config.name)
+        _logger.debug("TestCase configuration: %r", self._workflow_test_config.__dict__)
 
         # check input_map
         if inputs is None:
@@ -815,14 +817,14 @@ class _DelegateIO(object):
 
     def write(self, text):
         self._captured.write(text)
-        if self.verbosity == 0:
+        if self.verbosity > 0:
             self.delegate.write(text)
 
     def writeln(self, text=None):
         if text is not None:
             self._captured.write(text)
         self._captured.write('\n')
-        if self.verbosity == 0:
+        if self.verbosity > 0:
             self.delegate.writeln(text)
 
     def __getattr__(self, attr):
