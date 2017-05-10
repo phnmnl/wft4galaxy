@@ -28,6 +28,10 @@ _UTF8 = 'UTF-8'
 
 # package level logger
 _logger = _common.LoggerManager.get_logger(__name__)
+_empty_logger = _common.LoggerManager.get_logger("aux_logger")
+_h = _logging.StreamHandler()
+_h.setFormatter(_logging.Formatter("%(message)s"))
+_empty_logger.addHandler(_h)
 
 
 class UnsupportedTestCaseException(Exception):
