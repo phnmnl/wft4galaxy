@@ -399,7 +399,9 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
         if not self._galaxy_workflow:
             self._galaxy_workflow = self._workflow_loader.load_workflow(
                 self._workflow_test_config,
-                workflow_name_prefix=_core.WorkflowTestCase.DEFAULT_WORKFLOW_NAME_PREFIX)
+                workflow_name_prefix=_core.WorkflowTestCase.DEFAULT_WORKFLOW_NAME_PREFIX,
+                workflow_name_suffix=self.uuid
+            )
         return self._galaxy_workflow
 
     def run_test(self, base_path=None, inputs=None, params=None, expected_outputs=None,
@@ -494,7 +496,8 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
 
                 # create a new history for the current test
                 history = self._galaxy_instance.histories.create(
-                    _core.WorkflowTestCase.DEFAULT_HISTORY_NAME_PREFIX + test_uuid)
+                    "-".join([_core.WorkflowTestCase.DEFAULT_HISTORY_NAME_PREFIX,
+                              self._workflow_test_config.name.replace(" ", ""), test_uuid]))
                 _logger.info("Create a history '%s' (id: %r)", history.name, history.id)
 
                 # upload input data to the current history

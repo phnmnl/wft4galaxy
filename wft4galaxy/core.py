@@ -122,8 +122,8 @@ class WorkflowTestCase(object):
 
     """
     # Default settings
-    DEFAULT_HISTORY_NAME_PREFIX = "_WorkflowTestHistory_"
-    DEFAULT_WORKFLOW_NAME_PREFIX = "_WorkflowTest_"
+    DEFAULT_HISTORY_NAME_PREFIX = "WorkflowTestCase"
+    DEFAULT_WORKFLOW_NAME_PREFIX = "WorkflowTest"
     DEFAULT_OUTPUT_FOLDER = "results"
     DEFAULT_CONFIG_FILENAME = "workflow-test-suite.yml"
     DEFAULT_WORKFLOW_CONFIG = {
