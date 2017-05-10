@@ -102,6 +102,9 @@ class LoggerManager(object):
             log_filename = LoggerManager.new_log_file(output_folder)
         elif not _os.path.isabs(log_filename):
             log_filename = _os.path.join(output_folder, log_filename)
+        if not _os.path.exists(output_folder):
+            logger.debug("Creating folder '%s' of log file %s", output_folder, log_filename)
+            _os.makedirs(output_folder)
         logger.debug("Enabling LOG file: '%s'", log_filename)
         fileHandler = _logging.FileHandler(log_filename)
         log_format = LoggerManager.get_string_format(logger.getEffectiveLevel() == _logging.DEBUG)
