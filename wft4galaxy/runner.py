@@ -343,7 +343,7 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
         self._output_folder = workflow_test_config.output_folder
         self._base_path = workflow_test_config.base_path
         self._test_cases = {}
-        self._test_uuid = None
+        self._uuid = None
         self._galaxy_workflow = None
         self._file_handler = None
         self.test_result = None
@@ -369,12 +369,13 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
     def to_string(self):
         return "Workflow Test '{0}': testId={1}, workflow='{2}', input=[{3}], output=[{4}]" \
             .format(self._workflow_test_config.name,
-                    self._get_test_uuid(),
+                    self.uuid,
                     self._workflow_test_config.name,
                     ",".join(self._workflow_test_config.inputs),
                     ",".join(self._workflow_test_config.expected_outputs))
 
-    def _get_test_uuid(self, update=False):
+    @property
+    def uuid(self):
         """
         Get the current UUID or generate a new one.
 
@@ -384,9 +385,9 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
         :rtype: str
         :return: a generated UUID
         """
-        if not self._test_uuid or update:
-            self._test_uuid = str(_uuid1())
-        return self._test_uuid
+        if not self._uuid:
+            self._uuid = self._test_suite_runner.uuid if self._test_suite_runner is not None else str(_uuid1())
+        return self._uuid
 
     def get_galaxy_workflow(self):
         """
@@ -476,7 +477,7 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
         output_folder = output_folder if output_folder is not None else self._output_folder
 
         # uuid of the current test
-        test_uuid = self._get_test_uuid(True)
+        test_uuid = self.uuid
 
         # store the current message
         error_msg = None
@@ -646,7 +647,7 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
         i.e., the uploaded workflow and the created history are removed from Galaxy and the actual
         output datasets (downloaded from Galaxy) are deleted from the output path of the local file system.
         """
-        _logger.debug("Cleanup of workflow test '%s'...", self._test_uuid)
+        _logger.debug("Cleanup of workflow test '%s'...", self._uuid)
         for test_uuid, test_result in _iteritems(self._test_cases):
             if test_result.output_history:
                 self._galaxy_instance.histories.delete(test_result.output_history.id)
@@ -654,7 +655,7 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
         if self._galaxy_workflow:
             self._workflow_loader.unload_workflow(self._galaxy_workflow.id)
             self._galaxy_workflow = None
-        _logger.debug("Cleanup of workflow test '%s': DONE", self._test_uuid)
+        _logger.debug("Cleanup of workflow test '%s': DONE", self._uuid)
         if output_folder and _os.path.exists(output_folder):
             _shutil.rmtree(output_folder)
             _logger.debug("Deleted WF output folder '%s': DONE", output_folder)
@@ -693,6 +694,7 @@ class WorkflowTestSuiteRunner(_unittest.TestSuite):
         """
 
         super(WorkflowTestSuiteRunner, self).__init__()
+        self._uuid = str(_uuid1())
         self._suite = suite
         self._workflows = {}
         self._workflow_runners = []
@@ -722,6 +724,10 @@ class WorkflowTestSuiteRunner(_unittest.TestSuite):
                                                   disable_cleanup=disable_cleanup,
                                                   disable_assertions=disable_assertions)
                 self.addTest(runner)
+
+    @property
+    def uuid(self):
+        return self._uuid
 
     @property
     def galaxy_instance(self):
