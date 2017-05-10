@@ -720,7 +720,7 @@ class WorkflowTestResult(object):
 class WorkflowTestReportGenerator(object):
     __metaclass__ = ABCMeta
 
-    def generate_report(self, stream, output_format="xml"):
+    def generate_report(self, stream, report_format="plaintext"):
         raise NotImplementedError()
 
     def printErrors(self):

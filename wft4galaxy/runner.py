@@ -1,3 +1,4 @@
+from __future__ import print_function
 from future.utils import iteritems as _iteritems
 
 import os as _os
@@ -6,10 +7,10 @@ import six as _six
 import copy as _copy
 import time as _time
 import shutil as _shutil
+from enum import IntEnum
 import logging as _logging
 import unittest as _unittest
 from uuid import uuid1 as _uuid1
-from abc import ABCMeta, abstractmethod
 from StringIO import StringIO as _StringIO
 
 # XMLRunner utilities
@@ -23,7 +24,7 @@ from wft4galaxy import comparators as _comparators
 
 # the encoding name needs to be one of
 # http://www.iana.org/assignments/character-sets/character-sets.xhtml
-UTF8 = 'UTF-8'
+_UTF8 = 'UTF-8'
 
 # package level logger
 _logger = _common.LoggerManager.get_logger(__name__)
@@ -35,6 +36,12 @@ class UnsupportedTestCaseException(Exception):
 
 class UnsupportedOuputFormatException(Exception):
     """ Represents an format which the report generator doesn't support. """
+
+
+_SUPPORTED_REPORT_FORMATS = {
+    "plaintext": "txt",
+    "xunit": "xml"
+}
 
 
 class WorkflowTestsRunner():
@@ -95,7 +102,8 @@ class WorkflowTestsRunner():
         else:
             raise UnsupportedTestCaseException("{} not supported".format(test.__class__.name))
 
-    def run(self, test, filter=None, output_folder=None, output_format="xml",
+    def run(self, test, filter=None, stream=_sys.stderr, verbosity=2,
+            output_folder=None, output_suffix=None, report_format=_SUPPORTED_REPORT_FORMATS.keys()[0],
             disable_assertions=None, disable_cleanup=None, enable_logger=None, enable_debug=None):
 
         # deepcopy to avoid side effects
@@ -116,7 +124,7 @@ class WorkflowTestsRunner():
         # run tests
         test_result = None
         try:
-            result = self._runner.run(test_wrapper, output_format=output_format)
+            result = self._runner.run(test_wrapper, report_format=report_format)
 
             test_result = test_wrapper.test_result
             if isinstance(test_wrapper, WorkflowTestSuiteRunner):
@@ -144,8 +152,8 @@ class _WorkflowTestResultReporterImpl(_core.WorkflowTestReportGenerator):
         self._test_result = test_result
         setattr(self, "generate_report", self.generate_report)
 
-    def generate_report(self, output_file, output_format="xml"):
-        self._test_result.generate_report(output_file, output_format)
+    def generate_report(self, output_file, report_format=_SUPPORTED_REPORT_FORMATS.keys()[0]):
+        self._test_result.generate_report(output_file, report_format)
 
 
 class _ExtendedXMLTestRunner(_xmlrunner.XMLTestRunner):
@@ -154,10 +162,10 @@ class _ExtendedXMLTestRunner(_xmlrunner.XMLTestRunner):
     def __init__(self, output='.', outsuffix=None, stream=_sys.stderr,
                  descriptions=True, verbosity=2, elapsed_times=True):
         super(_ExtendedXMLTestRunner, self).__init__(output, outsuffix, stream, descriptions, verbosity, elapsed_times)
-        self.encoding = UTF8
+        self.encoding = _UTF8
         self.report_stream = self.stream
 
-    def _make_result(self, output_format="xml"):
+    def _make_result(self, report_format):
         """
         Creates a TestResult object which will be used to store
         information about the executed tests.
@@ -167,15 +175,15 @@ class _ExtendedXMLTestRunner(_xmlrunner.XMLTestRunner):
             verbosity=self.verbosity, elapsed_times=self.elapsed_times
         )
 
-    def run(self, test, output_format=None):
+    def run(self, test, report_format=None):
         """
             Runs the given test case or test suite.
         """
         report_data = None
         try:
             # Prepare the test execution
-            self._patch_standard_output()
-            result = self._make_result(output_format)
+            self._patch_standard_output(verbosity=self.verbosity)
+            result = self._make_result(report_format)
 
             # Print a nice header
             self.report_stream.writeln()
@@ -230,13 +238,13 @@ class _ExtendedXMLTestRunner(_xmlrunner.XMLTestRunner):
                 self.report_stream.write("\n")
 
             # Generate reports
-            if output_format:
+            if report_format:
                 self.report_stream.writeln()
-                _logger.info('Generating reports (format: \'{}\') ...'.format(output_format))
+                _logger.info('Generating reports (format: \'{}\') ...'.format(report_format))
                 if not _os.path.exists(self.output):
                     _os.makedirs(self.output)
-                with open(self._output_filename(output_format), "w") as output_file:
-                    result.generate_report(output_file, output_format)
+                with open(self._output_filename(test, report_format), "w") as output_file:
+                    result.generate_report(output_file, report_format)
         finally:
             self._restore_standard_output()
 
@@ -250,16 +258,12 @@ class _ExtendedXMLTestRunner(_xmlrunner.XMLTestRunner):
         super(_ExtendedXMLTestRunner, self)._patch_standard_output()
         self.report_stream = _DelegateIO(self.stream)
 
-    def _output_filename(self, output_format):
-        suite_name = "WorkflowTestSuite"
-        if self.outsuffix:
-            # not checking with 'is not None', empty means no suffix.
-            suite_name = '%s-%s' % (suite_name, self.outsuffix)
-
+    def _output_filename(self, test, report_format):
+        report_name = "WorkflowTest" + \
+                      ("Suite" if isinstance(test, WorkflowTestSuiteRunner) else "Case") + "-" + test.uuid
         filename = _os.path.join(
             self.output,
-            '%s.%s' % (suite_name, output_format))
-
+            '%s.%s' % (report_name, _SUPPORTED_REPORT_FORMATS[report_format]))
         _logger.debug("Output FILENAME: %s", filename)
         return filename
 
@@ -276,25 +280,25 @@ class _ExtendedXMLTestResult(_XMLTestResult):
         # store output handlers
         self._output_handlers = {}
         # register base handlers
-        self.register_output_handler("xml", self._generate_xml_report)
-        self.register_output_handler("txt", self._generate_txt_report)
+        self.register_output_handler("xunit", self._generate_xml_report)
+        self.register_output_handler("plaintext", self._generate_txt_report)
 
-    def register_output_handler(self, output_format, output_handler):
-        self._output_handlers[output_format] = output_handler
+    def register_output_handler(self, report_format, output_handler):
+        self._output_handlers[report_format] = output_handler
 
-    def generate_report(self, stream, output_format="xml"):
+    def generate_report(self, stream, report_format=_SUPPORTED_REPORT_FORMATS.keys()[0]):
         """
-        Write a report, formatted accordingly to the param `output_format`,
+        Write a report, formatted accordingly to the param `report_format`,
         to `stream`. Currently supported format are XML and plaintext.
 
         :param stream: the stream which the report has to be written to. 
-        :param output_format: the format of the report to write.
+        :param report_format: the format of the report to write.
         :return: 
         """
         try:
-            self._output_handlers[output_format](stream)
+            self._output_handlers[report_format](stream)
         except KeyError:
-            raise UnsupportedOuputFormatException("'{}' format not supported!".format(output_format))
+            raise UnsupportedOuputFormatException("'{}' format not supported!".format(report_format))
 
     def _generate_txt_report(self, stream):
         """ 
@@ -321,7 +325,7 @@ class _ExtendedXMLTestResult(_XMLTestResult):
             )
             xml_content = doc.toprettyxml(
                 indent='\t',
-                encoding=UTF8
+                encoding=_UTF8
             )
 
         # Assume that test_runner.output is a stream
@@ -333,11 +337,11 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
     Class responsible for launching a workflow test.
     """
 
-    def __init__(self, galaxy_instance, workflow_loader, workflow_test_config, test_suite=None):
+    def __init__(self, galaxy_instance, workflow_loader, workflow_test_config, test_suite_runner=None):
         self._galaxy_instance = galaxy_instance
         self._workflow_loader = workflow_loader
         self._workflow_test_config = workflow_test_config
-        self._test_suite = test_suite
+        self._test_suite_runner = test_suite_runner
         self._disable_cleanup = workflow_test_config.disable_cleanup
         self._disable_assertions = workflow_test_config.disable_assertions
         self._output_folder = workflow_test_config.output_folder
@@ -549,8 +553,8 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
 
         # store result
         self._test_cases[test_uuid] = test_result
-        if self._test_suite:
-            self._test_suite._add_test_result(test_result)
+        if self._test_suite_runner:
+            self._test_suite_runner._add_test_result(test_result)
         # FIXME
         self.test_result = test_result
 

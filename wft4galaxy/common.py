@@ -1,10 +1,12 @@
 from __future__ import print_function
+from future.utils import iteritems as _iteritems
 from past.builtins import basestring as _basestring
 
-import json as _json
-import logging as _logging
 import os as _os
+import json as _json
 import types as _types
+import logging as _logging
+from enum import IntEnum
 import datetime as _datetime
 
 # bioblend dependencies
