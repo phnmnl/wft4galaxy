@@ -5,7 +5,6 @@ from future.utils import iteritems as _iteritems
 from past.builtins import basestring as _basestring
 
 import os as _os
-from abc import ABCMeta
 import logging as _logging
 from json import dumps as _json_dumps
 from uuid import uuid1 as  _uuid1
@@ -718,12 +717,7 @@ class WorkflowTestResult(object):
 
 
 class WorkflowTestReportGenerator(object):
-    __metaclass__ = ABCMeta
-
     def generate_report(self, stream, report_format="plaintext"):
-        raise NotImplementedError()
-
-    def printErrors(self):
         raise NotImplementedError()
 
 
