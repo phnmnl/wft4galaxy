@@ -51,7 +51,7 @@ _SUPPORTED_REPORT_FORMATS = {
 
 class WorkflowTestsRunner():
     """
-    Class responsible for running a `WorkflowTestCase` and `WorkflowTestSuite` instances.
+    Class responsible for running `WorkflowTestCase` and `WorkflowTestSuite` instances.
     """
 
     def __init__(self, galaxy_url=None, galaxy_api_key=None,
@@ -114,6 +114,8 @@ class WorkflowTestsRunner():
             output_folder=None, output_suffix=None,
             report_format=None, report_filename=None,
             disable_assertions=None, disable_cleanup=None, enable_logger=None, enable_debug=None):
+
+        """ Run a single test case or a suite of test cases. """
 
         # deepcopy to avoid side effects
         test = _copy.deepcopy(test)
