@@ -513,13 +513,18 @@ class WorkflowTestCase(object):
         return config
 
     def run(self, galaxy_url=None, galaxy_api_key=None, output_folder=None,
-            disable_cleanup=None, enable_logger=None, enable_debug=None):
+            enable_xunit=False, xunit_file=None, verbosity=0,
+            enable_logger=None, enable_debug=None, disable_cleanup=None):
         _common.LoggerManager.configure_logging(
             _logging.DEBUG if enable_debug is True else _logging.INFO if enable_logger is True else _logging.ERROR)
         import wft4galaxy.runner as _runner
         return _runner.WorkflowTestsRunner(
-            galaxy_url, galaxy_api_key).run(self, disable_cleanup=disable_cleanup, output_folder=output_folder,
-                                            enable_logger=enable_logger, enable_debug=enable_debug)
+            galaxy_url, galaxy_api_key).run(self, verbosity=verbosity,
+                                            output_folder=output_folder or self.output_folder,
+                                            report_format="xunit" if enable_xunit else None,
+                                            report_filename=xunit_file,
+                                            enable_logger=enable_logger, enable_debug=enable_debug,
+                                            disable_cleanup=disable_cleanup)
 
 
 class WorkflowTestSuite(object):
@@ -629,12 +634,16 @@ class WorkflowTestSuite(object):
             raise ValueError("Filename '{0}' not found".format(filename))
 
     def run(self, galaxy_url=None, galaxy_api_key=None, tests=None, output_folder=None,
+            enable_xunit=False, xunit_file=None, verbosity=0,
             enable_logger=None, enable_debug=None, disable_cleanup=None):
         _common.LoggerManager.configure_logging(
             _logging.DEBUG if enable_debug is True else _logging.INFO if enable_logger is True else _logging.ERROR)
         import wft4galaxy.runner as _runner
         return _runner.WorkflowTestsRunner(
-            galaxy_url, galaxy_api_key).run(self, filter=tests, output_folder=output_folder,
+            galaxy_url, galaxy_api_key).run(self, filter=tests, verbosity=verbosity,
+                                            output_folder=output_folder or self.output_folder,
+                                            report_format="xunit" if enable_xunit else None,
+                                            report_filename=xunit_file,
                                             enable_logger=enable_logger, enable_debug=enable_debug,
                                             disable_cleanup=disable_cleanup)
 

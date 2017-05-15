@@ -15,6 +15,7 @@ from StringIO import StringIO as _StringIO
 
 # XMLRunner utilities
 import xmlrunner as _xmlrunner
+from xmlrunner.runner import XMLTestRunner
 from xmlrunner.result import _XMLTestResult
 
 # wft4galaxy dependencies
@@ -50,27 +51,29 @@ _SUPPORTED_REPORT_FORMATS = {
 
 class WorkflowTestsRunner():
     """
-    Class responsible for running a `WorkflowTestCase` or `WorkflowTestSuite`.
+    Class responsible for running a `WorkflowTestCase` and `WorkflowTestSuite` instances.
     """
 
     def __init__(self, galaxy_url=None, galaxy_api_key=None,
-                 output='.', outsuffix=None, stream=_sys.stderr,
+                 output_folder='.', stream=_sys.stderr,
                  descriptions=True, verbosity=1, elapsed_times=True):
-        self._runner = _ExtendedXMLTestRunner(output='reports', outsuffix=None, stream=_sys.stderr,
-                                              descriptions=True, verbosity=2, elapsed_times=True)
-        self.galaxy_url = galaxy_url
         self.galaxy_api_key = galaxy_api_key
 
-        # create Galaxy instance here
+        # create Galaxy instance
         self._galaxy_instance = _common.get_galaxy_instance(galaxy_url, galaxy_api_key)
 
-        # create WorkflowLoader here
+        # create WorkflowLoader
         self._workflow_loader = _common.WorkflowLoader.get_instance(self._galaxy_instance)
 
         # logger
         self._logger = _common.LoggerManager.get_logger(self)
 
-    def _setup(self, test, output_folder=None,
+        # runner reference
+        self._runner = _ExtendedXMLTestRunner(output=output_folder,
+                                              stream=stream, verbosity=verbosity,
+                                              descriptions=descriptions, elapsed_times=elapsed_times)
+
+    def _setup(self, test, output_folder=None, verbosity=2,
                disable_assertions=None, disable_cleanup=None, enable_logger=None, enable_debug=None):
         """ Update runner configuration accordingly to the test configuration"""
 
@@ -83,6 +86,9 @@ class WorkflowTestsRunner():
         if disable_assertions is not None:
             test.disable_assertions = disable_assertions
 
+        # update verbosity level
+        self._runner.verbosity = verbosity
+
         # update output folder
         self._runner.output = test.output_folder if output_folder is None else output_folder
 
@@ -90,8 +96,6 @@ class WorkflowTestsRunner():
         _common.LoggerManager.configure_logging(_logging.ERROR)
         if test.enable_logger or test.enable_debug:
             _common.LoggerManager.configure_logging(_logging.DEBUG if test.enable_debug else _logging.INFO)
-            if test.disable_cleanup:
-                self._file_handler = _common.LoggerManager.enable_log_to_file(output_folder=test.output_folder)
 
     def _make_wrappers(self, test, filter=None, output_folder=None,
                        disable_assertions=None, disable_cleanup=None, enable_logger=None, enable_debug=None):
@@ -107,14 +111,15 @@ class WorkflowTestsRunner():
             raise UnsupportedTestCaseException("{} not supported".format(test.__class__.name))
 
     def run(self, test, filter=None, stream=_sys.stderr, verbosity=2,
-            output_folder=None, output_suffix=None, report_format=_SUPPORTED_REPORT_FORMATS.keys()[0],
+            output_folder=None, output_suffix=None,
+            report_format=None, report_filename=None,
             disable_assertions=None, disable_cleanup=None, enable_logger=None, enable_debug=None):
 
         # deepcopy to avoid side effects
         test = _copy.deepcopy(test)
 
         # update configuration
-        self._setup(test, output_folder=output_folder,
+        self._setup(test, output_folder=output_folder, verbosity=verbosity,
                     disable_assertions=disable_assertions, disable_cleanup=disable_cleanup,
                     enable_logger=enable_logger, enable_debug=enable_debug)
 
@@ -128,7 +133,12 @@ class WorkflowTestsRunner():
         # run tests
         test_result = None
         try:
-            result = self._runner.run(test_wrapper, report_format=report_format)
+            if report_filename and \
+                    not _os.path.isabs(report_filename) and not report_filename.startswith("./"):
+                report_filename = _os.path.join(output_folder, report_filename)
+            result = self._runner.run(test_wrapper,
+                                      report_format=report_format,
+                                      report_filename=report_filename)
 
             test_result = test_wrapper.test_result
             if isinstance(test_wrapper, WorkflowTestSuiteRunner):
@@ -139,6 +149,8 @@ class WorkflowTestsRunner():
                                          {"_test_result": result})
         except Exception as e:
             self._logger.error(e)
+            if enable_debug:
+                self._logger.exception(e)
 
         finally:
             if not test.disable_cleanup:
@@ -160,7 +172,7 @@ class _WorkflowTestResultReporterImpl(_core.WorkflowTestReportGenerator):
         self._test_result.generate_report(output_file, report_format)
 
 
-class _ExtendedXMLTestRunner(_xmlrunner.XMLTestRunner):
+class _ExtendedXMLTestRunner(XMLTestRunner):
     """ Extends the XMLTestRunner to offer a custom XMLUnit support """
 
     def __init__(self, output='.', outsuffix=None, stream=_sys.stderr,
@@ -179,7 +191,7 @@ class _ExtendedXMLTestRunner(_xmlrunner.XMLTestRunner):
             verbosity=self.verbosity, elapsed_times=self.elapsed_times
         )
 
-    def run(self, test, report_format=None):
+    def run(self, test, report_filename=None, report_format=None):
         """
             Runs the given test case or test suite.
         """
@@ -242,29 +254,30 @@ class _ExtendedXMLTestRunner(_xmlrunner.XMLTestRunner):
                 self.report_stream.write("\n")
 
             # Generate reports
-            if report_format:
+            if report_format is not None:
                 self.report_stream.writeln()
                 _logger.info('Generating reports (format: \'{}\') ...'.format(report_format))
                 if not _os.path.exists(self.output):
                     _os.makedirs(self.output)
-                with open(self._output_filename(test, report_format), "w") as output_file:
+                if report_filename is None:
+                    report_filename = self._output_filename(test, report_format)
+                with open(report_filename, "w") as output_file:
                     result.generate_report(output_file, report_format)
+                _logger.info('Generated \'{}\' report available @ {}'.format(report_format, report_filename))
         finally:
             self._restore_standard_output()
 
         return result
 
-    def _restore_standard_output(self):
-        super(_ExtendedXMLTestRunner, self)._restore_standard_output()
-        self.report_stream = self.stream
+    def _patch_standard_output(self, verbosity=2):
+        self.report_stream = _DelegateIO(self.stream, verbosity)
 
-    def _patch_standard_output(self):
-        super(_ExtendedXMLTestRunner, self)._patch_standard_output()
-        self.report_stream = _DelegateIO(self.stream)
+    def _restore_standard_output(self):
+        self.report_stream = self.stream
 
     def _output_filename(self, test, report_format):
         report_name = "WorkflowTest" + \
-                      ("Suite" if isinstance(test, WorkflowTestSuiteRunner) else "Case") + "-" + test.uuid
+                      ("Suite" if isinstance(test, WorkflowTestSuiteRunner) else "Case") + "Report-" + test.uuid
         filename = _os.path.join(
             self.output,
             '%s.%s' % (report_name, _SUPPORTED_REPORT_FORMATS[report_format]))
@@ -277,10 +290,9 @@ class _ExtendedXMLTestResult(_XMLTestResult):
     Customize the `xmlrunner._XMLTestResult` class to support new features. 
     """
 
-    def __init__(self, stream=_sys.stdout, descriptions=1, verbosity=1,
-                 elapsed_times=True, properties=None, infoclass=None):
+    def __init__(self, stream=_sys.stderr, descriptions=1, verbosity=1, elapsed_times=True):
         super(_ExtendedXMLTestResult, self).__init__(
-            stream, descriptions, verbosity, elapsed_times, properties, infoclass)
+            stream, descriptions, verbosity, elapsed_times)
         # store output handlers
         self._output_handlers = {}
         # register base handlers
@@ -454,7 +466,9 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
         if enable_logger or enable_debug:
             _common.LoggerManager.update_log_level(_logging.DEBUG if enable_debug else _logging.INFO)
             if disable_cleanup:
-                self._file_handler = _common.LoggerManager.enable_log_to_file(output_folder=output_folder)
+                self._file_handler = _common.LoggerManager.enable_log_to_file(
+                    output_folder=output_folder,
+                    log_filename="-".join(["WorkflowTestCase", self.worflow_test_name, self.uuid]) + ".log")
         else:
             _common.LoggerManager.update_log_level(_logging.ERROR)
 
