@@ -39,7 +39,7 @@ RUN pip install --upgrade pip
 ADD bashrc ${HOME}/.bashrc
 
 # install wft4galaxy
-RUN git clone -b ${WFT4GALAXY_BRANCH} ${WFT4GALAXY_REPOSITORY_URL} ${WFT4GALAXY_PATH} \
+RUN git clone --single-branch --depth 1 -b ${WFT4GALAXY_BRANCH} ${WFT4GALAXY_REPOSITORY_URL} ${WFT4GALAXY_PATH} \
     && cd ${WFT4GALAXY_PATH} \
     && python setup.py install
 
