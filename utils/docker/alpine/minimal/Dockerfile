@@ -36,12 +36,7 @@ RUN apk update && apk add \
 RUN pip install --upgrade pip
 
 # setup bash custom prompt (PS1)
-RUN echo "parse_git_branch() {" >> ${HOME}/.bashrc
-RUN echo "git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'" >> ${HOME}/.bashrc
-RUN echo "}" >> ${HOME}/.bashrc
-RUN echo "export PS1=\"\[\033[36m\]\u\[\033[m\]@\[\033[32m\]\h:\[\033[33;1m\]\w\[\033[m\]\[\e[1;31m\]\$(parse_git_branch)\[\e[0m\]\$ \"" >> ${HOME}/.bashrc
-RUN echo "export CLICOLOR=1" >> ${HOME}/.bashrc
-RUN echo "export LSCOLORS=ExFxBxDxCxegedabagacad" >> ${HOME}/.bashrc
+ADD bashrc ${HOME}/.bashrc
 
 # install wft4galaxy
 RUN git clone -b ${WFT4GALAXY_BRANCH} ${WFT4GALAXY_REPOSITORY_URL} ${WFT4GALAXY_PATH} \
