@@ -11,8 +11,7 @@ import unittest as _unittest
 from uuid import uuid1 as _uuid1
 from StringIO import StringIO as _StringIO
 
-# XMLRunner utilities
-import xmlrunner as _xmlrunner
+# XMLRunner dependencies
 from xmlrunner.runner import XMLTestRunner
 from xmlrunner.result import _XMLTestResult
 
@@ -181,12 +180,13 @@ class _ExtendedXMLTestRunner(XMLTestRunner):
         self.encoding = _UTF8
         self.report_stream = self.stream
 
-    def _make_result(self, report_format):
+    def _make_result(self, test, report_format):
         """
         Creates a TestResult object which will be used to store
         information about the executed tests.
         """
         return _ExtendedXMLTestResult(
+            test=test,
             stream=self.report_stream, descriptions=self.descriptions,
             verbosity=self.verbosity, elapsed_times=self.elapsed_times
         )
@@ -199,7 +199,7 @@ class _ExtendedXMLTestRunner(XMLTestRunner):
         try:
             # Prepare the test execution
             self._patch_standard_output(verbosity=self.verbosity)
-            result = self._make_result(report_format)
+            result = self._make_result(test, report_format)
 
             # Print a nice header
             self.report_stream.writeln()
@@ -290,9 +290,11 @@ class _ExtendedXMLTestResult(_XMLTestResult):
     Customize the `xmlrunner._XMLTestResult` class to support new features. 
     """
 
-    def __init__(self, stream=_sys.stderr, descriptions=1, verbosity=1, elapsed_times=True):
+    def __init__(self, test, stream=_sys.stderr, descriptions=1, verbosity=1, elapsed_times=True):
         super(_ExtendedXMLTestResult, self).__init__(
             stream, descriptions, verbosity, elapsed_times)
+        # store a reference to the test
+        self.test = test
         # store output handlers
         self._output_handlers = {}
         # register base handlers
@@ -333,7 +335,7 @@ class _ExtendedXMLTestResult(_XMLTestResult):
         parentElement = doc
 
         for suite, tests in all_results.items():
-            suite_name = suite
+            suite_name = self.test.uuid
 
             # Build the XML file
             testsuite = _XMLTestResult._report_testsuite(
@@ -753,6 +755,9 @@ class WorkflowTestSuiteRunner(_unittest.TestSuite):
     @property
     def uuid(self):
         return self._uuid
+
+    def __str__(self):
+        return "Suite-{}".format(self.uuid)
 
     @property
     def galaxy_instance(self):
