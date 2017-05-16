@@ -3,11 +3,9 @@ from future.utils import iteritems as _iteritems
 
 import os as _os
 import sys as _sys
-import six as _six
 import copy as _copy
 import time as _time
 import shutil as _shutil
-from enum import IntEnum
 import logging as _logging
 import unittest as _unittest
 from uuid import uuid1 as _uuid1

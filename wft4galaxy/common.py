@@ -6,7 +6,6 @@ import os as _os
 import json as _json
 import types as _types
 import logging as _logging
-from enum import IntEnum
 import datetime as _datetime
 
 # bioblend dependencies
