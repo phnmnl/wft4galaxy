@@ -86,12 +86,19 @@ DEFAULT_WORKFLOW_CONFIG = {
 }
 
 
+class _CustomFormatter(_argparse.RawTextHelpFormatter):
+    """ Customize settings of the default RawTextHelpFormatter """
+
+    def __init__(self, prog, indent_increment=2, max_help_position=40, width=None):
+        super(_CustomFormatter, self).__init__(prog, indent_increment, max_help_position, width)
+
+
 class _CommandLineHelper:
     def __init__(self, omit_subparsers=False):
         self._parser, self._entrypoint_parsers = self.setup(omit_subparsers)
 
     def setup(self, omit_subparsers=False):
-        main_parser = _argparse.ArgumentParser(add_help=True, formatter_class=_argparse.RawTextHelpFormatter)
+        main_parser = _argparse.ArgumentParser(add_help=True, formatter_class=_CustomFormatter)
         main_parser.add_argument('--registry', help='Alternative Docker registry (default is "DockerHub")',
                                  default=None)
         main_parser.add_argument('--repository', default=None, metavar="REPO", dest="repository",
@@ -165,12 +172,15 @@ class _CommandLineHelper:
                                   default=DEFAULT_CONFIG_FILENAME,
                                   help="YAML configuration file of workflow tests (default is \"{0}\")"
                                   .format(DEFAULT_CONFIG_FILENAME))
-        wft4g_parser.add_argument("-o", "--output", metavar="output",
+        wft4g_parser.add_argument("-o", "--output", metavar="PATH",
                                   default=DEFAULT_OUTPUT_FOLDER,
                                   help="Absolute path of the output folder (default is \"{0}\")"
                                   .format(DEFAULT_OUTPUT_FOLDER))
         wft4g_parser.add_argument('--enable-logger', help='Enable log messages', action='store_true')
         wft4g_parser.add_argument('--disable-cleanup', help='Disable cleanup', action='store_true')
+        wft4g_parser.add_argument('--xunit', help='Enable xUnit report', action='store_true', default=False)
+        wft4g_parser.add_argument('--xunit-file', default=None, metavar="PATH",
+                                  help='Set the path of the xUnit report file (absolute or relative to the output folder)')
         wft4g_parser.add_argument("test", help="Workflow Test Name", nargs="*")
 
         return main_parser, entrypoint_parsers
@@ -404,6 +414,11 @@ class NonInteractiveContainer(Container):
             # cleanup option
             if options.disable_cleanup:
                 cmd.append("--disable-cleanup")
+            # xunit options
+            if options.xunit:
+                cmd.append("--xunit")
+            if options.xunit_file:
+                cmd += ["--xunit-file", options.xunit_file]
             # add test filter
             cmd += options.test
 
