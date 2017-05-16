@@ -21,8 +21,7 @@ ENV WFT4GALAXY_BRANCH ${git_branch:-develop}
 
 # install base packages
 RUN apt-get update && \
-    apt-get install -y python python-dev python-pip git \
-                       python-lxml libyaml-dev && \
+    apt-get install -y python-dev python-pip git python-lxml libyaml-dev && \
     apt-get -y clean && apt-get -y autoremove && rm -rf /var/lib/{cache,log}/ /tmp/* /var/tmp/*
 
 # install ipython

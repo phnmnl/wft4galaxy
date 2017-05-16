@@ -25,7 +25,6 @@ RUN apk update && apk add \
     gcc \
     make \
     git \
-    python \
     py-pip \
     bash \
     python-dev \
