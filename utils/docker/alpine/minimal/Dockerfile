@@ -41,13 +41,8 @@ ADD bashrc ${HOME}/.bashrc
 # install wft4galaxy
 RUN git clone --single-branch --depth 1 -b ${WFT4GALAXY_BRANCH} ${WFT4GALAXY_REPOSITORY_URL} ${WFT4GALAXY_PATH} \
     && cd ${WFT4GALAXY_PATH} \
-    && python setup.py install
-
-# build a tutorial folder within the user's home
-RUN mkdir ${HOME}/tutorial && \
-    ln -s ${WFT4GALAXY_PATH}/examples ${HOME}/tutorial/examples && \
-    ln -s ${WFT4GALAXY_PATH}/docs/notebooks ${HOME}/tutorial/notebooks && \
-    ln -s ${WFT4GALAXY_PATH}/docs/images ${HOME}/tutorial/images
+    && python setup.py install \
+    && rm -rf ${WFT4GALAXY_PATH}
 
 # update the working dir
 WORKDIR /root
