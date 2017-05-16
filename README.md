@@ -38,26 +38,25 @@ wft4galaxy [options]
 The the main available options are:
 
 ```bash
-usage: wft4galaxy [-h] [--server SERVER] [--api-key API_KEY] [--enable-logger]
-                  [--debug] [--disable-cleanup] [--disable-assertions]
-                  [-o OUTPUT] [-f FILE]
+usage: wft4galaxy [-h] [--server GALAXY_URL] [--api-key GALAXY_API_KEY]
+                  [-f FILE] [--enable-logger] [--debug] [--disable-cleanup]
+                  [--xunit] [--xunit-file FILE_PATH] [-o PATH]
                   [test [test ...]]
 
 positional arguments:
-  test                  Workflow Test Name
+  test                      Workflow Test Name
 
 optional arguments:
-  -h, --help            show this help message and exit
-  --server SERVER       Galaxy server URL
-  --api-key API_KEY     Galaxy server API KEY
-  --enable-logger       Enable log messages
-  --debug               Enable debug mode
-  --disable-cleanup     Disable cleanup
-  --disable-assertions  Disable assertions
-  -o OUTPUT, --output OUTPUT
-                        absolute path of the output folder
-  -f FILE, --file FILE  YAML definition file of workflow tests
-                        (default is workflow-test-suite.yml)
+  -h, --help                show this help message and exit
+  --server GALAXY_URL       Galaxy server URL
+  --api-key GALAXY_API_KEY  Galaxy server API KEY
+  -f FILE, --file FILE      YAML configuration file of workflow tests (default is workflow-test-suite.yml)
+  --enable-logger           Enable log messages
+  --debug                   Enable debug mode
+  --disable-cleanup         Disable cleanup
+  --xunit                   Enable xUnit report
+  --xunit-file FILE_PATH    Set the path of the xUnit report file (absolute or relative to the output folder)
+  -o PATH, --output PATH    Path of the output folder
                         
 ```
 
