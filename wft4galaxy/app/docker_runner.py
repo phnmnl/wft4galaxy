@@ -273,6 +273,7 @@ class Container():
 
 class InteractiveContainer(Container):
     def _parse_volumes(self, volumes):
+        mounts = []
         result = {}
         if volumes:
             for v_str in volumes:
@@ -280,8 +281,11 @@ class InteractiveContainer(Container):
                 if len(v_info) != 2:
                     raise ValueError(
                         "Invalid volume parameter '{0}'. See 'docker run' syntax for more details.".format(v_str))
-                result[v_info[0]] = {"bind": v_info[1]}
-        return result
+                if not _os.path.isabs(v_info[0]):
+                    v_info[0] = _os.path.abspath(v_info[0])
+                result[v_info[0]] = {"bind": v_info[1], "mode": "rw"}
+                mounts.append(v_info[1])
+        return mounts, result
 
     def _parse_ports(self, ports):
         result = {}
@@ -311,7 +315,7 @@ class InteractiveContainer(Container):
             docker_image = self.get_image_name(options, options.skip_update)
 
             # volumes
-            volumes = self._parse_volumes(options.volume)
+            vmounts, volumes = self._parse_volumes(options.volume)
 
             # ports
             ports = self._parse_ports(options.port)
@@ -335,9 +339,9 @@ class InteractiveContainer(Container):
                 tty=True,
                 command=command,
                 environment=environment,
-                volumes=volumes,
+                volumes=vmounts,
                 ports=list(ports.keys()),
-                host_config=client.create_host_config(port_bindings=ports)
+                host_config=client.create_host_config(binds=volumes, port_bindings=ports)
             )
             _logger.info("Started Docker container %s", container["Id"])
             _dockerpty.start(client, container)
