@@ -6,6 +6,7 @@ last_commit=$(git log --format="%H" -n 1)
 if [ -z "${git_url}" ]; then
 	echo "Getting git repository URL from local repository" >&2
 	first_remote=$(git remote | head -n 1)
+	echo "Using git remote '${first_remote}'" >&2
 	git_url=$(git config --get remote.${first_remote}.url)
 fi
 
