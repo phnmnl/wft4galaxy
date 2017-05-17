@@ -2,8 +2,18 @@
 
 # git info
 last_commit=$(git log --format="%H" -n 1)
-git_url=$(git config --get remote.origin.url)
-git_branch=$(git rev-parse --abbrev-ref HEAD)
+
+if [ -z "${git_url}" ]; then
+	echo "Getting git repository URL from local repository" >&2
+	first_remote=$(git remote | head -n 1)
+	git_url=$(git config --get remote.${first_remote}.url)
+fi
+
+if [ -z "${git_branch}" ] ; then
+	echo "Git branch not specified.  Using local repository's current branch" >&2
+	git_branch=$(git rev-parse --abbrev-ref HEAD)
+fi
+
 git_repo_owner=$(echo ${git_url} | sed -E "s/.*[:\/](.*)\/(.*)(\.git)/\1/")
 git_repo_name=$(echo ${git_url} | sed -E "s/.*[:\/](.*)\/(.*)(\.git)/\2/")
 
