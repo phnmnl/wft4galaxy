@@ -24,9 +24,6 @@ git_url="https://github.com/${git_repo_owner}/${git_repo_name}.git"
 # infer image type (minimal|develop) from the containing folder
 image_type=$(basename "$(pwd)")
 
-# infer base_os from the containing folder
-base_os=$(basename $(dirname "$(pwd)"))
-
 # map the git phnmnl repository to the Crs4 DockerHub repository
 if [[ ${git_repo_owner} == "phnmnl" ]]; then
     git_repo_owner="crs4"
@@ -34,11 +31,11 @@ fi
 
 # get Docker image tag
 tagged_version="false"
-docker_tag="${base_os}-${git_branch}"
+docker_tag="${image_type}-${git_branch}"
 git_tags=($(git show-ref --tags -s))
 for t in ${git_tags[@]}; do
     if [[ ${last_commit} == ${t} ]]; then
-        docker_tag=${base_os}-$(git describe --contains ${t})
+        docker_tag=${image_type}-$(git describe --contains ${t})
         tagged_version="true"
         break
     fi

@@ -31,8 +31,14 @@ if [ $# -ge 1 ]; then
   echo " - Using user-specified git repository url ${git_url}"
 fi
 
+MyDir="$(dirname "${BASH_SOURCE[0]}")"
+
+# Need to cd into this script's directory because image-config assumes
+# it's running within it
+cd "${MyDir}"
+
 # load git/docker info
-source "../image-config.sh"
+source "${MyDir}/../image-config.sh"
 
 if [ -z "${git_branch}" -o -z "${git_url}" ]; then
   echo "Error fetching remote repository information :-(  Try specifying it on the command line" >&2

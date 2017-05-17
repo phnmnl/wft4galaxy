@@ -50,7 +50,6 @@ DOCKER_IMAGE_SETTINGS = {
         if _properties is not None and "Docker" in _properties and "tag" in _properties["Docker"] else "develop",
     "production": "wft4galaxy-minimal",
     "develop": "wft4galaxy-develop",
-    "supported_os": ["alpine", "ubuntu"],
     "default_version": "develop"
 }
 
@@ -109,11 +108,6 @@ class _CommandLineHelper:
                                       '(default is "{}")'.format(DOCKER_IMAGE_SETTINGS["default_version"]))
         main_parser.add_argument('--image', help='Alternative "wft4galaxy" Docker image name '
                                                  'specified as NAME:TAG', default=None)
-        main_parser.add_argument('--os', choices=DOCKER_IMAGE_SETTINGS["supported_os"],
-                                 help='Base OS of the Docker image (default is "{0}" and '
-                                      'it is ignored when the "--image" option is specified)'
-                                 .format(DOCKER_IMAGE_SETTINGS["supported_os"][0]),
-                                 default=DOCKER_IMAGE_SETTINGS["supported_os"][0])
         main_parser.add_argument('--skip-update', action="store_true", default=False,
                                  help='Skip the update of the "wft4galaxy" Docker image '
                                       'and use the local version if it is available')
@@ -247,7 +241,7 @@ class Container():
                         version = _properties["Repository"]["branch"]
 
             # build the image tag
-            image_tag = "{0}-{1}".format(options.os or "alpine", version or DOCKER_IMAGE_SETTINGS["default_version"])
+            image_tag = "{}".format(version or DOCKER_IMAGE_SETTINGS["default_version"])
             # build the image name
             img_name_parts.append("{0}:{1}".format(config[2], image_tag))
 
