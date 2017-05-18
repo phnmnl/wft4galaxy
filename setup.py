@@ -3,6 +3,7 @@ import shutil
 from setuptools import setup
 import subprocess as _subprocess
 from json import dump as _json_dump
+from pip.req import parse_requirements
 from distutils.command.clean import clean
 from setuptools.command.build_py import build_py
 
@@ -113,25 +114,14 @@ class CleanCommand(clean):
             self._rmrf(p)
 
 
+install_reqs = parse_requirements("requirements.txt", session="hack")
+requirements = [str(ir.req) for ir in install_reqs]
 setup(
     name='wft4galaxy',
     description='Utility module for testing Galaxy workflows',
     url='https://github.com/phnmnl/wft4galaxy',
     version='0.1',
-    install_requires={
-        'setuptools': ['setuptools'],
-        'future': ['future>=0.16.0'],
-        'bioblend': ['bioblend'],
-        'ruamel.yaml': ['ruamel.yaml'],  # TODO: to be removed in the next release
-        'lxml': ['lxml'],
-        'pyyaml': ['pyyaml'],
-        'sphinx_rtd_theme': ['sphinx_rtd_theme'],
-        'Jinja2': ['Jinja2>=2.9'],
-        'docker': ['docker>=2.1.0'],
-        'dockerpty': ['dockerpty>=0.4.1'],
-        'unittest-xml-reporting': ['unittest-xml-reporting==2.1.0']
-    },
-    dependency_links=['git+https://github.com/galaxyproject/bioblend.git/@master#egg=bioblend-latest'],
+    install_requires=requirements,
     package_data={'wft4galaxy': ['wft4galaxy.properties'], 'templates': ['*']},
     packages=["wft4galaxy", "wft4galaxy.comparators", "wft4galaxy.app", "templates"],
     entry_points={'console_scripts': [
