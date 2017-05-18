@@ -5,13 +5,31 @@ language: python
 services:
   - docker
 
+env:
+  global:
+    - GALAXY_CONFIG_MASTER_API_KEY=HSNiugRFvgT574F43jZ7N9F3
+    - GALAXY_PORT=30700
+    - GALAXY_DOCKER_HOST=127.0.0.1
+    - GALAXY_CONTAINER_NAME=galaxy-server
+    - GALAXY_USERNAME=wft4galaxy
+    - GALAXY_USER_PASSWORD=wft4galaxy-tester
+    - GALAXY_USER_EMAIL=wft4galaxy@wft.it
+
+#  matrix:
+#    - USE_NETWORK=true
+#    - USE_NETWORK=false
+
 before_install:
-  - pwd
-  - ls
-  - pip install -r requirements.txt
+- pip install -r requirements.txt
+- utils/docker/start-galaxy.sh ${GALAXY_CONFIG_MASTER_API_KEY} ${GALAXY_PORT} ${GALAXY_DOCKER_HOST} ${GALAXY_CONTAINER_NAME}
+- utils/docker/create-galaxy-user.py --with-api-key \
+                            --server ${GALAXY_SERVER} --api-key ${GALAXY_CONFIG_MASTER_API_KEY} \
+                            ${GALAXY_USERNAME} ${GALAXY_USER_PASSWORD} ${GALAXY_USER_EMAIL}
 
 script:
-  - echo "OK"
+- GALAXY_API_KEY=$(cat "wft4galaxy.id")
+- tests/docker/setup.sh ${GALAXY_API_KEY}
 
-after_success:
-  #
+
+after_script:
+- docker rm -f ${GALAXY_CONTAINER_NAME}

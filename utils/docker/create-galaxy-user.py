@@ -88,6 +88,9 @@ def main():
             filename = user_info["username"] + ".info"
         with open(filename, "w") as out:
             _json.dump(user_info, out, indent=4)
+        filename = user_info["username"] + ".id"
+        with open(filename, "w") as out:
+            out.write(user_info["api-key"])
 
         # write to stdout the "api-key"
         print(user_info["api-key"])
