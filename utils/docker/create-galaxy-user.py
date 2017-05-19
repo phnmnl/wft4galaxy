@@ -26,7 +26,7 @@ def _make_parser():
                                       description="Create a new Galaxy user programmatically.")
     parser.add_argument('--server', help='Galaxy Server URL', default=_os.environ["GALAXY_URL"])
     parser.add_argument('--api-key', help='Galaxy Admin\'s API KEY', required=True)
-    parser.add_argument('--debug', help='Enable debug messages', required=False, default=False)
+    parser.add_argument('--debug', help='Enable debug messages', action="store_true", default=False)
     parser.add_argument('--file', default=None, help='Set a custom output files (default = "<username>.info")')
     parser.add_argument('username', help='User(name) to add')
     parser.add_argument('password', help='User\'s password')
