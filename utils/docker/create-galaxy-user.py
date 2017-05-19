@@ -11,7 +11,7 @@ from bioblend import ConnectionError
 from bioblend.galaxy import GalaxyInstance as _GalaxyInstance
 
 # create a module level logger
-_logger = _logging.getLogger("UserCreator")
+_logger = _logging.getLogger("UserManager")
 
 
 class _CustomFormatter(_argparse.RawTextHelpFormatter):
@@ -36,15 +36,23 @@ def _make_parser():
     return parser
 
 
-class CreatorException(ConnectionError):
+class GalaxyException(ConnectionError):
     def __init__(self, e):
-        super(CreatorException, self).__init__(self.get_message(e.message, e.body), e.body, e.status_code)
+        super(GalaxyException, self).__init__(self.get_message(e.message, e.body), e.body, e.status_code)
 
     @staticmethod
     def get_message(message, body):
         if body:
             return _json.loads(body)["err_msg"]
         return message
+
+
+class CreateUserException(GalaxyException):
+    pass
+
+
+class CreateApiKeyException(GalaxyException):
+    pass
 
 
 def create_user(galaxy_instance, username, password, user_email):
@@ -54,7 +62,14 @@ def create_user(galaxy_instance, username, password, user_email):
             raise RuntimeError("Possible issue when creating the user: no user ID ca be found!")
         return user_info
     except ConnectionError as e:
-        raise CreatorException(e)
+        raise CreateUserException(e)
+
+
+def create_api_key(galaxy_instance, user_id):
+    try:
+        return galaxy_instance.users.create_user_apikey(user_id)
+    except ConnectionError as e:
+        raise CreateApiKeyException(e)
 
 
 def main():
@@ -82,7 +97,7 @@ def main():
 
         # add API KEY if required
         if options.with_api_key:
-            api_key = gi.users.create_user_apikey(user_info["id"])
+            api_key = create_api_key(galaxy_instance=gi, user_id=user_info["id"])
             user_info["api-key"] = api_key
             _logger.info("Created API KEY: %s", api_key)
 
@@ -91,9 +106,6 @@ def main():
             filename = user_info["username"] + ".info"
         with open(filename, "w") as out:
             _json.dump(user_info, out, indent=4)
-        filename = user_info["username"] + ".id"
-        with open(filename, "w") as out:
-            out.write(user_info["api-key"])
 
         # write to stdout the "api-key"
         print(user_info["api-key"])
