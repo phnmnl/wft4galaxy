@@ -2,6 +2,10 @@ sudo: required
 
 language: python
 
+python:
+  - "2.7"
+  - "3.6"
+
 services:
   - docker
 
@@ -23,15 +27,14 @@ env:
 before_install:
 - pip install -r requirements.txt
 - utils/docker/start-galaxy.sh ${GALAXY_CONFIG_MASTER_API_KEY} ${GALAXY_PORT} ${GALAXY_DOCKER_HOST} ${GALAXY_CONTAINER_NAME}
-- GALAXY_API_KEY=$(utils/docker/create-galaxy-user.py --debug --server ${GALAXY_URL} --api-key ${GALAXY_CONFIG_MASTER_API_KEY} ${GALAXY_USERNAME} ${GALAXY_USER_PASSWORD} ${GALAXY_USER_EMAIL} --with-api-key)
-- echo "Galaxy URL: ${GALAXY_URL}"
-- echo "Galaxy KEY: ${GALAXY_API_KEY}"
+- utils/docker/create-galaxy-user.py --debug --server ${GALAXY_URL} --api-key ${GALAXY_CONFIG_MASTER_API_KEY} ${GALAXY_USERNAME} ${GALAXY_USER_PASSWORD} ${GALAXY_USER_EMAIL} --with-api-key
 
 install:
 - python setup.py install
 
 script:
-- wft4galaxy -f examples/workflow-test-suite.yml --debug
+- GALAXY_API_KEY=$(cat "wft4galaxy.id")
+- wft4galaxy -f examples/change_case/workflow-test-suite.yml --debug --server ${GALAXY_URL} --api-key ${GALAXY_API_KEY}
 
 
 after_script:
