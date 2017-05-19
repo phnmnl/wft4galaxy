@@ -1,50 +1,28 @@
 #!/usr/bin/env bash
 
-function print_usage() {
-  (echo "USAGE: $0 [ Repo URL [revision] ]"
-   echo
-   echo "If no arguments are provided, this script will try to get the"
-   echo "required repository information from the local repository itself") >&2
-}
+# absolute path of the current script
+script_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-if [ $# -gt 4 ]; then
-  print_usage
-  exit 1
-fi
+# set prefix for distinguishing minimal from develop image (used by the 'set-docker-image-info' script)
+export IMAGE_TAG_PREFIX="minimal"
 
-if [ "${1}" == "-h" ]; then
-  print_usage
-  exit 0
-fi
+# set git && image info
+source ${script_path}/../set-git-repo-info.sh "$@"
+source ${script_path}/../set-docker-image-info.sh
 
-if [ $# -eq 0 ]; then
-  printf "== No user specified arguments.  Using defaults from local repository ==\n\n" >&2
-fi
-
-if [ $# -eq 2 ]; then
-  git_branch="${2}"
-  echo " - Using user-specified git revision ${git_branch}"
-fi
-
-if [ $# -ge 1 ]; then
-  git_url="${1}"
-  echo " - Using user-specified git repository url ${git_url}"
-fi
-
-MyDir="$(dirname "${BASH_SOURCE[0]}")"
-
-# Need to cd into this script's directory because image-config assumes
-# it's running within it
-cd "${MyDir}"
+# Need to cd into this script's directory because image-config assumes it's running within it
+cd "${script_path}"
 
 # load git/docker info
-source "${MyDir}/../image-config.sh"
+source "${script_path}/../image-config.sh"
 
 if [ -z "${git_branch}" -o -z "${git_url}" ]; then
   echo "Error fetching remote repository information :-(  Try specifying it on the command line" >&2
   exit 1
 fi
 
-
 # build the Docker image
-docker build --build-arg git_branch=${git_branch} --build-arg git_url=${git_url} -t ${IMAGE_NAME} .
+docker build --build-arg git_branch=${GIT_BRANCH} --build-arg git_url=${GIT_HTTPS} -t ${IMAGE} .
+
+# restore the original path
+cd -
