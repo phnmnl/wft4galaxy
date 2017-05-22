@@ -41,6 +41,11 @@ for t in ${git_tags[@]}; do
     fi
 done
 
+
+if [[ -z ${GIT_TAG} ]]; then
+
+fi
+
 # set IMAGE_NAME if not defined
 if [[ -z ${IMAGE_NAME} ]]; then
     IMAGE_NAME="${git_repo_owner}/wft4galaxy-${image_type}:${docker_tag}"
