@@ -92,6 +92,7 @@ fi
 if [ -z "${git_branch}" ] ; then
 	echo "Git branch not specified.  Using local repository's current branch" >&2
 	git_branch=$(git rev-parse --abbrev-ref HEAD)
+	git_branch=$(git branch | grep \* | cut -d ' ' -f2)
 fi
 
 # owner

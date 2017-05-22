@@ -13,16 +13,14 @@ source ${script_path}/../set-docker-image-info.sh
 # Need to cd into this script's directory because image-config assumes it's running within it
 cd "${script_path}"
 
-# load git/docker info
-source "${script_path}/../image-config.sh"
-
-if [ -z "${git_branch}" -o -z "${git_url}" ]; then
-  echo "Error fetching remote repository information :-(  Try specifying it on the command line" >&2
-  exit 1
-fi
+# override just for debugs
+IMAGE="kikkomep/wft4galaxy-minimal:minimal-travis-integration"
 
 # build the Docker image
 docker build --build-arg git_branch=${GIT_BRANCH} --build-arg git_url=${GIT_HTTPS} -t ${IMAGE} .
+
+# print list of Docker images available
+docker images
 
 # restore the original path
 cd -

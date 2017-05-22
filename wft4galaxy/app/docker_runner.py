@@ -48,9 +48,9 @@ DOCKER_IMAGE_SETTINGS = {
         if _properties is not None and "Docker" in _properties and "repository" in _properties["Docker"] else "crs4",
     "tag": _properties["Docker"]["tag"] \
         if _properties is not None and "Docker" in _properties and "tag" in _properties["Docker"] else "develop",
-    "production": "wft4galaxy-minimal",
+    "production": "wft4galaxy",
     "develop": "wft4galaxy-develop",
-    "default_version": "develop"
+    "default_version": "latest"
 }
 
 # Docker container settings
