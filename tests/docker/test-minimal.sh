@@ -10,7 +10,7 @@ curl -s https://raw.githubusercontent.com/phnmnl/wft4galaxy/develop/utils/docker
 cd ${IMAGE_ROOT_PATH}
 
 # build docker image
-./build-remote.sh && cd -
+./build-remote.sh --branch ${TRAVIS_BRANCH} && cd -
 
 # Run examples  # FIXME: change the repo and version TAGs
 wft4galaxy-docker --repository kikkomep --version minimal-travis-integration \

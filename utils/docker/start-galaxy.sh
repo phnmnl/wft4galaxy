@@ -17,7 +17,7 @@ GALAXY_URL="http://${GALAXY_DOCKER_HOST}:${GALAXY_PORT}"
 export GALAXY_URL=${GALAXY_URL//[[:blank:]]/}
 
 # wait for Galaxy
-printf "\nWaiting for Galaxy @ (${GALAXY_URL} ..."
+printf "\nWaiting for Galaxy @ ${GALAXY_URL} ..."
 until $(curl --output /dev/null --silent --head --fail ${GALAXY_URL}); do
     printf '.'
     sleep 5
