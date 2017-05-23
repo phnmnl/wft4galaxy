@@ -12,7 +12,9 @@ debug="false"
 
 
 function print_usage(){
-    echo -e "\n USAGE: $0 [--url URL] [--owner OWNER] [--branch BRANCH] [--tag TAG]\n" >&2
+    (echo -e "\n USAGE: start-galaxy.sh [--docker-host <IP>] [--container-name <NAME>] [--master-api-key <API-KEY>]"
+     echo -e "                        [--network <DOCKER_NETWORK>] [--ip <CONTAINER_ADDRESS>] [--port <GALAXY_HTTP_PORT>]"
+     echo -e "                        [-h|--help]\n ") >&2
 }
 
 
@@ -77,7 +79,7 @@ while [ -n "$1" ]; do
                         debug="true"
                         shift
                         ;;
-                  -h )
+                  -h|--help )
                         print_usage
                         exit 0
                         ;;
