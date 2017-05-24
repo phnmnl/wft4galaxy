@@ -37,6 +37,9 @@ do
             exit -1
             ;;
         *)
+            if [[ -z ${image_type} ]]; then
+                image_type=${1}
+            fi
             ;;
     esac
     shift
@@ -52,6 +55,11 @@ script_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # absolute path of the image folder
 image_path="${script_path}/${image_type}"
+# check whether the image type exists
+if [[ ! -d ${image_path} ]]; then
+    echo -e "\nThe image type '${image_type}' doen't exist!!!"
+    exit -1
+fi
 
 # set git && image info
 source ${script_path}/set-git-repo-info.sh "$@"
