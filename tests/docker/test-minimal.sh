@@ -18,6 +18,9 @@ function print_usage(){
         echo "required image information from the local repository itself") >&2
 }
 
+# disable debug
+debug=""
+
 # parse args
 while test $# -gt 0
 do
@@ -54,6 +57,10 @@ do
             export IMAGE_TAG=$2
             shift
             ;;
+        --debug )
+            debug="--debug"
+            shift
+            ;;
         --*)
             print_usage
             exit -1
@@ -87,7 +94,7 @@ cd ${image_root_path}
 "${image_root_path}/${image_type}/build.sh" && cd -
 
 # set optional arguments
-cmd_other_opts="--skip-update"
+cmd_other_opts="--skip-update ${debug}"
 if [[ -n ${IMAGE_REPOSITORY} ]]; then
     cmd_other_opts="${cmd_other_opts} --repository ${IMAGE_REPOSITORY}"
 fi
@@ -105,7 +112,7 @@ fi
 #            ubuntu bash -c "apt-get update && apt-get install -y iputils-ping && timeout 5 ping 172.18.0.22"
 
 # build cmd
-base_cmd="wft4galaxy-docker --debug ${cmd_other_opts} --server ${GALAXY_URL} --api-key ${GALAXY_API_KEY}"
+base_cmd="wft4galaxy-docker ${cmd_other_opts} --server ${GALAXY_URL} --api-key ${GALAXY_API_KEY}"
 cmd="${base_cmd} -f examples/change_case/workflow-test.yml"
 echo "CMD: ${cmd}">&2
 
