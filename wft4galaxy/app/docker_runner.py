@@ -30,12 +30,15 @@ _FAILURE_EXIT = -1
 # Jupyter port
 DEFAULT_JUPYTER_PORT = 9876
 
-# try to load wft4galaxy.properties
+# absolute path of this script
+_script_path = _os.path.realpath(__file__)
+_logger.debug("Script path: %s" % _script_path)
+
+# try to load wft4galaxy.properties if the script belongs to an installed instance of wft4galaxy
 _properties = None
 try:
-    import wft4galaxy as _wft4galaxy
-
-    with open(_os.path.join(_os.path.dirname(_wft4galaxy.__file__), "wft4galaxy.properties")) as fp:
+    _properties_file_path = _os.path.abspath(_os.path.join(_script_path, _os.pardir, _os.pardir))
+    with open(_os.path.join(_properties_file_path, "wft4galaxy.properties")) as fp:
         _properties = _json.load(fp)
         _logger.debug("wft4galaxy.properties: %r", _properties)
 except:
