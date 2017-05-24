@@ -37,6 +37,7 @@ do
             exit -1
             ;;
         *)
+            # support only the first argument; skip all remaining
             if [[ -z ${image_type} ]]; then
                 image_type=${1}
             fi
