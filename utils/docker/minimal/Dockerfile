@@ -20,32 +20,32 @@ ENV WFT4GALAXY_REPOSITORY_URL ${git_url:-"https://github.com/phnmnl/wft4galaxy"}
 ENV WFT4GALAXY_BRANCH ${git_branch:-develop}
 
 # install base packages
-RUN    echo "Installing depedencies" >&2 \
+RUN echo "Installing depedencies" >&2 \
     && apk update && apk add \
-          build-base \
-          gcc \
-          make \
-          git \
-          py-pip \
-          bash \
-					python \
-					py-setuptools \
-          python-dev \
-          py-lxml \
+        build-base \
+        gcc \
+        make \
+        git \
+        py-pip \
+        bash \
+        python \
+        py-setuptools \
+        python-dev \
+        py-lxml \
     && pip install --upgrade pip \
     && echo "Cloning wft4galaxy" >&2 \
     && git clone --single-branch --depth 1 -b ${WFT4GALAXY_BRANCH} ${WFT4GALAXY_REPOSITORY_URL} ${WFT4GALAXY_PATH} \
     && cd ${WFT4GALAXY_PATH} \
-		&& echo "Building and installing wft4galaxy" >&2 \
+    && echo "Building and installing wft4galaxy" >&2 \
     && python setup.py install \
-		&& echo "Removing build-time dependencies" >&2 \
-		&& apk del \
-          build-base \
-          gcc \
-          make \
-          git \
-          py-pip \
-          python-dev \
+    && echo "Removing build-time dependencies" >&2 \
+    && apk del \
+        build-base \
+        gcc \
+        make \
+        git \
+        py-pip \
+        python-dev \
     && rm -rf ${WFT4GALAXY_PATH} \
     && rm -rf /var/cache/apk/*
 
