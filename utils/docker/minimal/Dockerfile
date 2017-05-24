@@ -33,7 +33,7 @@ RUN echo "Installing depedencies" >&2 \
         python-dev \
         py-lxml \
     && pip install --upgrade pip \
-    && echo "Cloning wft4galaxy" >&2 \
+    && echo "Cloning wft4galaxy: branch=${WFT4GALAXY_BRANCH} url=${WFT4GALAXY_REPOSITORY_URL}" >&2 \
     && git clone --single-branch --depth 1 -b ${WFT4GALAXY_BRANCH} ${WFT4GALAXY_REPOSITORY_URL} ${WFT4GALAXY_PATH} \
     && cd ${WFT4GALAXY_PATH} \
     && echo "Building and installing wft4galaxy" >&2 \
