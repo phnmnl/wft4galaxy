@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# set IMAGE_NAME
+IMAGE_NAME=${1}
+
 # parse existing IMAGE
 if [[ -n ${IMAGE} ]]; then
     export IMAGE_OWNER=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*):(.*)(\.git)/\1/")
@@ -42,9 +45,6 @@ image_tag=${GIT_BRANCH}
 if [[ -n ${GIT_TAG} ]]; then
     image_tag=${GIT_TAG}
 fi
-if [[ -n ${IMAGE_TAG_PREFIX} ]]; then
-    image_tag="${IMAGE_TAG_PREFIX}-${image_tag}"
-fi
 export IMAGE_TAG=${image_tag}
 
 # set image repository
@@ -61,7 +61,6 @@ fi
 echo " - Docker image: ${IMAGE}" >&2
 echo " - Docker image owner: ${IMAGE_OWNER}" >&2
 echo " - Docker image name: ${IMAGE_NAME}" >&2
-echo " - Docker image tag prefix: ${IMAGE_TAG_PREFIX}" >&2
 echo " - Docker image tag: ${IMAGE_TAG}" >&2
 echo " - Docker image repository: ${IMAGE_REPOSITORY}" >&2
 
