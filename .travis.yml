@@ -43,7 +43,7 @@ script:
 - GALAXY_API_KEY=$(cat "wft4galaxy.id")
 - wft4galaxy -f examples/change_case/workflow-test.yml --server ${GALAXY_URL} --api-key ${GALAXY_API_KEY}
 - export GALAXY_URL=http://${GALAXY_ADDRESS} # use the address of the Galaxy container within the Docker network
-- tests/docker/test-minimal.sh "utils/docker/minimal" ${GALAXY_URL} ${GALAXY_API_KEY} ${GALAXY_NETWORK}
+- tests/docker/run-all.sh --server ${GALAXY_URL} --api-key${GALAXY_API_KEY} --network ${GALAXY_NETWORK}
 
 
 after_script:
