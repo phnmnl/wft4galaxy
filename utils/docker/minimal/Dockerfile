@@ -36,6 +36,7 @@ RUN echo "Installing depedencies" >&2 \
     && echo "Cloning wft4galaxy: branch=${WFT4GALAXY_BRANCH} url=${WFT4GALAXY_REPOSITORY_URL}" >&2 \
     && git clone --single-branch --depth 1 -b ${WFT4GALAXY_BRANCH} ${WFT4GALAXY_REPOSITORY_URL} ${WFT4GALAXY_PATH} \
     && cd ${WFT4GALAXY_PATH} \
+    && pip install -r requirements.txt \
     && echo "Building and installing wft4galaxy" >&2 \
     && python setup.py install \
     && echo "Removing build-time dependencies" >&2 \
