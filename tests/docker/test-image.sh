@@ -84,6 +84,7 @@ for s in ${settings[@]}; do
     fi
 done
 
+
 # download wft4galaxy script
 curl -s https://raw.githubusercontent.com/phnmnl/wft4galaxy/develop/utils/docker/install.sh | bash /dev/stdin .
 
