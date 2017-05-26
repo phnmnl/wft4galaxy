@@ -178,7 +178,10 @@ class _CommandLineHelper:
                                   .format(DEFAULT_OUTPUT_FOLDER))
         wft4g_parser.add_argument('--enable-logger', help='Enable log messages', action='store_true')
         wft4g_parser.add_argument('--disable-cleanup', help='Disable cleanup', action='store_true')
-        wft4g_parser.add_argument('--xunit', help='Enable xUnit report', action='store_true', default=False)
+
+        # here we hardcode the possible values of wft4galaxy.core.OutputFormat because we don't
+        # want to require installing the package to use the docker runner.
+        wft4g_parser.add_argument('--output-format', choices=tuple('text', 'xunit'), help='Choose output type', default='text')
         wft4g_parser.add_argument('--xunit-file', default=None, metavar="PATH",
                                   help='Set the path of the xUnit report file (absolute or relative to the output folder)')
         wft4g_parser.add_argument("test", help="Workflow Test Name", nargs="*")
@@ -414,11 +417,10 @@ class NonInteractiveContainer(Container):
             # cleanup option
             if options.disable_cleanup:
                 cmd.append("--disable-cleanup")
-            # xunit options
-            if options.xunit:
-                cmd.append("--xunit")
+            # output format options
+            cmd.extend( ('--output-format', options.output_format) )
             if options.xunit_file:
-                cmd += ["--xunit-file", options.xunit_file]
+                cmd.extend(("--xunit-file", options.xunit_file))
             # add test filter
             cmd += options.test
 

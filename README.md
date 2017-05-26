@@ -40,24 +40,23 @@ The the main available options are:
 ```bash
 usage: wft4galaxy [-h] [--server GALAXY_URL] [--api-key GALAXY_API_KEY]
                   [-f FILE] [--enable-logger] [--debug] [--disable-cleanup]
-                  [--xunit] [--xunit-file FILE_PATH] [-o PATH]
+                  [--output-format {text,xunit}] [--xunit-file FILE_PATH] [-o PATH]
                   [test [test ...]]
 
 positional arguments:
   test                      Workflow Test Name
 
 optional arguments:
-  -h, --help                show this help message and exit
-  --server GALAXY_URL       Galaxy server URL
-  --api-key GALAXY_API_KEY  Galaxy server API KEY
-  -f FILE, --file FILE      YAML configuration file of workflow tests (default is workflow-test-suite.yml)
-  --enable-logger           Enable log messages
-  --debug                   Enable debug mode
-  --disable-cleanup         Disable cleanup
-  --xunit                   Enable xUnit report
-  --xunit-file FILE_PATH    Set the path of the xUnit report file (absolute or relative to the output folder)
-  -o PATH, --output PATH    Path of the output folder
-                        
+  -h, --help                    show this help message and exit
+  --server GALAXY_URL           Galaxy server URL
+  --api-key GALAXY_API_KEY      Galaxy server API KEY
+  -f FILE, --file FILE          YAML configuration file of workflow tests (default is workflow-test-suite.yml)
+  --enable-logger               Enable log messages
+  --debug                       Enable debug mode
+  --disable-cleanup             Disable cleanup
+  --output-format {text,xunit}  Choose output type
+  --xunit-file FILE_PATH        Set the path of the xUnit report file (absolute or relative to the output folder)
+  -o PATH, --output PATH        Path of the output folder
 ```
 
 As an example, you can run tests defined in your ``workflow-test-suite.yml`` definition file by typing:

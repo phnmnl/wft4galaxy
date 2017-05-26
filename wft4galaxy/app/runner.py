@@ -7,6 +7,7 @@ import logging as _logging
 
 import wft4galaxy.core as _core
 import wft4galaxy.common as _common
+from wft4galaxy.core import OutputFormat
 
 # set logger
 _logger = _common.LoggerManager.get_logger(__name__)
@@ -31,7 +32,8 @@ def _make_parser():
     parser.add_argument('--debug', help='Enable debug mode', action='store_true', default=None)
     parser.add_argument('--disable-cleanup', help='Disable cleanup', action='store_true', default=None)
 
-    parser.add_argument('--xunit', help='Enable xUnit report', action='store_true', default=False)
+    parser.add_argument('--output-format', choices=tuple(OutputFormat), help='Choose output type', default=OutputFormat.text)
+
     parser.add_argument('--xunit-file', default=None, metavar="FILE_PATH",
                         help='Set the path of the xUnit report file (absolute or relative to the output folder)')
     parser.add_argument('-o', '--output', dest="output_folder", metavar="PATH", help='Path of the output folder')
@@ -46,6 +48,8 @@ def _parse_cli_arguments(parser, cmd_args):
         parser.error("Test file {} doesn't exist or isn't a file".format(args.file))
     if not _os.access(args.file, _os.R_OK):
         parser.error("Permission error.  Test file {} isn't accessible for reading".format(args.file))
+    if args.xunit_file and args.output_format != OutputFormat.xunit:
+        parser.error("--xunit-file can only be specified when using the xUnit output format")
 
     return args
 
@@ -157,7 +161,7 @@ def main():
                          enable_logger=options.enable_logger,
                          enable_debug=options.debug,
                          disable_cleanup=options.disable_cleanup,
-                         enable_xunit=options.xunit,
+                         enable_xunit=(options.output_format == OutputFormat.xunit),
                          xunit_file=options.xunit_file,
                          tests=options.test)
 

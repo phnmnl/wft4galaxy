@@ -18,6 +18,20 @@ import wft4galaxy.common as _common
 # set logger
 _logger = _common.LoggerManager.get_logger(__name__)
 
+# Enum magic for Python < 3.4
+class Enum(object):
+    def __init__(self, **enums):
+        for name, val in enums.iteritems():
+            self.__dict__[name] = val
+
+    def __setattr__(self, name, v):
+        raise StandardError("Setting enum value not allowed")
+
+    def __iter__(self):
+        return self.__dict__.iterkeys()
+
+# Define an Enum for supported output types
+OutputFormat = Enum(text='text', xunit='xunit')
 
 class FileFormats(object):
     YAML = "YAML"
