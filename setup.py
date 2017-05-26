@@ -70,7 +70,9 @@ def update_properties(config):
 
     # Docker info
     config["Docker"] = {
-        "repository": owner,
+        # uncomment to set a registry different from the DockerHub
+        # "registry": "",
+        "owner": owner,
         "tag": docker_tag
     }
 

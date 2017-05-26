@@ -30,15 +30,12 @@ _FAILURE_EXIT = -1
 # Jupyter port
 DEFAULT_JUPYTER_PORT = 9876
 
-# absolute path of this script
-_script_path = _os.path.realpath(__file__)
-_logger.debug("Script path: %s" % _script_path)
-
-# try to load wft4galaxy.properties if the script belongs to an installed instance of wft4galaxy
+# try to load wft4galaxy.properties
 _properties = None
 try:
-    _properties_file_path = _os.path.abspath(_os.path.join(_script_path, _os.pardir, _os.pardir))
-    with open(_os.path.join(_properties_file_path, "wft4galaxy.properties")) as fp:
+    import wft4galaxy as _wft4galaxy
+
+    with open(_os.path.join(_os.path.dirname(_wft4galaxy.__file__), "wft4galaxy.properties")) as fp:
         _properties = _json.load(fp)
         _logger.debug("wft4galaxy.properties: %r", _properties)
 except:
@@ -51,9 +48,10 @@ DOCKER_IMAGE_SETTINGS = {
         if _properties is not None and "Docker" in _properties and "repository" in _properties["Docker"] else "crs4",
     "tag": _properties["Docker"]["tag"] \
         if _properties is not None and "Docker" in _properties and "tag" in _properties["Docker"] else "develop",
-    "production": "wft4galaxy",
+    "production": "wft4galaxy-minimal",
     "develop": "wft4galaxy-develop",
-    "default_version": "latest"
+    "supported_os": ["alpine", "ubuntu"],
+    "default_version": "develop"
 }
 
 # Docker container settings
@@ -111,6 +109,11 @@ class _CommandLineHelper:
                                       '(default is "{}")'.format(DOCKER_IMAGE_SETTINGS["default_version"]))
         main_parser.add_argument('--image', help='Alternative "wft4galaxy" Docker image name '
                                                  'specified as NAME:TAG', default=None)
+        main_parser.add_argument('--os', choices=DOCKER_IMAGE_SETTINGS["supported_os"],
+                                 help='Base OS of the Docker image (default is "{0}" and '
+                                      'it is ignored when the "--image" option is specified)'
+                                 .format(DOCKER_IMAGE_SETTINGS["supported_os"][0]),
+                                 default=DOCKER_IMAGE_SETTINGS["supported_os"][0])
         main_parser.add_argument('--skip-update', action="store_true", default=False,
                                  help='Skip the update of the "wft4galaxy" Docker image '
                                       'and use the local version if it is available')
@@ -244,7 +247,7 @@ class Container():
                         version = _properties["Repository"]["branch"]
 
             # build the image tag
-            image_tag = "{}".format(version or DOCKER_IMAGE_SETTINGS["default_version"])
+            image_tag = "{0}-{1}".format(options.os or "alpine", version or DOCKER_IMAGE_SETTINGS["default_version"])
             # build the image name
             img_name_parts.append("{0}:{1}".format(config[2], image_tag))
 
@@ -270,7 +273,6 @@ class Container():
 
 class InteractiveContainer(Container):
     def _parse_volumes(self, volumes):
-        mounts = []
         result = {}
         if volumes:
             for v_str in volumes:
@@ -278,11 +280,8 @@ class InteractiveContainer(Container):
                 if len(v_info) != 2:
                     raise ValueError(
                         "Invalid volume parameter '{0}'. See 'docker run' syntax for more details.".format(v_str))
-                if not _os.path.isabs(v_info[0]):
-                    v_info[0] = _os.path.abspath(v_info[0])
-                result[v_info[0]] = {"bind": v_info[1], "mode": "rw"}
-                mounts.append(v_info[1])
-        return mounts, result
+                result[v_info[0]] = {"bind": v_info[1]}
+        return result
 
     def _parse_ports(self, ports):
         result = {}
@@ -312,7 +311,7 @@ class InteractiveContainer(Container):
             docker_image = self.get_image_name(options, options.skip_update)
 
             # volumes
-            vmounts, volumes = self._parse_volumes(options.volume)
+            volumes = self._parse_volumes(options.volume)
 
             # ports
             ports = self._parse_ports(options.port)
@@ -336,9 +335,9 @@ class InteractiveContainer(Container):
                 tty=True,
                 command=command,
                 environment=environment,
-                volumes=vmounts,
+                volumes=volumes,
                 ports=list(ports.keys()),
-                host_config=client.create_host_config(binds=volumes, port_bindings=ports)
+                host_config=client.create_host_config(port_bindings=ports)
             )
             _logger.info("Started Docker container %s", container["Id"])
             _dockerpty.start(client, container)
