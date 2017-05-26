@@ -18,6 +18,9 @@ function print_usage(){
         echo "required image information from the local repository itself") >&2
 }
 
+# options
+opts="$@"
+
 # disable debug
 debug=""
 
@@ -57,6 +60,14 @@ do
             export IMAGE_TAG=$2
             shift
             ;;
+        --url|--repo-url)
+            repo_url="--url $2"
+            shift
+            ;;
+        --branch|--repo-branch)
+            repo_branch="--branch $2"
+            shift
+            ;;
         --debug )
             debug="--debug"
             shift
@@ -85,22 +96,28 @@ for s in ${settings[@]}; do
 done
 
 
+# extract git info & Docker image name
+source ${image_root_path}/set-git-repo-info.sh ${repo_url} ${repo_branch}
+source ${image_root_path}/set-docker-image-info.sh
+
 # download wft4galaxy script
-curl -s https://raw.githubusercontent.com/phnmnl/wft4galaxy/develop/utils/docker/install.sh | bash /dev/stdin .
+owner=${GIT_OWNER:-"phnmnl"}
+branch=${GIT_BRANCH:-"develop"}
+curl -s https://raw.githubusercontent.com/${owner}/wft4galaxy/${branch}/utils/docker/install.sh | bash /dev/stdin .
+echo "Downloaded 'wft4galaxy-docker' Github repository: ${owner}/wft4galaxy (branch: ${branch})" >&2
 
 # switch the Docker image context
-cd ${image_root_path}
+cd ${image_root_path} > /dev/null
 
 # build docker image
-"${image_root_path}/${image_type}/build.sh" && cd -
+"${image_root_path}/${image_type}/build.sh" ${opts} && cd - > /dev/null
 
 # set optional arguments
 cmd_other_opts="--skip-update ${debug}"
-if [[ -n ${IMAGE_REPOSITORY} ]]; then
-    cmd_other_opts="${cmd_other_opts} --repository ${IMAGE_REPOSITORY}"
+if [[ -n ${IMAGE_OWNER} ]]; then
+    cmd_other_opts="${cmd_other_opts} --repository ${IMAGE_OWNER}"
 fi
 if [[ -n ${IMAGE_TAG} ]]; then
-    # TODO: update version to tag
     cmd_other_opts="${cmd_other_opts} --version ${IMAGE_TAG}"
 fi
 if [[ -n ${GALAXY_NETWORK} ]]; then
@@ -113,9 +130,12 @@ fi
 #            ubuntu bash -c "apt-get update && apt-get install -y iputils-ping && timeout 5 ping 172.18.0.22"
 
 # build cmd
-base_cmd="wft4galaxy-docker ${cmd_other_opts} --server ${GALAXY_URL} --api-key ${GALAXY_API_KEY}"
+base_cmd="wft4galaxy-docker --version ${branch} ${cmd_other_opts} --server ${GALAXY_URL} --api-key ${GALAXY_API_KEY}"
 cmd="${base_cmd} -f examples/change_case/workflow-test.yml"
-echo "CMD: ${cmd}">&2
+echo -e "CMD: ${cmd}\n">&2
 
 # run test
 ${cmd}
+
+# cleanup
+rm wft4galaxy-docker
