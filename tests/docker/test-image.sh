@@ -114,11 +114,8 @@ cd ${image_root_path} > /dev/null
 
 # set optional arguments
 cmd_other_opts="--skip-update ${debug}"
-if [[ -n ${IMAGE_OWNER} ]]; then
-    cmd_other_opts="${cmd_other_opts} --repository ${IMAGE_OWNER}"
-fi
 if [[ -n ${IMAGE_TAG} ]]; then
-    cmd_other_opts="${cmd_other_opts} --version ${IMAGE_TAG}"
+    cmd_other_opts="${cmd_other_opts} --tag ${IMAGE_TAG}"
 fi
 if [[ -n ${GALAXY_NETWORK} ]]; then
     cmd_other_opts="${cmd_other_opts} --network ${GALAXY_NETWORK}"
@@ -130,7 +127,7 @@ fi
 #            ubuntu bash -c "apt-get update && apt-get install -y iputils-ping && timeout 5 ping 172.18.0.22"
 
 # build cmd
-base_cmd="wft4galaxy-docker --version ${branch} ${cmd_other_opts} --server ${GALAXY_URL} --api-key ${GALAXY_API_KEY}"
+base_cmd="wft4galaxy-docker ${cmd_other_opts} --server ${GALAXY_URL} --api-key ${GALAXY_API_KEY}"
 cmd="${base_cmd} -f examples/change_case/workflow-test.yml"
 echo -e "CMD: ${cmd}\n">&2
 
