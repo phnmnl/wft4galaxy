@@ -24,18 +24,6 @@ WorkflowTestSuite
     :members:
 
 
-WorkflowTestCaseRunner
-----------------------
-.. autoclass:: wft4galaxy.core.WorkflowTestRunner
-    :members:
-
-
-WorkflowTestSuiteRunner
------------------------
-.. autoclass:: wft4galaxy.core.WorkflowTestSuiteRunner
-    :members:
-
-
 Base comparator function
 ------------------------
 .. autofunction:: wft4galaxy.comparators.base_comparator
