@@ -4,4 +4,4 @@
 script_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # call the build script
-${script_path}/../build-image.sh -n "wft4galaxy" "minimal"
+${script_path}/../build-image.sh -n "wft4galaxy" "minimal" "$@"

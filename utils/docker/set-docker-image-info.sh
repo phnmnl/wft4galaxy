@@ -43,15 +43,9 @@ elif [[ -n ${IMAGE_REPOSITORY} ]]; then
 
 # if neither IMAGE_NAME or IMAGE_REPOSITORY are setted
 else
-    echo "Using Git repository info to generate image info...">&2
 
     # set image owner
     if [[ -z ${IMAGE_OWNER} ]]; then
-        if [[ -z ${GIT_OWNER} ]]; then
-            echo "GIT_OWNER not found">&2
-            exit -1
-        fi
-
         # map the git phnmnl repository to the Crs4 DockerHub repository
         if [[ ${GIT_OWNER} == "phnmnl" ]]; then
             GIT_OWNER="crs4"
@@ -66,30 +60,41 @@ else
 
     # set image tag
     if [[ -z ${IMAGE_TAG} ]]; then
-        if [[ -z ${GIT_BRANCH} && -z ${GIT_TAG} ]]; then
-            echo "GIT_BRANCH or GIT_TAG not found">&2
-            exit -1
-        fi
-        image_tag=${GIT_BRANCH}
-        if [[ -n ${GIT_TAG} ]]; then
-            image_tag=${GIT_TAG}
+        if [[ -n ${GIT_BRANCH} || -n ${GIT_TAG} ]]; then
+            image_tag=${GIT_BRANCH}
+            if [[ -n ${GIT_TAG} ]]; then
+                image_tag=${GIT_TAG}
+            fi
+        else
+            image_tag="latest"
         fi
         export IMAGE_TAG=${image_tag}
     fi
 
     # set image repository
     if [[ -z ${IMAGE_REPOSITORY} ]]; then
-        export IMAGE_REPOSITORY="${IMAGE_OWNER}/${IMAGE_NAME}"
+        if [[ -z ${IMAGE_OWNER} ]]; then
+            export IMAGE_REPOSITORY="${IMAGE_OWNER}/${IMAGE_NAME}"
+        else
+            export IMAGE_REPOSITORY="${IMAGE_NAME}"
+        fi
     fi
 fi
 
 # set image repository
 if [[ -z ${IMAGE} ]]; then
+    image=""
     if [[ -n ${IMAGE_REGISTRY} ]]; then
-        export IMAGE="${IMAGE_REGISTRY}/${IMAGE_OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
-    else
-        export IMAGE="${IMAGE_OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
+        image="${IMAGE_REGISTRY}/"
     fi
+    if [[ -n ${IMAGE_OWNER} ]]; then
+        image="${image}${IMAGE_OWNER}/"
+    fi
+    image="${image}${IMAGE_NAME}"
+    if [[ -n ${IMAGE_TAG} ]]; then
+        image="${image}:${IMAGE_TAG}"
+    fi
+    export IMAGE=${image}
 fi
 
 # log Docker image info

@@ -32,6 +32,14 @@ do
             export IMAGE_TAG=$2
             shift
             ;;
+        --url|--repo-url)
+            repo_url="--url $2"
+            shift
+            ;;
+        --branch|--repo-branch)
+            repo_branch="--branch $2"
+            shift
+            ;;
         --*)
             print_usage
             exit -1
@@ -63,14 +71,14 @@ if [[ ! -d ${image_path} ]]; then
 fi
 
 # set git && image info
-source ${script_path}/set-git-repo-info.sh "$@"
+source ${script_path}/set-git-repo-info.sh ${repo_url} ${repo_branch}
 source ${script_path}/set-docker-image-info.sh
 
 # Need to cd into this script's directory because image-config assumes it's running within it
-cd "${image_path}"
+cd "${image_path}" > /dev/null
 
 # build the Docker image
 docker build --build-arg git_branch=${GIT_BRANCH} --build-arg git_url=${GIT_HTTPS} -t ${IMAGE} .
 
 # restore the original path
-cd -
+cd - > /dev/null
