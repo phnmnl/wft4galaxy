@@ -7,20 +7,20 @@ if [[ -n ${IMAGE} ]]; then
     prefixes=$(echo ${IMAGE} | grep -o "/" | wc -l |  sed -e 's/^[[:space:]]*//')
 
     if [[ $prefixes -eq 0 ]]; then
-        export IMAGE_NAME=$(echo ${IMAGE} | sed -E "s/(.*):(.*)(\.git)/\1/")
-        export IMAGE_TAG=$(echo ${IMAGE} | sed -E "s/(.*):(.*)(\.git)/\2/")
+        export IMAGE_NAME=$(echo ${IMAGE} | sed -E "s/(.*):(.*)/\1/")
+        export IMAGE_TAG=$(echo ${IMAGE} | sed -E "s/(.*):(.*)/\2/")
         export IMAGE_OWNER=""
         export IMAGE_REGISTRY=""
     elif [[ $prefixes -eq 1 ]]; then
         export IMAGE_REGISTRY=""
-        export IMAGE_OWNER=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*):(.*)(\.git)/\1/")
-        export IMAGE_NAME=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*):(.*)(\.git)/\2/")
-        export IMAGE_TAG=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*):(.*)(\.git)/\3/")
+        export IMAGE_OWNER=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*):(.*)/\1/")
+        export IMAGE_NAME=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*):(.*)/\2/")
+        export IMAGE_TAG=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*):(.*)/\3/")
     elif [[ $prefixes -eq 2 ]]; then
-        export IMAGE_REGISTRY=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*)\/(.*):(.*)(\.git)/\1/")
-        export IMAGE_OWNER=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*)\/(.*):(.*)(\.git)/\2/")
-        export IMAGE_NAME=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*)\/(.*):(.*)(\.git)/\3/")
-        export IMAGE_TAG=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*)\/(.*):(.*)(\.git)/\4/")
+        export IMAGE_REGISTRY=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*)\/(.*):(.*)/\1/")
+        export IMAGE_OWNER=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*)\/(.*):(.*)/\2/")
+        export IMAGE_NAME=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*)\/(.*):(.*)/\3/")
+        export IMAGE_TAG=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*)\/(.*):(.*)/\4/")
     fi
 
 elif [[ -n ${IMAGE_REPOSITORY} ]]; then
@@ -30,15 +30,11 @@ elif [[ -n ${IMAGE_REPOSITORY} ]]; then
 
     export IMAGE_REGISTRY=""
     if [[ $prefixes -eq 0 ]]; then
-        export IMAGE_NAME=$(echo ${IMAGE} | sed -E "s/(.*):(.*)(\.git)/\1/")
-        export IMAGE_TAG=$(echo ${IMAGE} | sed -E "s/(.*):(.*)(\.git)/\2/")
+        export IMAGE_NAME=$(echo ${IMAGE_REPOSITORY} | sed -E "s/(.*)/\1/")
         export IMAGE_OWNER=""
-        export IMAGE_REGISTRY=""
     elif [[ $prefixes -eq 1 ]]; then
-        export IMAGE_REGISTRY=""
-        export IMAGE_OWNER=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*):(.*)(\.git)/\1/")
-        export IMAGE_NAME=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*):(.*)(\.git)/\2/")
-        export IMAGE_TAG=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*):(.*)(\.git)/\3/")
+        export IMAGE_OWNER=$(echo ${IMAGE_REPOSITORY} | sed -E "s/(.*)\/(.*)/\1/")
+        export IMAGE_NAME=$(echo ${IMAGE_REPOSITORY} | sed -E "s/(.*)\/(.*)/\2/")
     fi
 
 # if neither IMAGE_NAME or IMAGE_REPOSITORY are setted
@@ -73,12 +69,17 @@ else
 
     # set image repository
     if [[ -z ${IMAGE_REPOSITORY} ]]; then
-        if [[ -z ${IMAGE_OWNER} ]]; then
+        if [[ -n ${IMAGE_OWNER} ]]; then
             export IMAGE_REPOSITORY="${IMAGE_OWNER}/${IMAGE_NAME}"
         else
             export IMAGE_REPOSITORY="${IMAGE_NAME}"
         fi
     fi
+fi
+
+# set image tag if doesn't specified or detected
+if [[ -z ${IMAGE_TAG} ]]; then
+    export IMAGE_TAG="latest"
 fi
 
 # set image repository
