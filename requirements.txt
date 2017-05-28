@@ -1,6 +1,6 @@
 setuptools
 future>=0.16.0
-ruamel.yaml==0.13.14
+#ruamel.yaml==0.13.14
 lxml
 pyyaml
 sphinx_rtd_theme
