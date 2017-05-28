@@ -110,6 +110,7 @@ echo "Downloaded 'wft4galaxy-docker' Github repository: ${owner}/wft4galaxy (bra
 cd ${image_root_path} > /dev/null
 
 # build docker image
+echo "${image_root_path}/${image_type}/build.sh ${opts}"
 "${image_root_path}/${image_type}/build.sh" ${opts} && cd - > /dev/null
 
 # set optional arguments
