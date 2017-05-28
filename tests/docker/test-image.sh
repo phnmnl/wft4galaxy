@@ -111,7 +111,7 @@ cd ${image_root_path} > /dev/null
 
 # build docker image
 echo "${image_root_path}/${image_type}/build.sh ${opts}"
-"${image_root_path}/${image_type}/build.sh" ${opts} && cd - > /dev/null
+"${image_root_path}/${image_type}/build.sh" ${repo_branch} && cd - > /dev/null
 
 # set optional arguments
 cmd_other_opts="--skip-update ${debug}"
