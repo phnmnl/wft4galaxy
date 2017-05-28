@@ -127,7 +127,7 @@ fi
 #            ubuntu bash -c "apt-get update && apt-get install -y iputils-ping && timeout 5 ping 172.18.0.22"
 
 # build cmd
-base_cmd="wft4galaxy-docker ${cmd_other_opts} --server ${GALAXY_URL} --api-key ${GALAXY_API_KEY}"
+base_cmd="./wft4galaxy-docker ${cmd_other_opts} --server ${GALAXY_URL} --api-key ${GALAXY_API_KEY}"
 cmd="${base_cmd} -f examples/change_case/workflow-test.yml"
 echo -e "CMD: ${cmd}\n">&2
 
