@@ -175,8 +175,7 @@ class _CommandLineHelper:
 
         # here we hardcode the possible values of wft4galaxy.core.OutputFormat because we don't
         # want to require installing the package to use the docker runner.
-        wft4g_parser.add_argument('--output-format', choices=('text', 'xunit'), help='Choose output type',
-                                  default='text')
+        wft4g_parser.add_argument('--output-format', choices=('text', 'xunit'), help='Choose output type', default='text')
         wft4g_parser.add_argument('--xunit-file', default=None, metavar="PATH",
                                   help='Set the path of the xUnit report file (absolute or relative to the output folder)')
         wft4g_parser.add_argument("test", help="Workflow Test Name", nargs="*")
