@@ -1,4 +1,4 @@
-FROM alpine
+FROM alpine:3.6
 
 # metadata
 MAINTAINER PhenoMeNal-H2020 Project ( phenomenal-h2020-users@googlegroups.com )
