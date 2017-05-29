@@ -1,4 +1,4 @@
-FROM ubuntu:14.04
+FROM alpine
 
 # metadata
 MAINTAINER PhenoMeNal-H2020 Project ( phenomenal-h2020-users@googlegroups.com )
@@ -20,31 +20,30 @@ ENV WFT4GALAXY_REPOSITORY_URL ${git_url:-"https://github.com/phnmnl/wft4galaxy"}
 ENV WFT4GALAXY_BRANCH ${git_branch:-develop}
 
 # install base packages
-RUN \
-       echo "Installing packages" \
-    && apt-get update \
-    && apt-get install --no-install-recommends -y \
-         git \
-         inetutils-ping \
-         libyaml-dev \
-         nano \
-         python3-dev \
-         python3-lxml \
-         python3-pip \
-         vim \
-    && echo "Installing ipython and jupyter" \
-    && pip3 install --upgrade pip
-
-
-RUN pip3 install ipython bash_kernel
-
-RUN echo "Cloning and installing wft4galaxy" \
+RUN echo "Installing dependencies" >&2 \
+    && apk update && apk add \
+        bash \
+        build-base \
+        gcc \
+        git \
+        iputils \
+        make \
+        nano \
+        py-lxml \
+        py-pip \
+        py-setuptools \
+        python \
+        python-dev \
+        vim \
+    && pip install --upgrade pip \
+    && pip install ipython \
+    && echo "Cloning wft4galaxy: branch=${WFT4GALAXY_BRANCH} url=${WFT4GALAXY_REPOSITORY_URL}" >&2 \
     && git clone -b ${WFT4GALAXY_BRANCH} ${WFT4GALAXY_REPOSITORY_URL} ${WFT4GALAXY_PATH} \
     && cd ${WFT4GALAXY_PATH} \
-    && python3 setup.py install \
-    && apt-get -y clean \
-    && apt-get -y autoremove \
-    && rm -rf /var/lib/{cache,log}/ /tmp/* /var/tmp/*
+    && pip install -r requirements.txt \
+    && echo "Building and installing wft4galaxy" >&2 \
+    && python setup.py install \
+    && rm -rf /var/cache/apk/*
 
 # setup bash custom prompt (PS1)
 ADD bashrc /root/.bashrc
