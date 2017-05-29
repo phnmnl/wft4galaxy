@@ -20,7 +20,7 @@ ENV WFT4GALAXY_REPOSITORY_URL ${git_url:-"https://github.com/phnmnl/wft4galaxy"}
 ENV WFT4GALAXY_BRANCH ${git_branch:-develop}
 
 # install base packages
-RUN echo "Installing depedencies" >&2 \
+RUN echo "Installing dependencies" >&2 \
     && apk update && apk add \
         build-base \
         gcc \
