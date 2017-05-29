@@ -44,22 +44,6 @@ do
             GALAXY_NETWORK=$2
             shift
             ;;
-        -r|--image-registry)
-            export IMAGE_REGISTRY=$2
-            shift
-            ;;
-        -o|--image-owner)
-            export IMAGE_OWNER=$2
-            shift
-            ;;
-        -n|--image-name)
-            export IMAGE_NAME=$2
-            shift
-            ;;
-        -t|--image-tag)
-            export IMAGE_TAG=$2
-            shift
-            ;;
         --url|--repo-url)
             repo_url="--url $2"
             shift
