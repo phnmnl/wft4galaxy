@@ -51,7 +51,7 @@ RUN echo "Installing dependencies" >&2 \
     && rm -rf /var/cache/apk/*
 
 # setup bash custom prompt (PS1)
-ADD bashrc ${HOME}/.bashrc
+ADD bashrc /root/.bashrc
 
 # update the working dir
 WORKDIR /root
