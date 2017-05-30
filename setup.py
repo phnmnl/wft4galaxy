@@ -18,7 +18,8 @@ def _run_txt_cmd(cmd):
 
 
 def update_properties(config):
-    repo_url = _run_txt_cmd(['git', 'config', '--get', 'remote.origin.url'])
+    first_remote = _run_txt_cmd(['git', 'remote' ]).split('\n')[0]
+    repo_url = _run_txt_cmd(['git', 'config', '--get', 'remote.{}.url'.format(first_remote)])
     branch = _run_txt_cmd(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
     last_commit = _run_txt_cmd(['git', 'log', '--format=%H', '-n', '1'])
 
