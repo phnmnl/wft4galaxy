@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Use this script to build an image with the version of wft4galaxy that's in the
+# current project.  This is useful for development.
+#
+# Note that currently have have to comment '#update_properties(config)' from setup.py
+
 set -o errexit
 set -o nounset
 
@@ -30,6 +35,7 @@ image_name="${1}"
 
 # absolute path of the current script
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+proj_dir="${script_dir}/../../../"
 
 # On exit, for whatever reason, try to clean up
 trap "cleanup" EXIT INT ERR
@@ -37,7 +43,14 @@ trap "cleanup" EXIT INT ERR
 work_dir="$(mktemp --directory)"
 
 log "copying project dir to work directory ${work_dir}"
-cp --archive ${script_dir}/../../../* "${work_dir}"
+if [ $(ls "${proj_dir}" | grep 'wft4galaxy\|setup.py' | wc -l) -lt 2 ] ; then
+	log "There seems to be a problem with the project directory ${proj_dir}"
+	log "We're not seeing the expected wft4galaxy directory and the setup.py"
+	log "file.  Is something wrong?"
+	exit 1
+fi
+
+cp --archive ${proj_dir}/* "${work_dir}"
 
 sed_script="${work_dir}/Dockerfile.sed"
 # subtle thing: when ADDing multiple things to a directory, the directory's
@@ -47,7 +60,7 @@ cat <<END > "${sed_script}"
 /\<git\>  *\<clone\> .*\${WFT4GALAXY/d
 END
 
-sed -f "${sed_script}" "${script_dir}/minimal/Dockerfile" > "${work_dir}/Dockerfile"
+sed -f "${sed_script}" "${proj_dir}/utils/docker/minimal/Dockerfile" > "${work_dir}/Dockerfile"
 
 log "New Dockerfile"
 cat "${work_dir}/Dockerfile"
