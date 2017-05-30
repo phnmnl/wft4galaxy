@@ -8,17 +8,19 @@ from distutils.command.clean import clean
 from setuptools.command.build_py import build_py
 
 
-def _run_cmd(cmd):
-    if hasattr(_subprocess, "run"):
-        return _subprocess.run(cmd, stdout=_subprocess.PIPE).stdout.decode("utf-8").strip("\n")
-    else:
-        return _subprocess.check_output(cmd).strip("\n")
+def _run_txt_cmd(cmd):
+    # Using universal_newlines=True causes subprocess to always
+    # handle the output as a str.  This should be compatible with
+    # all versions of Python >= 2.7.  Remeber that check_output in
+    # Python 3 returns a binary stream, unless called with
+    # universal_newlines=True
+    return _subprocess.check_output(cmd, universal_newlines=True).strip("\n")
 
 
 def update_properties(config):
-    repo_url = _run_cmd(['git', 'config', '--get', 'remote.origin.url'])
-    branch = _run_cmd(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
-    last_commit = _run_cmd(['git', 'log', '--format=%H', '-n', '1'])
+    repo_url = _run_txt_cmd(['git', 'config', '--get', 'remote.origin.url'])
+    branch = _run_txt_cmd(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+    last_commit = _run_txt_cmd(['git', 'log', '--format=%H', '-n', '1'])
 
     # get tags
     tags = []
@@ -26,7 +28,7 @@ def update_properties(config):
         # Git repository could not contain tags
         # and the following command fails in such a case.
         # We simply ignore this failure
-        tags = _run_cmd(['git', 'show-ref', '--tags', '-s'])
+        tags = _run_txt_cmd(['git', 'show-ref', '--tags', '-s'])
     except:
         pass
 
@@ -53,7 +55,7 @@ def update_properties(config):
     # git & docker tag
     tag = None
     if last_commit in tags:
-        tag = _run_cmd(['git', 'describe', '--contains', last_commit])
+        tag = _run_txt_cmd(['git', 'describe', '--contains', last_commit])
         docker_tag = "alpine-{0}".format(tag)
     else:
         docker_tag = "alpine-{0}".format(branch)
