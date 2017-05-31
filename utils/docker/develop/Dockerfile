@@ -36,11 +36,12 @@ RUN echo "Installing dependencies" >&2 \
         python-dev \
         vim \
     && pip install --upgrade pip \
-    && pip install ipython \
+    && pip install ipython jupyter bash_kernel \
     && echo "Cloning wft4galaxy: branch=${WFT4GALAXY_BRANCH} url=${WFT4GALAXY_REPOSITORY_URL}" >&2 \
     && git clone -b ${WFT4GALAXY_BRANCH} ${WFT4GALAXY_REPOSITORY_URL} ${WFT4GALAXY_PATH} \
     && cd ${WFT4GALAXY_PATH} \
     && pip install -r requirements.txt \
+    && python -m bash_kernel.install \
     && echo "Building and installing wft4galaxy" >&2 \
     && python setup.py install \
     && rm -rf /var/cache/apk/*
