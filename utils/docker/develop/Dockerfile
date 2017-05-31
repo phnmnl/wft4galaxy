@@ -49,6 +49,12 @@ RUN echo "Installing dependencies" >&2 \
 # setup bash custom prompt (PS1)
 ADD bashrc /root/.bashrc
 
+# build a tutorial folder within the user's home
+RUN mkdir ${HOME}/tutorial && \
+    ln -s ${WFT4GALAXY_PATH}/examples ${HOME}/tutorial/examples && \
+    ln -s ${WFT4GALAXY_PATH}/docs/notebooks ${HOME}/tutorial/notebooks && \
+    ln -s ${WFT4GALAXY_PATH}/docs/images ${HOME}/tutorial/images
+
 # update the working dir
 WORKDIR /root
 
