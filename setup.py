@@ -17,8 +17,27 @@ def _run_txt_cmd(cmd):
     return _subprocess.check_output(cmd, universal_newlines=True).strip("\n")
 
 
+def _check_is_git_repo():
+    """
+    Check whether the current project directory is a Git repository or not.
+
+    :rtype: bool
+    :return: ``True`` if the current project directory is a Git repository; ``False`` otherwise
+    """
+    if _subprocess.call(["git", "branch"], stderr=_subprocess.STDOUT, stdout=open(os.devnull, 'w')) != 0:
+        return False
+    else:
+        return True
+
+
 def update_properties(config):
-    first_remote = _run_txt_cmd(['git', 'remote' ]).split('\n')[0]
+    # do not write properties file if the current project directory
+    # is not a Git repository
+    if not _check_is_git_repo():
+        print("Not a Git repository")
+        return False
+
+    first_remote = _run_txt_cmd(['git', 'remote']).split('\n')[0]
     repo_url = _run_txt_cmd(['git', 'config', '--get', 'remote.{}.url'.format(first_remote)])
     branch = _run_txt_cmd(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
     last_commit = _run_txt_cmd(['git', 'log', '--format=%H', '-n', '1'])
@@ -78,6 +97,7 @@ def update_properties(config):
         "owner": owner,
         "tag": docker_tag
     }
+    return True
 
 
 class BuildCommand(build_py):
