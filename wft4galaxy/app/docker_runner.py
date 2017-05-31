@@ -30,12 +30,15 @@ _FAILURE_EXIT = -1
 # Jupyter port
 DEFAULT_JUPYTER_PORT = 9876
 
-# try to load wft4galaxy.properties
+# absolute path of this script
+_script_path = _os.path.realpath(__file__)
+_logger.debug("Script path: %s" % _script_path)
+
+# try to load wft4galaxy.properties if the script belongs to an installed instance of wft4galaxy
 _properties = None
 try:
-    import wft4galaxy as _wft4galaxy
-
-    with open(_os.path.join(_os.path.dirname(_wft4galaxy.__file__), "wft4galaxy.properties")) as fp:
+    _properties_file_path = _os.path.abspath(_os.path.join(_script_path, _os.pardir, _os.pardir))
+    with open(_os.path.join(_properties_file_path, "wft4galaxy.properties")) as fp:
         _properties = _json.load(fp)
         _logger.debug("wft4galaxy.properties: %r", _properties)
 except:
@@ -44,14 +47,12 @@ except:
 # Docker image settings
 DOCKER_IMAGE_SETTINGS = {
     "registry": None,
-    "repository": _properties["Docker"]["repository"] \
-        if _properties is not None and "Docker" in _properties and "repository" in _properties["Docker"] else "crs4",
-    "tag": _properties["Docker"]["tag"] \
-        if _properties is not None and "Docker" in _properties and "tag" in _properties["Docker"] else "develop",
-    "production": "wft4galaxy-minimal",
+    "owner": "crs4",
+    "production": "wft4galaxy",
     "develop": "wft4galaxy-develop",
-    "supported_os": ["alpine", "ubuntu"],
-    "default_version": "develop"
+    "default_tag_version": "latest",
+    "repository": _properties["Docker"]["repository"] \
+        if _properties is not None and "Docker" in _properties and "repository" in _properties["Docker"] else "crs4"
 }
 
 # Docker container settings
@@ -98,22 +99,14 @@ class _CommandLineHelper:
         self._parser, self._entrypoint_parsers = self.setup(omit_subparsers)
 
     def setup(self, omit_subparsers=False):
-        main_parser = _argparse.ArgumentParser(add_help=True, formatter_class=_CustomFormatter)
-        main_parser.add_argument('--registry', help='Alternative Docker registry (default is "DockerHub")',
-                                 default=None)
+
+        main_parser = _argparse.ArgumentParser(add_help=True, formatter_class=_argparse.RawTextHelpFormatter)
         main_parser.add_argument('--repository', default=None, metavar="REPO", dest="repository",
-                                 help='Alternative Docker repository containing '
-                                      'the "wft4galaxy" Docker image (default is "crs4")')
-        main_parser.add_argument('--version', default=None, metavar="VERSION",
-                                 help='Alternative version of the "wft4galaxy" Docker image'
-                                      '(default is "{}")'.format(DOCKER_IMAGE_SETTINGS["default_version"]))
-        main_parser.add_argument('--image', help='Alternative "wft4galaxy" Docker image name '
-                                                 'specified as NAME:TAG', default=None)
-        main_parser.add_argument('--os', choices=DOCKER_IMAGE_SETTINGS["supported_os"],
-                                 help='Base OS of the Docker image (default is "{0}" and '
-                                      'it is ignored when the "--image" option is specified)'
-                                 .format(DOCKER_IMAGE_SETTINGS["supported_os"][0]),
-                                 default=DOCKER_IMAGE_SETTINGS["supported_os"][0])
+                                 help='Alternative Docker image repository of '
+                                      'the "wft4galaxy" Docker image (default is "crs4/wft4galaxy[-develop]")')
+        main_parser.add_argument('--tag', default=None, metavar="VERSION_TAG",
+                                 help='Alternative version tag of the "wft4galaxy" Docker image '
+                                      '(default is "{}")'.format(DOCKER_IMAGE_SETTINGS["default_tag_version"]))
         main_parser.add_argument('--skip-update', action="store_true", default=False,
                                  help='Skip the update of the "wft4galaxy" Docker image '
                                       'and use the local version if it is available')
@@ -181,7 +174,8 @@ class _CommandLineHelper:
 
         # here we hardcode the possible values of wft4galaxy.core.OutputFormat because we don't
         # want to require installing the package to use the docker runner.
-        wft4g_parser.add_argument('--output-format', choices=tuple('text', 'xunit'), help='Choose output type', default='text')
+        wft4g_parser.add_argument('--output-format', choices=('text', 'xunit'), help='Choose output type',
+                                  default='text')
         wft4g_parser.add_argument('--xunit-file', default=None, metavar="PATH",
                                   help='Set the path of the xUnit report file (absolute or relative to the output folder)')
         wft4g_parser.add_argument("test", help="Workflow Test Name", nargs="*")
@@ -192,7 +186,7 @@ class _CommandLineHelper:
         args = self._parser.parse_args()
         # add port Jupyter web port
         if "web_port" in args:
-            args.port.append("8888:{0}".format(args.web_port))
+            args.port.append("{0}:{1}".format(args.web_port, args.web_port))
         _logger.debug("Parsed arguments %r", args)
         return args
 
@@ -214,65 +208,71 @@ class ContainerRunner:
 
 class Container():
     def get_image_name(self, options, skip_update=False):
-        img_name_parts = []
+
         # base default config
         config = DOCKER_CONTAINER_SETTINGS["entrypoints"][options.entrypoint]
-        # set registry
-        if options.registry is not None:
-            img_name_parts.append(options.registry)
-        elif DOCKER_IMAGE_SETTINGS["registry"]:
-            img_name_parts.append(DOCKER_IMAGE_SETTINGS["registry"])
-        # set repository
-        if options.repository:
-            img_name_parts.append(options.repository)
+
+        image_repository = None
+        if options.repository is not None:
+            image_repository = options.repository
+
         else:
-            img_name_parts.append(DOCKER_IMAGE_SETTINGS["repository"])
-        # set image name
-        if options.image:
-            img_name_parts.append(options.image)
+            #
+            img_name_parts = []
+
+            # set registry
+            if _properties and "registry" in _properties["Docker"]:
+                img_name_parts.append(_properties["Docker"]["registry"])
+            elif DOCKER_IMAGE_SETTINGS["registry"]:  # set default registry if exists
+                img_name_parts.append(DOCKER_IMAGE_SETTINGS["registry"])
+            # set repository
+            if _properties and "owner" in _properties["Docker"]:
+                img_name_parts.append(_properties["Docker"]["owner"])
+            elif DOCKER_IMAGE_SETTINGS["owner"]:  # set default registry if exists
+                img_name_parts.append(DOCKER_IMAGE_SETTINGS["owner"])
+            # set image name
+            img_name_parts.append(config[2])
+
+            # build the fully qualified Docker image name
+            image_repository = "/".join(img_name_parts)
+            _logger.debug("Using Docker image: %s", image_repository)
+
+        # try to use the version tag provided by user
+        if options.tag is not None:
+            image_tag = options.tag
+        # if the user doesn't provide a version
         else:
+            # if wft4galaxy has installed, try to use its metadata
+            if _properties is not None and "Repository" in _properties:
+                # if the installed version has tag, use it
+                image_tag = _properties["Repository"]["tag"] if "tag" in _properties["Repository"] else None
+                # if the installed version has not a tag, use the branch of the Git repository as version
+                if image_tag is None \
+                        and _properties["Repository"]["branch"] and "branch" in _properties["Repository"]:
+                    image_tag = _properties["Repository"]["branch"]
 
-            # try to use the version provided by user
-            version = options.version
-
-            # if the user doesn't provide a version
-            if version is None:
-                # if wft4galaxy has installed, try to use its metadata
-                if _properties is not None and "Repository" in _properties:
-                    # if the installed version has tag, use it
-                    version = _properties["Repository"]["tag"] if "tag" in _properties["Repository"] else None
-                    # if the installed version has not a tag, use the branch of the Git repository as version
-                    if version is None \
-                            and _properties["Repository"]["branch"] and "branch" in _properties["Repository"]:
-                        version = _properties["Repository"]["branch"]
-
-            # build the image tag
-            image_tag = "{0}-{1}".format(options.os or "alpine", version or DOCKER_IMAGE_SETTINGS["default_version"])
-            # build the image name
-            img_name_parts.append("{0}:{1}".format(config[2], image_tag))
-
-        # build the fully qualified Docker image name
-        docker_image_name = "/".join(img_name_parts)
-        _logger.debug("Using Docker image: %s", docker_image_name)
+        # build the fully qualified image name
+        docker_image_fqn = "{0}:{1}".format(image_repository, image_tag)
 
         # if the user doesn't disable this option,
         # try to pull the last version the required image
         if not skip_update:
-            _logger.info("Updating Docker imge '{0}'".format(docker_image_name))
-            p = _subprocess.Popen(["docker", "pull", docker_image_name], shell=False, close_fds=False)
+            _logger.info("Updating Docker imge '{0}'".format(docker_image_fqn))
+            p = _subprocess.Popen(["docker", "pull", docker_image_fqn], shell=False, close_fds=False)
             try:
                 p.communicate()
             except KeyboardInterrupt:
                 print("\n")
-                _logger.warn("Pull of Docker image %s interrupted by user", docker_image_name)
+                _logger.warn("Pull of Docker image %s interrupted by user", docker_image_fqn)
         else:
-            _logger.info("Using the local version of the Docker image '{0}'".format(docker_image_name))
+            _logger.info("Using the local version of the Docker image '{0}'".format(docker_image_fqn))
 
-        return docker_image_name
+        return docker_image_fqn
 
 
 class InteractiveContainer(Container):
     def _parse_volumes(self, volumes):
+        mounts = []
         result = {}
         if volumes:
             for v_str in volumes:
@@ -280,8 +280,11 @@ class InteractiveContainer(Container):
                 if len(v_info) != 2:
                     raise ValueError(
                         "Invalid volume parameter '{0}'. See 'docker run' syntax for more details.".format(v_str))
-                result[v_info[0]] = {"bind": v_info[1]}
-        return result
+                if not _os.path.isabs(v_info[0]):
+                    v_info[0] = _os.path.abspath(v_info[0])
+                result[v_info[0]] = {"bind": v_info[1], "mode": "rw"}
+                mounts.append(v_info[1])
+        return mounts, result
 
     def _parse_ports(self, ports):
         result = {}
@@ -300,8 +303,8 @@ class InteractiveContainer(Container):
     def run(self, options):
         """
 
-        :param options: 
-        :return: 
+        :param options:
+        :return:
         """
         if options.entrypoint == "runtest":
             raise ValueError("You cannot use the entrypoint 'runtest' in interactive mode!")
@@ -311,7 +314,7 @@ class InteractiveContainer(Container):
             docker_image = self.get_image_name(options, options.skip_update)
 
             # volumes
-            volumes = self._parse_volumes(options.volume)
+            vmounts, volumes = self._parse_volumes(options.volume)
 
             # ports
             ports = self._parse_ports(options.port)
@@ -326,18 +329,21 @@ class InteractiveContainer(Container):
                 "--server", options.server,
                 "--api-key", options.api_key
             ]
-
+            if "web_port" in options:
+                command.extend(["--port", "{}".format(options.web_port)])
+            import socket
             # create and run Docker containers
             client = _docker.APIClient()
             container = client.create_container(
                 image=docker_image,
                 stdin_open=True,
                 tty=True,
+                hostname=socket.gethostname(),
                 command=command,
                 environment=environment,
-                volumes=volumes,
+                volumes=vmounts,
                 ports=list(ports.keys()),
-                host_config=client.create_host_config(port_bindings=ports)
+                host_config=client.create_host_config(binds=volumes, port_bindings=ports)
             )
             _logger.info("Started Docker container %s", container["Id"])
             _dockerpty.start(client, container)
@@ -362,8 +368,8 @@ class NonInteractiveContainer(Container):
     def run(self, options):
         """
 
-        :param options: 
-        :return: 
+        :param options:
+        :return:
         """
         # set absolute path of container mount points for IO
         container_input_path = _os.path.join("/", "data_input")
@@ -418,7 +424,7 @@ class NonInteractiveContainer(Container):
             if options.disable_cleanup:
                 cmd.append("--disable-cleanup")
             # output format options
-            cmd.extend( ('--output-format', options.output_format) )
+            cmd.extend(('--output-format', options.output_format))
             if options.xunit_file:
                 cmd.extend(("--xunit-file", options.xunit_file))
             # add test filter

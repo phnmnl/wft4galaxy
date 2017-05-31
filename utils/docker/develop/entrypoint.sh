@@ -15,7 +15,7 @@ elif [[ ${ENTRYPOINT} == "wizard" ]]; then
 elif [[ ${ENTRYPOINT} == "ipython" ]]; then
 	ipython ${ENTRYPOINT_ARGS}
 elif [[ ${ENTRYPOINT} == "jupyter" ]]; then
-	ipython notebook --ip=$(hostname) --no-browser --port 8888 ${ENTRYPOINT_ARGS}
+	ipython notebook --ip=$(hostname) --no-browser --allow-root ${ENTRYPOINT_ARGS}
 else
     /bin/bash ${ENTRYPOINT_ARGS}
 fi

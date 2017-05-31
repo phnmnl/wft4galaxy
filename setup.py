@@ -3,21 +3,44 @@ import shutil
 from setuptools import setup
 import subprocess as _subprocess
 from json import dump as _json_dump
+from pip.req import parse_requirements
 from distutils.command.clean import clean
 from setuptools.command.build_py import build_py
 
 
-def _run_cmd(cmd):
-    if hasattr(_subprocess, "run"):
-        return _subprocess.run(cmd, stdout=_subprocess.PIPE).stdout.decode("utf-8").strip("\n")
+def _run_txt_cmd(cmd):
+    # Using universal_newlines=True causes subprocess to always
+    # handle the output as a str.  This should be compatible with
+    # all versions of Python >= 2.7.  Remeber that check_output in
+    # Python 3 returns a binary stream, unless called with
+    # universal_newlines=True
+    return _subprocess.check_output(cmd, universal_newlines=True).strip("\n")
+
+
+def _check_is_git_repo():
+    """
+    Check whether the current project directory is a Git repository or not.
+
+    :rtype: bool
+    :return: ``True`` if the current project directory is a Git repository; ``False`` otherwise
+    """
+    if _subprocess.call(["git", "branch"], stderr=_subprocess.STDOUT, stdout=open(os.devnull, 'w')) != 0:
+        return False
     else:
-        return _subprocess.check_output(cmd).strip("\n")
+        return True
 
 
 def update_properties(config):
-    repo_url = _run_cmd(['git', 'config', '--get', 'remote.origin.url'])
-    branch = _run_cmd(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
-    last_commit = _run_cmd(['git', 'log', '--format=%H', '-n', '1'])
+    # do not write properties file if the current project directory
+    # is not a Git repository
+    if not _check_is_git_repo():
+        print("Not a Git repository")
+        return False
+
+    first_remote = _run_txt_cmd(['git', 'remote']).split('\n')[0]
+    repo_url = _run_txt_cmd(['git', 'config', '--get', 'remote.{}.url'.format(first_remote)])
+    branch = _run_txt_cmd(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+    last_commit = _run_txt_cmd(['git', 'log', '--format=%H', '-n', '1'])
 
     # get tags
     tags = []
@@ -25,7 +48,7 @@ def update_properties(config):
         # Git repository could not contain tags
         # and the following command fails in such a case.
         # We simply ignore this failure
-        tags = _run_cmd(['git', 'show-ref', '--tags', '-s'])
+        tags = _run_txt_cmd(['git', 'show-ref', '--tags', '-s'])
     except:
         pass
 
@@ -52,7 +75,7 @@ def update_properties(config):
     # git & docker tag
     tag = None
     if last_commit in tags:
-        tag = _run_cmd(['git', 'describe', '--contains', last_commit])
+        tag = _run_txt_cmd(['git', 'describe', '--contains', last_commit])
         docker_tag = "alpine-{0}".format(tag)
     else:
         docker_tag = "alpine-{0}".format(branch)
@@ -69,9 +92,12 @@ def update_properties(config):
 
     # Docker info
     config["Docker"] = {
-        "repository": owner,
+        # uncomment to set a registry different from the DockerHub
+        # "registry": "",
+        "owner": owner,
         "tag": docker_tag
     }
+    return True
 
 
 class BuildCommand(build_py):
@@ -113,25 +139,14 @@ class CleanCommand(clean):
             self._rmrf(p)
 
 
+install_reqs = parse_requirements("requirements.txt", session="hack")
+requirements = [str(ir.req) for ir in install_reqs]
 setup(
     name='wft4galaxy',
     description='Utility module for testing Galaxy workflows',
     url='https://github.com/phnmnl/wft4galaxy',
     version='0.1',
-    install_requires={
-        'setuptools': ['setuptools'],
-        'future': ['future>=0.16.0'],
-        'bioblend': ['bioblend'],
-        'ruamel.yaml': ['ruamel.yaml'],  # TODO: to be removed in the next release
-        'lxml': ['lxml'],
-        'pyyaml': ['pyyaml'],
-        'sphinx_rtd_theme': ['sphinx_rtd_theme'],
-        'Jinja2': ['Jinja2>=2.9'],
-        'docker': ['docker>=2.1.0'],
-        'dockerpty': ['dockerpty>=0.4.1'],
-        'unittest-xml-reporting': ['unittest-xml-reporting==2.1.0']
-    },
-    dependency_links=['git+https://github.com/galaxyproject/bioblend.git/@master#egg=bioblend-latest'],
+    install_requires=requirements,
     package_data={'wft4galaxy': ['wft4galaxy.properties'], 'templates': ['*']},
     packages=["wft4galaxy", "wft4galaxy.comparators", "wft4galaxy.app", "templates"],
     entry_points={'console_scripts': [
