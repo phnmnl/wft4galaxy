@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# load git/docker info
-source "../../image-config.sh"
+# absolute path of the current script
+script_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# build the Docker image
-docker build --build-arg git_branch=${git_branch} --build-arg git_url=${git_url} -t ${IMAGE_NAME} .
+# call the build script
+${script_path}/../build.sh
