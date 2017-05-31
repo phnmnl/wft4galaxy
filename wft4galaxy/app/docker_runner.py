@@ -185,7 +185,7 @@ class _CommandLineHelper:
         args = self._parser.parse_args()
         # add port Jupyter web port
         if "web_port" in args:
-            args.port.append("8888:{0}".format(args.web_port))
+            args.port.append("{0}:{1}".format(args.web_port, args.web_port))
         _logger.debug("Parsed arguments %r", args)
         return args
 
@@ -325,13 +325,16 @@ class InteractiveContainer(Container):
                 "--server", options.server,
                 "--api-key", options.api_key
             ]
-
+            if "web_port" in options:
+                command.extend(["--port", "{}".format(options.web_port)])
+            import socket
             # create and run Docker containers
             client = _docker.APIClient()
             container = client.create_container(
                 image=docker_image,
                 stdin_open=True,
                 tty=True,
+                hostname=socket.gethostname(),
                 command=command,
                 environment=environment,
                 volumes=volumes,
