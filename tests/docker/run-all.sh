@@ -7,4 +7,4 @@ script_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ${script_path}/test-image.sh minimal "$@"
 
 # test develop image
-#${script_path}/test-image.sh develop "$@"
+${script_path}/test-image.sh develop "$@"
