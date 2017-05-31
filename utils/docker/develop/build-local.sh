@@ -58,8 +58,9 @@ sed_script="${work_dir}/Dockerfile.sed"
 # subtle thing: when ADDing multiple things to a directory, the directory's
 # path must end with a slash
 cat <<END > "${sed_script}"
-/^RUN  *echo  *"Installing dependencies"/i ADD . "\${WFT4GALAXY_PATH}\/"
-/\<git\>  *\<clone\> .*\${WFT4GALAXY/d
+/git  *clone .*\${WFT4GALAXY/d
+/^RUN  *echo  *"Installing dependencies"/i\\
+ADD . "\${WFT4GALAXY_PATH}\/"
 END
 
 sed -f "${sed_script}" "${proj_dir}/utils/docker/minimal/Dockerfile" > "${work_dir}/Dockerfile"
