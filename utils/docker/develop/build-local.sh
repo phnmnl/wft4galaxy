@@ -40,7 +40,7 @@ proj_dir="${script_dir}/../../../"
 # On exit, for whatever reason, try to clean up
 trap "cleanup" EXIT INT ERR
 
-work_dir="$(mktemp --directory)"
+work_dir="$(mktemp -d)"
 
 log "copying project dir to work directory ${work_dir}"
 if [ $(ls "${proj_dir}" | grep 'wft4galaxy\|setup.py' | wc -l) -lt 2 ] ; then
@@ -50,7 +50,7 @@ if [ $(ls "${proj_dir}" | grep 'wft4galaxy\|setup.py' | wc -l) -lt 2 ] ; then
 	exit 1
 fi
 
-cp --archive ${proj_dir}/* "${work_dir}"
+cp -a ${proj_dir}/* "${work_dir}"
 
 sed_script="${work_dir}/Dockerfile.sed"
 # subtle thing: when ADDing multiple things to a directory, the directory's
