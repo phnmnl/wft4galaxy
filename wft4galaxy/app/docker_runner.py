@@ -174,7 +174,8 @@ class _CommandLineHelper:
 
         # here we hardcode the possible values of wft4galaxy.core.OutputFormat because we don't
         # want to require installing the package to use the docker runner.
-        wft4g_parser.add_argument('--output-format', choices=tuple('text', 'xunit'), help='Choose output type', default='text')
+        wft4g_parser.add_argument('--output-format', choices=('text', 'xunit'), help='Choose output type',
+                                  default='text')
         wft4g_parser.add_argument('--xunit-file', default=None, metavar="PATH",
                                   help='Set the path of the xUnit report file (absolute or relative to the output folder)')
         wft4g_parser.add_argument("test", help="Workflow Test Name", nargs="*")
@@ -302,8 +303,8 @@ class InteractiveContainer(Container):
     def run(self, options):
         """
 
-        :param options: 
-        :return: 
+        :param options:
+        :return:
         """
         if options.entrypoint == "runtest":
             raise ValueError("You cannot use the entrypoint 'runtest' in interactive mode!")
@@ -367,8 +368,8 @@ class NonInteractiveContainer(Container):
     def run(self, options):
         """
 
-        :param options: 
-        :return: 
+        :param options:
+        :return:
         """
         # set absolute path of container mount points for IO
         container_input_path = _os.path.join("/", "data_input")
@@ -423,7 +424,7 @@ class NonInteractiveContainer(Container):
             if options.disable_cleanup:
                 cmd.append("--disable-cleanup")
             # output format options
-            cmd.extend( ('--output-format', options.output_format) )
+            cmd.extend(('--output-format', options.output_format))
             if options.xunit_file:
                 cmd.extend(("--xunit-file", options.xunit_file))
             # add test filter
