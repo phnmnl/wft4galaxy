@@ -59,6 +59,7 @@ sed_script="${work_dir}/Dockerfile.sed"
 # path must end with a slash
 cat <<END > "${sed_script}"
 /git  *clone .*\${WFT4GALAXY/d
+/echo "Cloning wft4galaxy:/d
 /^RUN  *echo  *"Installing dependencies"/i\\
 ADD . "\${WFT4GALAXY_PATH}\/"
 END
