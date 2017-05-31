@@ -51,6 +51,8 @@ if [ $(ls "${proj_dir}" | grep 'wft4galaxy\|setup.py' | wc -l) -lt 2 ] ; then
 fi
 
 cp -a ${proj_dir}/* "${work_dir}"
+cp ${script_dir}/bashrc "${work_dir}"
+cp ${script_dir}/*.sh "${work_dir}"
 
 sed_script="${work_dir}/Dockerfile.sed"
 # subtle thing: when ADDing multiple things to a directory, the directory's
