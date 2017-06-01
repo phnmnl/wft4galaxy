@@ -9,7 +9,10 @@ import shutil as _shutil
 import logging as _logging
 import unittest as _unittest
 from uuid import uuid1 as _uuid1
-from StringIO import StringIO as _StringIO
+try:
+    from StringIO import StringIO as _StringIO
+except ImportError:
+    from io import StringIO as _StringIO
 
 # XMLRunner dependencies
 from xmlrunner.runner import XMLTestRunner
