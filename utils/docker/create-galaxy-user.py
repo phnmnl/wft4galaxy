@@ -76,52 +76,46 @@ def main():
     # configure logger
     _logging.basicConfig(level=_logging.ERROR, format="%(asctime)s [%(name)s] [%(levelname)+4.5s]  %(message)s")
 
+    # parse args
+    parser = _make_parser()
+    options = parser.parse_args(_sys.argv[1:])
+
+    # update log level
+    if options.debug:
+        _logging.basicConfig(level=_logging.DEBUG)
+    _logger.debug("Configuration: %s", options)
+
+    # galaxy instance configuration
+    gi = _GalaxyInstance(url=options.server, key=options.api_key)
+
+    # user
+    user_info = create_user(gi, options.username, options.password, options.email)
+
+    _logger.info("User created: %s" % user_info)
+
+    # add API KEY if required
+    if options.with_api_key:
+        api_key = create_api_key(galaxy_instance=gi, user_id=user_info["id"])
+        user_info["api-key"] = api_key
+        _logger.info("Created API KEY: %s", api_key)
+
+    filename = options.file
+    if filename is None:
+        filename = user_info["username"] + ".info"
+    with open(filename, "w") as out:
+        _json.dump(user_info, out, indent=4)
+    filename = user_info["username"] + ".id"
+    with open(filename, "w") as out:
+        out.write(user_info["api-key"])
+
+    # write to stdout the "api-key"
+    print(user_info["api-key"])
+
+if __name__ == "__main__":
     try:
-        # parse args
-        parser = _make_parser()
-        options = parser.parse_args(_sys.argv[1:])
-
-        # update log level
-        if options.debug:
-            _logging.basicConfig(level=_logging.DEBUG)
-        _logger.debug("Configuration: %s", options)
-
-        # galaxy instance configuration
-        gi = _GalaxyInstance(url=options.server, key=options.api_key)
-
-        # user
-        user_info = create_user(gi, options.username, options.password, options.email)
-
-        #
-        _logger.info("User created: %s" % user_info)
-
-        # add API KEY if required
-        if options.with_api_key:
-            api_key = create_api_key(galaxy_instance=gi, user_id=user_info["id"])
-            user_info["api-key"] = api_key
-            _logger.info("Created API KEY: %s", api_key)
-
-        filename = options.file
-        if filename is None:
-            filename = user_info["username"] + ".info"
-        with open(filename, "w") as out:
-            _json.dump(user_info, out, indent=4)
-        filename = user_info["username"] + ".id"
-        with open(filename, "w") as out:
-            out.write(user_info["api-key"])
-
-        # write to stdout the "api-key"
-        print(user_info["api-key"])
-
-        # return
-        _sys.exit(0)
-
-    except Exception as e:
+        main()
+    except StandardError as e:
         _logger.error(e)
         if _logger.isEnabledFor(_logging.DEBUG):
             _logger.exception(e)
         _sys.exit(99)
-
-
-if __name__ == "__main__":
-    main()
