@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+from future.utils import iteritems as _iteritems
+
+import os
+import sys
+import time
+import unittest
+import xmlrunner
+import importlib
+import logging
+import argparse
+
+# configure paths
+TestComparatorFilename = "test_comparator"
+TestDir = os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(0, TestDir)
+
+# configure loggers
+_logger = logging.getLogger("ComparatorTests")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] [%(levelname)+4.5s]  %(message)s")
+
+
+def _make_parser():
+    parser = argparse.ArgumentParser(add_help=True)
+    parser.add_argument('--verbosity', help='Set verbosity level', choices=range(0, 3), default=2)
+    parser.add_argument('--with-xunit', help='Enable xunit output', default=False, action="store_true")
+    parser.add_argument('--xunit-file', default=None, metavar="FILE_PATH",
+                        help='Set the path of the xUnit report file (absolute or relative to the output folder)')
+    return parser
+
+
+def suite():
+    """
+    Define the suite to be executed.
+
+    :return: suite object
+    """
+    test_folders = [td_name for td_name in os.listdir(TestDir) if os.path.isdir(os.path.join(TestDir, td_name))]
+    _logger.debug("Test folders: %s" % test_folders)
+    # prepare suite
+    suites = []
+    for test_dir in test_folders:
+        module_name = "{}.{}".format(test_dir, TestComparatorFilename)
+        m = importlib.import_module(module_name)
+        _logger.debug("Found module: %s", module_name)
+        if hasattr(m, "suite"):
+            suites.append(getattr(m, "suite")())
+        else:
+            _logger.warn("No suite found on module '%s'", module_name)
+    return suites
+
+
+def main():
+    # parse arguments
+    parser = _make_parser()
+    options = parser.parse_args(sys.argv[1:])
+    output_filename = options.xunit_file or "test-comparators-{}.xml".format(time.strftime("%Y%m%d%H%M%S"))
+    output = open(os.devnull, "w") if not options.with_xunit else open(output_filename, "w")
+    # execute tests
+    runner = xmlrunner.XMLTestRunner(verbosity=options.verbosity, output=output)
+    _result = runner.run(unittest.TestSuite(suite()))
+    sys.exit(_result.wasSuccessful())
+
+
+if __name__ == '__main__':
+    main()
