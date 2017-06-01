@@ -4,14 +4,11 @@ language: python
 
 python:
   - "2.7"
-  #- "3.6"
+  - "3.6"
 
 services:
   - docker
 
-#addons:
-#  hosts:
-#    - galaxy
 
 env:
   global:
@@ -26,9 +23,6 @@ env:
     - GALAXY_USER_PASSWORD=wft4galaxy-tester
     - GALAXY_USER_EMAIL=wft4galaxy@wft.it
 
-#  matrix:
-#    - USE_NETWORK=true
-#    - USE_NETWORK=false
 
 before_install:
 - pip install -r requirements.txt
@@ -41,6 +35,7 @@ install:
 
 script:
 - GALAXY_API_KEY=$(cat "wft4galaxy.id")
+- tests/comparators/run_all
 - wft4galaxy -f examples/change_case/workflow-test.yml --server ${GALAXY_URL} --api-key ${GALAXY_API_KEY}
 - export GALAXY_URL=http://${GALAXY_ADDRESS} # use the address of the Galaxy container within the Docker network
 - tests/docker/run-all.sh --branch ${TRAVIS_BRANCH} --server ${GALAXY_URL} --api-key ${GALAXY_API_KEY} --network ${GALAXY_NETWORK}
