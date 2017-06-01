@@ -61,7 +61,7 @@ def main():
     # execute tests
     runner = xmlrunner.XMLTestRunner(verbosity=options.verbosity, output=output)
     _result = runner.run(unittest.TestSuite(suite()))
-    sys.exit(_result.wasSuccessful())
+    sys.exit(0 if _result.wasSuccessful() else -1)
 
 
 if __name__ == '__main__':
