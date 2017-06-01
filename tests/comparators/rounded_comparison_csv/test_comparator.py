@@ -7,14 +7,6 @@ import unittest
 TestDir = os.path.abspath(os.path.dirname(__file__))
 
 
-class TestWft4Galaxy(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-
 class TestRoundedCsvComparator(unittest.TestCase):
     CorrelationFile = os.path.join(TestDir, 'correlation_table.csv')
 
@@ -41,9 +33,7 @@ class TestRoundedCsvComparator(unittest.TestCase):
 
 
 def suite():
-    s = unittest.TestLoader().loadTestsFromTestCase(TestWft4Galaxy)
-    s.addTests(unittest.TestLoader().loadTestsFromTestCase(TestRoundedCsvComparator))
-    return s
+    return unittest.TestLoader().loadTestsFromTestCase(TestRoundedCsvComparator)
 
 
 def main():
