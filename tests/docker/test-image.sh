@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-set -e
+set -o nounset
+set -o errexit
 
 # absolute path of the current script
 script_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -75,8 +76,8 @@ done
 settings=(image_type GALAXY_URL GALAXY_API_KEY)
 for s in ${settings[@]}; do
     if [[ -z ${!s} ]]; then
-        echo "No ${s} provided."
-        exit -1
+        echo "No ${s} provided." >&2
+        exit 1
     fi
 done
 
@@ -117,8 +118,18 @@ base_cmd="./wft4galaxy-docker ${cmd_other_opts} --server ${GALAXY_URL} --api-key
 cmd="${base_cmd} -f examples/change_case/workflow-test.yml"
 echo -e "CMD: ${cmd}\n">&2
 
+# turn off command error checking
+set +o errexit
+
 # run test
 ${cmd}
+exit_code=$?
 
 # cleanup
-rm wft4galaxy-docker
+rm -f wft4galaxy-docker
+
+if [ ${exit_code} -ne 0 ]; then
+    echo "Test failed (exit code: ${exit_code}" >&2
+fi
+
+exit ${exit_code}

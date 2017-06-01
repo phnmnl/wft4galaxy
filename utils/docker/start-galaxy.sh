@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+set -o errexit
+set -o nounset
+
 # Docker settings
 docker_image="bgruening/galaxy-stable"
 docker_host="localhost"
