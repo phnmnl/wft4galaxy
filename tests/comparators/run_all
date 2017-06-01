@@ -57,7 +57,7 @@ def main():
     parser = _make_parser()
     options = parser.parse_args(sys.argv[1:])
     output_filename = options.xunit_file or "test-comparators-{}.xml".format(time.strftime("%Y%m%d%H%M%S"))
-    output = open(os.devnull, "w") if not options.with_xunit else open(output_filename, "w")
+    output = open(os.devnull, "wb") if not options.with_xunit else open(output_filename, "wb")
     # execute tests
     runner = xmlrunner.XMLTestRunner(verbosity=options.verbosity, output=output)
     _result = runner.run(unittest.TestSuite(suite()))
