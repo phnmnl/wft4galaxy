@@ -238,6 +238,7 @@ class Container():
             _logger.debug("Using Docker image: %s", image_repository)
 
         # try to use the version tag provided by user
+        image_tag = DOCKER_IMAGE_SETTINGS["default_tag_version"]
         if options.tag is not None:
             image_tag = options.tag
         # if the user doesn't provide a version
