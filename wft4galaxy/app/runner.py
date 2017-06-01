@@ -32,7 +32,7 @@ def _make_parser():
     parser.add_argument('--debug', help='Enable debug mode', action='store_true', default=None)
     parser.add_argument('--disable-cleanup', help='Disable cleanup', action='store_true', default=None)
 
-    parser.add_argument('--output-format', choices=(OutputFormat), help='Choose output type', default=OutputFormat.text)
+    parser.add_argument('--output-format', choices=OutputFormat, help='Choose output type', default=OutputFormat.text)
 
     parser.add_argument('--xunit-file', default=None, metavar="FILE_PATH",
                         help='Set the path of the xUnit report file (absolute or relative to the output folder)')

@@ -96,7 +96,7 @@ echo "Downloaded 'wft4galaxy-docker' Github repository: ${owner}/wft4galaxy (bra
 cd ${image_root_path} > /dev/null
 
 # build docker image
-echo "${image_root_path}/${image_type}/build.sh ${opts}"
+echo "${image_root_path}/${image_type}/build.sh ${opts}" >&2
 "${image_root_path}/${image_type}/build.sh" ${repo_branch} && cd - > /dev/null
 
 # set optional arguments
@@ -122,7 +122,7 @@ echo -e "CMD: ${cmd}\n">&2
 set +o errexit
 
 # run test
-${cmd}
+${cmd} 
 exit_code=$?
 
 # cleanup
