@@ -44,9 +44,11 @@ else
     if [[ -z ${IMAGE_OWNER} ]]; then
         # map the git phnmnl repository to the Crs4 DockerHub repository
         if [[ ${GIT_OWNER} == "phnmnl" ]]; then
-            GIT_OWNER="crs4"
+            IMAGE_OWNER="crs4"
+        else
+            IMAGE_OWNER=${GIT_OWNER}
         fi
-        export IMAGE_OWNER=${GIT_OWNER}
+        export IMAGE_OWNER
     fi
 
     # set IMAGE_NAME if not defined
