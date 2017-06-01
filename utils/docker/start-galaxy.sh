@@ -12,6 +12,7 @@ master_api_key=""
 port=80
 container_name="galaxy-server"
 debug="false"
+max_wait_time=$((5*60)) # seconds
 
 
 function print_usage(){
@@ -136,15 +137,27 @@ if [[ ${debug} == "true" ]]; then
 fi
 
 # start Dockerized Galaxy
+# If this fails the script should exit with non-zero because of errexit
 ${docker_cmd}
 
 # wait for Galaxy
+wait_time=0
+sleep_time=5
 printf "\nWaiting for Galaxy @ ${GALAXY_URL} ..."
 until $(curl --output /dev/null --silent --head --fail ${GALAXY_URL}); do
     printf '.'
-    sleep 5
+    sleep ${sleep_time}
+    wait_time=$((${wait_time} + ${sleep_time}))
+    if [ ${wait_time} -ge ${max_wait_time} ]; then
+        (printf "There seems to be a problem starting Galaxy.\n"
+         printf "We've waitedf or %d seconds so far and it's still not answering\n"
+         printf "Giving up\n" ) >&2
+        exit 2
+    fi
 done
 printf ' Started\n'
 
 # Galaxy info
 printf "\nGalaxy server running @ ${GALAXY_URL}\n"
+
+exit 0
