@@ -21,11 +21,12 @@ sys.path.insert(0, TestDir)
 _logger = logging.getLogger("ComparatorTests")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] [%(levelname)+4.5s]  %(message)s")
 
+from wft4galaxy.core import OutputFormat
 
 def _make_parser():
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument('--verbosity', help='Set verbosity level', choices=range(0, 3), default=2)
-    parser.add_argument('--with-xunit', help='Enable xunit output', default=False, action="store_true")
+    parser.add_argument('--output-format', choices=OutputFormat, help='Choose output type', default=OutputFormat.text)
     parser.add_argument('--xunit-file', default=None, metavar="FILE_PATH",
                         help='Set the path of the xUnit report file (absolute or relative to the output folder)')
     return parser
@@ -57,7 +58,7 @@ def main():
     parser = _make_parser()
     options = parser.parse_args(sys.argv[1:])
     output_filename = options.xunit_file or "test-comparators-{}.xml".format(time.strftime("%Y%m%d%H%M%S"))
-    output = open(os.devnull, "wb") if not options.with_xunit else open(output_filename, "wb")
+    output = open(os.devnull, "wb") if options.output_format == OutputFormat.text else open(output_filename, "wb")
     # execute tests
     runner = xmlrunner.XMLTestRunner(verbosity=options.verbosity, output=output)
     _result = runner.run(unittest.TestSuite(suite()))
