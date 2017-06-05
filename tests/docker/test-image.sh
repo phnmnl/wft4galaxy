@@ -111,7 +111,8 @@ cd ${image_root_path} > /dev/null
 
 # build docker image
 echo "${image_root_path}/${image_type}/build.sh ${opts}" >&2
-"${image_root_path}/${image_type}/build.sh" ${repo_branch} && cd - > /dev/null
+"${image_root_path}/${image_type}/build.sh" ${repo_branch}
+cd - > /dev/null
 
 # set optional arguments
 cmd_other_opts="--repository ${IMAGE_OWNER}/wft4galaxy --skip-update ${debug}"
