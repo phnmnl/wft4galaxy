@@ -21,90 +21,117 @@ function print_usage(){
      echo -e "                        [-h|--help]\n ") >&2
 }
 
+function usage_error() {
+  print_usage
+  exit 1
+}
 
-# parse arguments
-while [ -n "$1" ]; do
-    # Copy so we can modify it (can't modify $1)
-    OPT="$1"
-    # Detect argument termination
-    if [ x"$OPT" = x"--" ]; then
-            shift
-            for OPT ; do
-                    OTHER_OPTS="$OTHER_OPTS \"$OPT\""
-            done
-            break
-    fi
-    # Parse current opt
-    while [ x"$OPT" != x"-" ] ; do
-            case "$OPT" in
-                  --docker-host=* )
-                          docker_host="${OPT#*=}"
-                          ;;
-                  --docker-host )
-                          docker_host="$2"
+function get_opt_value() {
+  if [ $# -le 1 ]; then
+    echo "Missing value for option ${1}" >&2
+    usage_error # never returns
+  fi
+
+  value="${2}"
+  if [[ "${value}" == --* ]]; then # need [[ for wildcard matching
+    echo "Missing value for option ${1} (found other option '${value}')" >&2
+    usage_error # never returns
+  fi
+
+  echo ${value}
+  shift
+  return 0
+}
+
+function do_argument_parsing() {
+  #
+  # This function  modifies variables set at the script's global scope
+  #
+
+  if [ $# -le 0 ]; then
+    return 0
+  fi
+
+  OTHER_OPTS=''
+  while [ -n "$1" ]; do
+      # Copy so we can modify it (can't modify $1)
+      OPT="$1"
+      # Detect argument termination
+      if [ x"$OPT" = x"--" ]; then
+              shift
+              for OPT ; do
+                      OTHER_OPTS="$OTHER_OPTS \"$OPT\""
+              done
+              break
+      fi
+      # Parse current opt
+      while [ x"$OPT" != x"-" ] ; do
+              case "$OPT" in
+                    --docker-host=* )
+                            docker_host="${OPT#*=}"
+                            ;;
+                    --docker-host )
+                            docker_host="$(get_opt_value)"
+                            ;;
+                    --network=* )
+                            network="${OPT#*=}"
+                            ;;
+                    --network )
+                            network="$(get_opt_value)"
+                            ;;
+                    --ip=* )
+                            ip="${OPT#*=}"
+                            ;;
+                    --ip )
+                            ip="$(get_opt_value)"
+                            ;;
+                    --port=* )
+                            port="${OPT#*=}"
+                            ;;
+                    --port )
+                            port="$(get_opt_value)"
+                            ;;
+                    --master-api-key=* )
+                            master_api_key="${OPT#*=}"
+                            ;;
+                    --master-api-key )
+                            master_api_key="$(get_opt_value)"
+                            ;;
+                    --container-name=* )
+                            container_name="${OPT#*=}"
+                            ;;
+                    --container-name )
+                            container_name="$(get_opt_value)"
+                            ;;
+                    --debug )
+                          debug="true"
                           shift
                           ;;
-                  --network=* )
-                          network="${OPT#*=}"
+                    -h|--help )
+                          print_usage
+                          exit 0
                           ;;
-                  --network )
-                          network="$2"
-                          shift
-                          ;;
-                  --ip=* )
-                          ip="${OPT#*=}"
-                          ;;
-                  --ip )
-                          ip="$2"
-                          shift
-                          ;;
-                  --port=* )
-                          port="${OPT#*=}"
-                          ;;
-                  --port )
-                          port="$2"
-                          shift
-                          ;;
-                  --master-api-key=* )
-                          master_api_key="${OPT#*=}"
-                          ;;
-                  --master-api-key )
-                          master_api_key="$2"
-                          shift
-                          ;;
-                  --container-name=* )
-                          container_name="${OPT#*=}"
-                          ;;
-                  --container-name )
-                          container_name="$2"
-                          shift
-                          ;;
-                  --debug )
-                        debug="true"
-                        shift
-                        ;;
-                  -h|--help )
-                        print_usage
-                        exit 0
-                        ;;
-                  * )
+                    * )
                           OTHER_OPTS="$OTHER_OPTS $OPT"
                           break
                           ;;
-            esac
-            # Check for multiple short options
-            # NOTICE: be sure to update this pattern to match valid options
-            NEXTOPT="${OPT#-[cfr]}" # try removing single short opt
-            if [ x"$OPT" != x"$NEXTOPT" ] ; then
-                    OPT="-$NEXTOPT"  # multiple short opts, keep going
-            else
-                    break  # long form, exit inner loop
-            fi
-    done
-    # move to the next param
-    shift
-done
+              esac
+              # Check for multiple short options
+              # NOTICE: be sure to update this pattern to match valid options
+              NEXTOPT="${OPT#-[cfr]}" # try removing single short opt
+              if [ x"$OPT" != x"$NEXTOPT" ] ; then
+                      OPT="-$NEXTOPT"  # multiple short opts, keep going
+              else
+                      break  # long form, exit inner loop
+              fi
+      done
+      # move to the next param
+      shift
+  done
+}
 
+######### main ##########
+do_argument_parsing
 
 # Docker options
 docker_options=""
