@@ -84,15 +84,20 @@ def _compare_strings_as_floats(precision, a, b):
 
 
 def rounded_comparison_csv(actual_output, expected_output):
-    precision = 2
     import csv
+    try:
+        from itertools import izip
+    except ImportError:
+        # in Python 3 zip() function returns an iterator
+        izip = zip
+    precision = 2
     try:
         with open(actual_output) as actual, open(expected_output) as expected:
             aout = csv.reader(actual)
             eout = csv.reader(expected)
             for expected_row in eout:
                 actual_row = next(aout)
-                for actual_field, expected_field in list(zip(actual_row, expected_row)):
+                for actual_field, expected_field in izip(actual_row, expected_row):
                     if not _compare_strings_as_floats(precision, actual_field, expected_field) \
                             and actual_field != expected_field:
                         print("Difference found between expected and actual output", file=_sys.stderr)
