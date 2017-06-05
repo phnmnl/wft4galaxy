@@ -19,6 +19,15 @@ function print_usage(){
         echo "required image information from the local repository itself") >&2
 }
 
+# init argument variables
+image_type=''
+GALAXY_URL=''
+GALAXY_API_KEY=''
+GALAXY_NETWORK=''
+repo_url=''
+GIT_BRANCH=''
+repo_branch=''
+
 # options
 opts="$@"
 
@@ -34,22 +43,27 @@ do
             exit 0
             ;;
         --server )
-            GALAXY_URL=$2
+            [ $# -ge 2 ] || { echo "Missing value for '$1'"; exit 1; }
+            GALAXY_URL="$2"
             shift
             ;;
         --api-key)
-            GALAXY_API_KEY=$2
+            [ $# -ge 2 ] || { echo "Missing value for '$1'"; exit 1; }
+            GALAXY_API_KEY="$2"
             shift
             ;;
         --network )
-            GALAXY_NETWORK=$2
+            [ $# -ge 2 ] || { echo "Missing value for '$1'"; exit 1; }
+            GALAXY_NETWORK="$2"
             shift
             ;;
         --url|--repo-url)
+            [ $# -ge 2 ] || { echo "Missing value for '$1'"; exit 1; }
             repo_url="--url $2"
             shift
             ;;
         --branch|--repo-branch)
+            [ $# -ge 2 ] || { echo "Missing value for '$1'"; exit 1; }
             GIT_BRANCH=$2
             repo_branch="--branch $2"
             shift

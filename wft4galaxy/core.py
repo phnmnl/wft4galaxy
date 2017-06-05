@@ -18,6 +18,7 @@ import wft4galaxy.common as _common
 # set logger
 _logger = _common.LoggerManager.get_logger(__name__)
 
+
 # Enum magic for Python < 3.4
 class Enum(object):
     def __init__(self, **enums):
@@ -28,10 +29,19 @@ class Enum(object):
         raise StandardError("Setting enum value not allowed")
 
     def __iter__(self):
-        return iter(self.__dict__.keys())
+        try:
+            return self.__dict__.iterkeys()
+        except:
+            # in Python3 iterkeys() doesn't exist;
+            # .keys() returns a `dict_keys` object which is not a new list
+            # but a suitable object for creating iterators, which are also automatically created
+            # when the `dict_key` object is involved in a loop
+            return iter(self.__dict__.keys())
+
 
 # Define an Enum for supported output types
 OutputFormat = Enum(text='text', xunit='xunit')
+
 
 class FileFormats(object):
     YAML = "YAML"

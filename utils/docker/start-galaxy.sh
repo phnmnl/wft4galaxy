@@ -32,111 +32,95 @@ function get_opt_value() {
     usage_error # never returns
   fi
 
-  value="${2}"
+  local value="${2}"
   if [[ "${value}" == --* ]]; then # need [[ for wildcard matching
     echo "Missing value for option ${1} (found other option '${value}')" >&2
     usage_error # never returns
   fi
 
   echo ${value}
-  shift
   return 0
 }
 
-function do_argument_parsing() {
-  #
-  # This function  modifies variables set at the script's global scope
-  #
-
-  if [ $# -le 0 ]; then
-    return 0
-  fi
-
-  OTHER_OPTS=''
-  while [ -n "$1" ]; do
-      # Copy so we can modify it (can't modify $1)
-      OPT="$1"
-      # Detect argument termination
-      if [ x"$OPT" = x"--" ]; then
-              shift
-              for OPT ; do
-                      OTHER_OPTS="$OTHER_OPTS \"$OPT\""
-              done
-              break
-      fi
-      # Parse current opt
-      while [ x"$OPT" != x"-" ] ; do
-              case "$OPT" in
-                    --docker-host=* )
-                            docker_host="${OPT#*=}"
-                            ;;
-                    --docker-host )
-                            docker_host="$(get_opt_value)"
-                            ;;
-                    --network=* )
-                            network="${OPT#*=}"
-                            ;;
-                    --network )
-                            network="$(get_opt_value)"
-                            ;;
-                    --ip=* )
-                            ip="${OPT#*=}"
-                            ;;
-                    --ip )
-                            ip="$(get_opt_value)"
-                            ;;
-                    --port=* )
-                            port="${OPT#*=}"
-                            ;;
-                    --port )
-                            port="$(get_opt_value)"
-                            ;;
-                    --master-api-key=* )
-                            master_api_key="${OPT#*=}"
-                            ;;
-                    --master-api-key )
-                            master_api_key="$(get_opt_value)"
-                            ;;
-                    --container-name=* )
-                            container_name="${OPT#*=}"
-                            ;;
-                    --container-name )
-                            container_name="$(get_opt_value)"
-                            ;;
-                    --debug )
-                          debug="true"
-                          shift
-                          ;;
-                    -h|--help )
-                          print_usage
-                          exit 0
-                          ;;
-                    * )
-                          OTHER_OPTS="$OTHER_OPTS $OPT"
-                          break
-                          ;;
-              esac
-              # Check for multiple short options
-              # NOTICE: be sure to update this pattern to match valid options
-              NEXTOPT="${OPT#-[cfr]}" # try removing single short opt
-              if [ x"$OPT" != x"$NEXTOPT" ] ; then
-                      OPT="-$NEXTOPT"  # multiple short opts, keep going
-              else
-                      break  # long form, exit inner loop
-              fi
-      done
-      # move to the next param
-      shift
-  done
-}
-
 ######### main ##########
-do_argument_parsing
+
+OTHER_OPTS=''
+while [ $# -gt 0 ]; do
+    OPT="$1"
+    # Detect argument termination
+    if [ x"$OPT" == x"--" ]; then
+            shift
+            for OPT ; do
+                    OTHER_OPTS="$OTHER_OPTS \"$OPT\""
+            done
+            break
+    fi
+    # Parse current opt
+    case "$OPT" in
+          --docker-host=* )
+                  docker_host="${OPT#*=}"
+                  ;;
+          --docker-host )
+                  docker_host="$(get_opt_value "${@}")"
+                  shift
+                  ;;
+          --network=* )
+                  network="${OPT#*=}"
+                  ;;
+          --network )
+                  network="$(get_opt_value "${@}")"
+                  shift
+                  ;;
+          --ip=* )
+                  ip="${OPT#*=}"
+                  ;;
+          --ip )
+                  ip="$(get_opt_value "${@}")"
+                  shift
+                  ;;
+          --port=* )
+                  port="${OPT#*=}"
+                  ;;
+          --port )
+                  port="$(get_opt_value "${@}")"
+                  shift
+                  ;;
+          --master-api-key=* )
+                  master_api_key="${OPT#*=}"
+                  ;;
+          --master-api-key )
+                  master_api_key="$(get_opt_value "${@}")"
+                  shift
+                  ;;
+          --container-name=* )
+                  container_name="${OPT#*=}"
+                  ;;
+          --container-name )
+                  container_name="$(get_opt_value "${@}")"
+                  shift
+                  ;;
+          --debug )
+                debug="true"
+                ;;
+          -h|--help )
+                print_usage
+                exit 0
+                ;;
+          *)
+                OTHER_OPTS="$OTHER_OPTS $OPT"
+                break
+                ;;
+    esac
+
+    # move to the next param
+    shift
+done
+
 
 # Docker options
 docker_options=""
 if [[ -n ${master_api_key} ]]; then
-    docker_options="${docker_options}-e GALAXY_CONFIG_MASTER_API_KEY=${master_api_key}"
+    docker_options="${docker_options} -e GALAXY_CONFIG_MASTER_API_KEY=${master_api_key}"
 fi
 
 if [[ -n ${network} ]]; then
@@ -160,6 +144,15 @@ galaxy_exposed="${docker_host}:${port}"
 docker_cmd="docker run -d ${docker_options} -p ${galaxy_exposed}:80 ${docker_image}"
 
 if [[ ${debug} == "true" ]]; then
+    echo "docker_image=    ${docker_image}"
+    echo "docker_host=     ${docker_host}"
+    echo "network=         ${network}"
+    echo "ip=              ${ip}"
+    echo "master_api_key=  ${master_api_key}"
+    echo "port=            ${port}"
+    echo "container_name=  ${container_name}"
+    echo "debug=           ${debug}"
+    echo "max_wait_time=   ${max_wait_time}"
     echo -e "\nDocker Command: ${docker_cmd}"
 fi
 
