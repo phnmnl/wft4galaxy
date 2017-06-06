@@ -9,8 +9,9 @@ import operator as _operator
 import collections as _collections
 
 from bioblend import ConnectionError
-from ruamel.yaml import round_trip_dump as _round_trip_dump
-from ruamel.yaml.comments import CommentedMap as _CommentedMap
+# from ruamel.yaml import round_trip_dump as _round_trip_dump
+#from ruamel.yaml.comments import CommentedMap as _CommentedMap
+from .common import DynamicObject as _CommentedMap
 
 # BioBlend dependecies
 from bioblend.galaxy.tools import ToolClient as _ToolClient
@@ -52,7 +53,8 @@ class Workflow(object):
         """
         Print parameters needed by workflow tools to file.
         """
-        print(_round_trip_dump(self.params), file=stream)
+        # print(_round_trip_dump(self.params), file=stream)
+        print(_json.dumps(self.params, indent=4), file=stream)
 
     def show_outputs(self, stream=_sys.stdout):
         """

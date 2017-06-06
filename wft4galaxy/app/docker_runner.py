@@ -114,6 +114,7 @@ class _CommandLineHelper:
         main_parser.add_argument('--api-key', help='Galaxy server API KEY', default=None)
         main_parser.add_argument('--port', help='Docker port to expose', action="append", default=[])
         main_parser.add_argument('--volume', help='Docker volume to mount', type=str, action="append", default=[])
+        main_parser.add_argument('--network', help='Docker network to join', default=None)
         main_parser.add_argument('--debug', help='Enable debug mode', action='store_true')
 
         # reference to the global options
@@ -174,8 +175,7 @@ class _CommandLineHelper:
 
         # here we hardcode the possible values of wft4galaxy.core.OutputFormat because we don't
         # want to require installing the package to use the docker runner.
-        wft4g_parser.add_argument('--output-format', choices=('text', 'xunit'), help='Choose output type',
-                                  default='text')
+        wft4g_parser.add_argument('--output-format', choices=('text', 'xunit'), help='Choose output type', default='text')
         wft4g_parser.add_argument('--xunit-file', default=None, metavar="PATH",
                                   help='Set the path of the xUnit report file (absolute or relative to the output folder)')
         wft4g_parser.add_argument("test", help="Workflow Test Name", nargs="*")
@@ -238,6 +238,7 @@ class Container():
             _logger.debug("Using Docker image: %s", image_repository)
 
         # try to use the version tag provided by user
+        image_tag = DOCKER_IMAGE_SETTINGS["default_tag_version"]
         if options.tag is not None:
             image_tag = options.tag
         # if the user doesn't provide a version
@@ -395,6 +396,10 @@ class NonInteractiveContainer(Container):
         # add Docker ports
         for p in options.port:
             cmd += ["-p", p]
+        # attach container to a specific Docker network
+        if options.network:
+            cmd.extend(["--network", options.network])
+
         # Galaxy environment variables
         cmd.extend(["-e", "GALAXY_URL={0}".format(options.server)])
         cmd.extend(["-e", "GALAXY_API_KEY={0}".format(options.api_key)])

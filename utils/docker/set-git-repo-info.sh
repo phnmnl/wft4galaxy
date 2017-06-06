@@ -7,9 +7,16 @@ function print_usage(){
         echo "required repository information from the local repository itself") >&2
 }
 
+# Initialize argument variables
+git_repo_name=''
+git_branch=''
+git_owner=''
+git_tag=''
+git_url=''
+OTHER_OPTS=''
+
 # parse arguments
-while [ -n "$1" ]; do
-    # Copy so we can modify it (can't modify $1)
+while [ $# -gt 0 ]; do
     OPT="$1"
     # Detect argument termination
     if [ x"$OPT" = x"--" ]; then
@@ -20,58 +27,56 @@ while [ -n "$1" ]; do
             break
     fi
     # Parse current opt
-    while [ x"$OPT" != x"-" ] ; do
-            case "$OPT" in
-                  -h )
-                        print_usage
-                        exit 0
-                        ;;
-                  --url=* )
-                          git_url="${OPT#*=}"
-                          shift
-                          ;;
-                  --url )
-                          git_url="$2"
-                          shift
-                          ;;
-                  --owner=* )
-                          git_owner="${OPT#*=}"
-                          shift
-                          ;;
-                  --owner )
-                          git_owner="$2"
-                          shift
-                          ;;
-                  --branch=* )
-                          git_branch="${OPT#*=}"
-                          shift
-                          ;;
-                  --branch )
-                          git_branch="$2"
-                          shift
-                          ;;
-                  --tag=* )
-                          git_tag="${OPT#*=}"
-                          shift
-                          ;;
-                  --tag )
-                          git_tag="$2"
-                          shift
-                          ;;
-                  * )
-                          OTHER_OPTS="$OTHER_OPTS $OPT"
-                          break
-                          ;;
-            esac
-            # Check for multiple short options
-            # NOTICE: be sure to update this pattern to match valid options
-            NEXTOPT="${OPT#-[cfr]}" # try removing single short opt
-            if [ x"$OPT" != x"$NEXTOPT" ] ; then
-                    OPT="-$NEXTOPT"  # multiple short opts, keep going
-            else
-                    break  # long form, exit inner loop
-            fi
-    done
+    case "$OPT" in
+      -h )
+          print_usage
+          exit 0
+        ;;
+      --repo-name=* )
+          git_repo_name="${OPT#*=}"
+        ;;
+      --repo-name )
+          [ $# -ge 2 ] || { echo "Missing value for '$1'"; exit 1; }
+          git_repo_name="$2"
+          shift
+        ;;
+      --url=* )
+          git_url="${OPT#*=}"
+        ;;
+      --url )
+          [ $# -ge 2 ] || { echo "Missing value for '$1'"; exit 1; }
+          git_url="$2"
+          shift
+        ;;
+      --owner=* )
+          git_owner="${OPT#*=}"
+        ;;
+      --owner )
+          [ $# -ge 2 ] || { echo "Missing value for '$1'"; exit 1; }
+          git_owner="$2"
+          shift
+        ;;
+      --branch=* )
+          git_branch="${OPT#*=}"
+        ;;
+      --branch )
+          [ $# -ge 2 ] || { echo "Missing value for '$1'"; exit 1; }
+          git_branch="$2"
+          shift
+        ;;
+      --tag=* )
+          git_tag="${OPT#*=}"
+        ;;
+      --tag )
+          [ $# -ge 2 ] || { echo "Missing value for '$1'"; exit 1; }
+          git_tag="$2"
+          shift
+        ;;
+      * )
+          OTHER_OPTS="$OTHER_OPTS $OPT"
+          break
+        ;;
+    esac
     # move to the next param
     shift
 done
@@ -116,7 +121,7 @@ if [[ -d .git || -d $(git rev-parse --git-dir 2> /dev/null) ]]; then
     export GIT_URL=${git_url}
     export GIT_BRANCH=${git_branch}
     export GIT_OWNER=${git_owner}
-    export GIT_REPO_NAME=${git_repo}
+    export GIT_REPO_NAME=${git_repo_name}
     export GIT_TAG=${git_tag}
     export GIT_SSH="git@github.com:${git_owner}/${git_repo_name}.git"
     export GIT_HTTPS="https://github.com/${git_owner}/${git_repo_name}.git"

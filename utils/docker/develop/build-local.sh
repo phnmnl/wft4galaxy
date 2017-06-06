@@ -3,7 +3,6 @@
 # Use this script to build an image with the version of wft4galaxy that's in the
 # current project.  This is useful for development.
 #
-# Note that currently have have to comment '#update_properties(config)' from setup.py
 
 set -o errexit
 set -o nounset

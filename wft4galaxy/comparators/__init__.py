@@ -1,4 +1,3 @@
-
 from __future__ import print_function
 
 import os as _os
@@ -48,6 +47,7 @@ def base_comparator(actual_output_filename, expected_output_filename):
                 out_fp.writelines("%r\n" % item.rstrip('\n') for item in ldiff)
         return len(ldiff) == 0
 
+
 def csv_same_row_and_col_lengths(actual_output_filename, expected_output_filename):
     import csv
 
@@ -63,14 +63,16 @@ def csv_same_row_and_col_lengths(actual_output_filename, expected_output_filenam
             colsExpected.append(len(row))
 
         if colsActual and colsExpected:
-            return cmp(colsActual, colsExpected) == 0
+            return _common.cmp(colsActual, colsExpected) == 0
         return False
+
 
 def _get_float(s):
     try:
         return float(s)
     except ValueError:
         return None
+
 
 def _compare_strings_as_floats(precision, a, b):
     a_float = _get_float(a)
@@ -80,25 +82,30 @@ def _compare_strings_as_floats(precision, a, b):
     else:
         return False
 
+
 def rounded_comparison_csv(actual_output, expected_output):
-    precision = 2
     import csv
-    import itertools as it
+    try:
+        from itertools import izip
+    except ImportError:
+        # in Python 3 zip() function returns an iterator
+        izip = zip
+    precision = 2
     try:
         with open(actual_output) as actual, open(expected_output) as expected:
             aout = csv.reader(actual)
             eout = csv.reader(expected)
             for expected_row in eout:
                 actual_row = next(aout)
-                for actual_field, expected_field in it.izip(actual_row, expected_row):
+                for actual_field, expected_field in izip(actual_row, expected_row):
                     if not _compare_strings_as_floats(precision, actual_field, expected_field) \
-                       and actual_field != expected_field:
-                           print("Difference found between expected and actual output", file=_sys.stderr)
-                           print("Expected field text:", expected_field, file=_sys.stderr)
-                           print("Actual field text:", actual_field, file=_sys.stderr)
-                           print("Expected row:", expected_row, file=_sys.stderr)
-                           print("Actual row:", actual_row, file=_sys.stderr)
-                           return False
+                            and actual_field != expected_field:
+                        print("Difference found between expected and actual output", file=_sys.stderr)
+                        print("Expected field text:", expected_field, file=_sys.stderr)
+                        print("Actual field text:", actual_field, file=_sys.stderr)
+                        print("Expected row:", expected_row, file=_sys.stderr)
+                        print("Actual row:", actual_row, file=_sys.stderr)
+                        return False
     except StopIteration:
         print("Actual output is shorted than expected output", file=_sys.stderr)
         return False

@@ -127,6 +127,10 @@ def pformat(obj):
     return _json.dumps(obj, sort_keys=True, indent=4)
 
 
+def cmp(a, b):
+    return (a > b) - (a < b)
+
+
 def makedirs(path, check_if_exists=False):
     try:
         _os.makedirs(path)

@@ -1,89 +1,84 @@
 #!/usr/bin/env bash
 
-# parse existing IMAGE
-if [[ -n ${IMAGE} ]]; then
+# Define all the variables that this script can set
+# (if they don't already exist)
+export IMAGE="${IMAGE:-}"
+export IMAGE_NAME="${IMAGE_NAME:-}"
+export IMAGE_OWNER="${IMAGE_OWNER:-}"
+export IMAGE_REGISTRY="${IMAGE_REGISTRY:-}"
+export IMAGE_REPOSITORY="${IMAGE_REPOSITORY:-}"
+export IMAGE_TAG="${IMAGE_TAG:-}"
 
-    echo "Using IMAGE=${IMAGE} to generate image info...">&2
-    prefixes=$(echo ${IMAGE} | grep -o "/" | wc -l |  sed -e 's/^[[:space:]]*//')
+# parse existing IMAGE or IMAGE_REPOSITORY env variable
+pattern="((([[:alnum:]]*)\/)|((([[:alnum:]]*)\/)(([[:alnum:]]*)\/)))?([[:alnum:]]*)(\:([[:alnum:]]*))?$"
+if [[ -n ${IMAGE} && ${IMAGE} =~ ${pattern} || -n ${IMAGE_REPOSITORY} && ${IMAGE_REPOSITORY} =~ ${pattern} ]]; then
 
-    if [[ $prefixes -eq 0 ]]; then
-        export IMAGE_NAME=$(echo ${IMAGE} | sed -E "s/(.*):(.*)/\1/")
-        export IMAGE_TAG=$(echo ${IMAGE} | sed -E "s/(.*):(.*)/\2/")
-        export IMAGE_OWNER=""
-        export IMAGE_REGISTRY=""
-    elif [[ $prefixes -eq 1 ]]; then
-        export IMAGE_REGISTRY=""
-        export IMAGE_OWNER=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*):(.*)/\1/")
-        export IMAGE_NAME=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*):(.*)/\2/")
-        export IMAGE_TAG=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*):(.*)/\3/")
-    elif [[ $prefixes -eq 2 ]]; then
-        export IMAGE_REGISTRY=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*)\/(.*):(.*)/\1/")
-        export IMAGE_OWNER=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*)\/(.*):(.*)/\2/")
-        export IMAGE_NAME=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*)\/(.*):(.*)/\3/")
-        export IMAGE_TAG=$(echo ${IMAGE} | sed -E "s/(.*)\/(.*)\/(.*):(.*)/\4/")
+    # log
+    if [[ -n ${IMAGE} ]]; then
+        echo "Using IMAGE=${IMAGE} to generate image info...">&2
+    elif [[ -n ${IMAGE_REPOSITORY} ]]; then
+        echo "Using IMAGE_REPOSITORY=${IMAGE_REPOSITORY} to generate image info...">&2
     fi
 
-elif [[ -n ${IMAGE_REPOSITORY} ]]; then
+    # set minimal image info
+    IMAGE_NAME="${BASH_REMATCH[9]}"
+    IMAGE_TAG="${BASH_REMATCH[11]}" # it can be empty, but we fix it below
 
-    echo "Using IMAGE_REPOSITORY=${IMAGE_REPOSITORY} to generate image info...">&2
-    prefixes=$(echo ${IMAGE_REPOSITORY} | grep -o "/" | wc -l |  sed -e 's/^[[:space:]]*//')
+    # form with owner and image name
+    if [[ -n ${BASH_REMATCH[2]} ]]; then
+        IMAGE_OWNER="${BASH_REMATCH[3]}"
+        IMAGE_REPOSITORY="${IMAGE_OWNER}/${IMAGE_NAME}"
 
-    export IMAGE_REGISTRY=""
-    if [[ $prefixes -eq 0 ]]; then
-        export IMAGE_NAME=$(echo ${IMAGE_REPOSITORY} | sed -E "s/(.*)/\1/")
-        export IMAGE_OWNER=""
-    elif [[ $prefixes -eq 1 ]]; then
-        export IMAGE_OWNER=$(echo ${IMAGE_REPOSITORY} | sed -E "s/(.*)\/(.*)/\1/")
-        export IMAGE_NAME=$(echo ${IMAGE_REPOSITORY} | sed -E "s/(.*)\/(.*)/\2/")
+    # extend form with registry and owner
+    elif [[ -n ${BASH_REMATCH[4]} ]]; then
+        IMAGE_REGISTRY="${BASH_REMATCH[6]}"
+        IMAGE_OWNER="${BASH_REMATCH[8]}"
+        IMAGE_REPOSITORY="${IMAGE_REGISTRY}/${IMAGE_OWNER}/${IMAGE_NAME}"
     fi
 
-# if neither IMAGE_NAME or IMAGE_REPOSITORY are setted
-else
-
+else  # neither IMAGE nor IMAGE_REPOSITORY are setted
     # set image owner
-    if [[ -z ${IMAGE_OWNER} ]]; then
+    if [[ -z "${IMAGE_OWNER}" ]]; then
         # map the git phnmnl repository to the Crs4 DockerHub repository
         if [[ ${GIT_OWNER} == "phnmnl" ]]; then
-            GIT_OWNER="crs4"
+            IMAGE_OWNER="crs4"
+        else
+            IMAGE_OWNER="${GIT_OWNER}"
         fi
-        export IMAGE_OWNER=${GIT_OWNER}
     fi
 
     # set IMAGE_NAME if not defined
-    if [[ -z ${IMAGE_NAME} ]]; then
-        export IMAGE_NAME="wft4galaxy"
+    if [[ -z "${IMAGE_NAME}" ]]; then
+        IMAGE_NAME="wft4galaxy"
     fi
 
-    # set image tag
-    if [[ -z ${IMAGE_TAG} ]]; then
+    # if image tag isn't set, trying getting it from git
+    if [[ -z "${IMAGE_TAG}" ]]; then
         if [[ -n ${GIT_BRANCH} || -n ${GIT_TAG} ]]; then
-            image_tag=${GIT_BRANCH}
+            IMAGE_TAG="${GIT_BRANCH}"
             if [[ -n ${GIT_TAG} ]]; then
-                image_tag=${GIT_TAG}
+                IMAGE_TAG="${GIT_TAG}" # preference to git tag name over branch
             fi
-        else
-            image_tag="latest"
         fi
-        export IMAGE_TAG=${image_tag}
     fi
 
     # set image repository
-    if [[ -z ${IMAGE_REPOSITORY} ]]; then
-        if [[ -n ${IMAGE_OWNER} ]]; then
-            export IMAGE_REPOSITORY="${IMAGE_OWNER}/${IMAGE_NAME}"
+    if [[ -z "${IMAGE_REPOSITORY}" ]]; then
+        if [[ -n "${IMAGE_OWNER}" ]]; then
+            IMAGE_REPOSITORY="${IMAGE_OWNER}/${IMAGE_NAME}"
         else
-            export IMAGE_REPOSITORY="${IMAGE_NAME}"
+            IMAGE_REPOSITORY="${IMAGE_NAME}"
         fi
     fi
 fi
 
-# set image tag if doesn't specified or detected
-if [[ -z ${IMAGE_TAG} ]]; then
-    export IMAGE_TAG="latest"
+# set image tag if not specified or detected
+if [[ -z "${IMAGE_TAG}" ]]; then
+    IMAGE_TAG="latest"
 fi
 
-# set image repository
-if [[ -z ${IMAGE} ]]; then
+# set image if not specified or detected
+if [[ -z "${IMAGE}" ]]; then
     image=""
     if [[ -n ${IMAGE_REGISTRY} ]]; then
         image="${IMAGE_REGISTRY}/"
@@ -95,7 +90,7 @@ if [[ -z ${IMAGE} ]]; then
     if [[ -n ${IMAGE_TAG} ]]; then
         image="${image}:${IMAGE_TAG}"
     fi
-    export IMAGE=${image}
+    IMAGE="${image}"
 fi
 
 # log Docker image info

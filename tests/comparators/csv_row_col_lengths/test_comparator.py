@@ -37,5 +37,14 @@ class TestCSVSameRowAndColLengthsComp(unittest.TestCase):
         return pkg_resources.resource_filename(__name__, resource_path)
 
 
+def suite():
+    return unittest.TestLoader().loadTestsFromTestCase(TestCSVSameRowAndColLengthsComp)
+
+
+def main():
+    result = unittest.TextTestRunner(verbosity=2).run(suite())
+    return 0 if result.wasSuccessful() else 1
+
+
 if __name__ == '__main__':
-    unittest.main()
+    sys.exit(main())

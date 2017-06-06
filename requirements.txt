@@ -1,6 +1,6 @@
 setuptools
 future>=0.16.0
-ruamel.yaml  # TODO: to be removed in the next release
+#ruamel.yaml==0.13.14
 lxml
 pyyaml
 sphinx_rtd_theme

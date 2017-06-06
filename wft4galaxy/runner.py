@@ -9,7 +9,10 @@ import shutil as _shutil
 import logging as _logging
 import unittest as _unittest
 from uuid import uuid1 as _uuid1
-from StringIO import StringIO as _StringIO
+try:
+    from StringIO import StringIO as _StringIO
+except ImportError:
+    from io import StringIO as _StringIO
 
 # XMLRunner dependencies
 from xmlrunner.runner import XMLTestRunner
@@ -167,7 +170,7 @@ class _WorkflowTestResultReporterImpl(_core.WorkflowTestReportGenerator):
         self._test_result = test_result
         setattr(self, "generate_report", self.generate_report)
 
-    def generate_report(self, output_file, report_format=_SUPPORTED_REPORT_FORMATS.keys()[0]):
+    def generate_report(self, output_file, report_format=list(_SUPPORTED_REPORT_FORMATS.keys())[0]):
         self._test_result.generate_report(output_file, report_format)
 
 
@@ -304,7 +307,7 @@ class _ExtendedXMLTestResult(_XMLTestResult):
     def register_output_handler(self, report_format, output_handler):
         self._output_handlers[report_format] = output_handler
 
-    def generate_report(self, stream, report_format=_SUPPORTED_REPORT_FORMATS.keys()[0]):
+    def generate_report(self, stream, report_format=list(_SUPPORTED_REPORT_FORMATS.keys())[0]):
         """
         Write a report, formatted accordingly to the param `report_format`,
         to `stream`. Currently supported format are XML and plaintext.

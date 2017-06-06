@@ -1,0 +1,46 @@
+sudo: required
+
+language: python
+
+python:
+  - "2.7"
+  - "3.6"
+
+services:
+  - docker
+
+
+env:
+  global:
+    - GALAXY_CONFIG_MASTER_API_KEY=HSNiugRFvgT574F43jZ7N9F3
+    - GALAXY_NETWORK=galaxy
+    - GALAXY_ADDRESS=172.18.0.22
+    - GALAXY_PORT=80
+    - GALAXY_DOCKER_HOST=127.0.0.1
+    - GALAXY_URL=http://${GALAXY_DOCKER_HOST}:${GALAXY_PORT}
+    - GALAXY_CONTAINER_NAME=galaxy-server
+    - GALAXY_USERNAME=wft4galaxy
+    - GALAXY_USER_PASSWORD=wft4galaxy-tester
+    - GALAXY_USER_EMAIL=wft4galaxy@wft.it
+
+
+before_install:
+- pip install -r requirements.txt
+- docker network create --driver bridge --subnet=172.18.0.0/16 ${GALAXY_NETWORK}
+- utils/docker/start-galaxy.sh --debug --master-api-key ${GALAXY_CONFIG_MASTER_API_KEY} --network ${GALAXY_NETWORK} --ip ${GALAXY_ADDRESS} --port ${GALAXY_PORT} --docker-host ${GALAXY_DOCKER_HOST} --container-name ${GALAXY_CONTAINER_NAME}
+- utils/docker/create-galaxy-user.py --debug --server ${GALAXY_URL} --api-key ${GALAXY_CONFIG_MASTER_API_KEY} ${GALAXY_USERNAME} ${GALAXY_USER_PASSWORD} ${GALAXY_USER_EMAIL} --with-api-key
+
+install:
+- python setup.py install
+
+script:
+- GALAXY_API_KEY=$(cat "wft4galaxy.id")
+- tests/comparators/run_all
+- wft4galaxy -f examples/change_case/workflow-test.yml --server ${GALAXY_URL} --api-key ${GALAXY_API_KEY}
+- export GALAXY_URL=http://${GALAXY_ADDRESS} # use the address of the Galaxy container within the Docker network
+- branch=${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_BRANCH}}
+- tests/docker/run-all.sh --branch ${branch} --server ${GALAXY_URL} --api-key ${GALAXY_API_KEY} --network ${GALAXY_NETWORK}
+
+
+after_script:
+- docker rm -f ${GALAXY_CONTAINER_NAME}
