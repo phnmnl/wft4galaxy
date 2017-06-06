@@ -648,7 +648,10 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
                 _logger.debug("Checking OUTPUT '%s' ...", output.name)
                 output_filename = _os.path.join(output_folder, output.name)
                 with open(output_filename, "wb") as out_file:
+                    output.wait()
                     output.download(out_file)
+                    if output.file_size == 0:
+                        _logger.error("Downloaded an empty file for output {0} (dataset_id '{1}', filename '{2}').".format(output_filename, output.id, output_filename))
                     output_file_map[output.name] = {"dataset": output, "filename": output_filename}
                     _logger.debug(
                         "Downloaded output {0}: dataset_id '{1}', filename '{2}'".format(output.name, output.id,
