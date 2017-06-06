@@ -9,43 +9,34 @@ export IMAGE_REGISTRY="${IMAGE_REGISTRY:-}"
 export IMAGE_REPOSITORY="${IMAGE_REPOSITORY:-}"
 export IMAGE_TAG="${IMAGE_TAG:-}"
 
-# parse existing IMAGE
-if [[ -n "${IMAGE}" ]]; then
+# parse existing IMAGE or IMAGE_REPOSITORY env variable
+pattern="((([[:alnum:]]*)\/)|((([[:alnum:]]*)\/)(([[:alnum:]]*)\/)))?([[:alnum:]]*)(\:([[:alnum:]]*))?$"
+if [[ -n ${IMAGE} && ${IMAGE} =~ ${pattern} || -n ${IMAGE_REPOSITORY} && ${IMAGE_REPOSITORY} =~ ${pattern} ]]; then
 
-    echo "Using IMAGE=${IMAGE} to generate image info...">&2
-    prefixes=$(echo ${IMAGE} | grep -o "/" | wc -l |  sed -e 's/^[[:space:]]*//')
-
-    if [[ $prefixes -eq 0 ]]; then
-        IMAGE_REGISTRY=""
-        IMAGE_OWNER=""
-        IMAGE_NAME="$(echo ${IMAGE} | sed -E "s/(.*):(.*)/\1/")"
-        IMAGE_TAG="$(echo ${IMAGE} | sed -E "s/(.*):(.*)/\2/")"
-    elif [[ $prefixes -eq 1 ]]; then
-        IMAGE_REGISTRY=""
-        IMAGE_OWNER="$(echo ${IMAGE} | sed -E "s/(.*)\/(.*):(.*)/\1/")"
-        IMAGE_NAME="$(echo ${IMAGE} | sed -E "s/(.*)\/(.*):(.*)/\2/")"
-        IMAGE_TAG="$(echo ${IMAGE} | sed -E "s/(.*)\/(.*):(.*)/\3/")"
-    elif [[ $prefixes -eq 2 ]]; then
-        IMAGE_REGISTRY="$(echo ${IMAGE} | sed -E "s/(.*)\/(.*)\/(.*):(.*)/\1/")"
-        IMAGE_OWNER="$(echo ${IMAGE} | sed -E "s/(.*)\/(.*)\/(.*):(.*)/\2/")"
-        IMAGE_NAME="$(echo ${IMAGE} | sed -E "s/(.*)\/(.*)\/(.*):(.*)/\3/")"
-        IMAGE_TAG="$(echo ${IMAGE} | sed -E "s/(.*)\/(.*)\/(.*):(.*)/\4/")"
+    # log
+    if [[ -n ${IMAGE} ]]; then
+        echo "Using IMAGE=${IMAGE} to generate image info...">&2
+    elif [[ -n ${IMAGE_REPOSITORY} ]]; then
+        echo "Using IMAGE_REPOSITORY=${IMAGE_REPOSITORY} to generate image info...">&2
     fi
 
-elif [[ -n "${IMAGE_REPOSITORY}" ]]; then
-    echo "Using IMAGE_REPOSITORY=${IMAGE_REPOSITORY} to generate image info...">&2
-    prefixes=$(echo ${IMAGE_REPOSITORY} | grep -o "/" | wc -l |  sed -e 's/^[[:space:]]*//')
+    # set minimal image info
+    IMAGE_NAME="${BASH_REMATCH[9]}"
+    IMAGE_TAG="${BASH_REMATCH[11]}" # it can be empty, but we fix it below
 
-    IMAGE_REGISTRY=""
-    if [[ $prefixes -eq 0 ]]; then
-        IMAGE_OWNER=""
-        IMAGE_NAME="$(echo ${IMAGE_REPOSITORY} | sed -E "s/(.*)/\1/")"
-    elif [[ $prefixes -eq 1 ]]; then
-        IMAGE_OWNER="$(echo ${IMAGE_REPOSITORY} | sed -E "s/(.*)\/(.*)/\1/")"
-        IMAGE_NAME="$(echo ${IMAGE_REPOSITORY} | sed -E "s/(.*)\/(.*)/\2/")"
+    # form with owner and image name
+    if [[ -n ${BASH_REMATCH[2]} ]]; then
+        IMAGE_OWNER="${BASH_REMATCH[3]}"
+        IMAGE_REPOSITORY="${IMAGE_OWNER}/${IMAGE_NAME}"
+
+    # extend form with registry and owner
+    elif [[ -n ${BASH_REMATCH[4]} ]]; then
+        IMAGE_REGISTRY="${BASH_REMATCH[6]}"
+        IMAGE_OWNER="${BASH_REMATCH[8]}"
+        IMAGE_REPOSITORY="${IMAGE_REGISTRY}/${IMAGE_OWNER}/${IMAGE_NAME}"
     fi
 
-else  # neither IMAGE_NAME nor IMAGE_REPOSITORY are set
+else  # neither IMAGE nor IMAGE_REPOSITORY are setted
     # set image owner
     if [[ -z "${IMAGE_OWNER}" ]]; then
         # map the git phnmnl repository to the Crs4 DockerHub repository
