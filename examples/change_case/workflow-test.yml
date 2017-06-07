@@ -28,7 +28,7 @@
 # This way you can examine them yourself after executing the tests
 #disable_cleanup: True
 
-# The path where the output datasets are written, if disable_cleanup is on
+# The path where the downloaded output datasets, logs and XUnit reports are written when they are enabled
 #output_folder: "results"`
 
 # Enables wft4galaxy's logger, which results in additional console output about
@@ -48,21 +48,28 @@ workflows:
   # We define a test case called "change_case"
   change_case:
     # 'file' is the path to file defining the workflow to be tested.
-    #     You can generate this file by exporting the workflow from Galaxy
+    #  You can generate this file by exporting the workflow from Galaxy
     file: "workflow.ga"
     # The input datasets for the workflow.  Specify them under "inputs:"
     inputs:
       # The lines consist of <input id>: <filename>; the id is the *Name* field of the input
-      # box defined in the workflow
+      # box defined in the workflow.
+      ### Specify dataset type ###
+      # To explicitly specify the file format of your input dataset you can use the following extended syntax:
+      # <input id>:              <-- the *Name* field of the input box defined in the workflow
+      #   file: <filename>       <-- the filename of the input dataset
+      #   type: <dataset type>   <-- the file format of the input dataset as specified by Galaxy
       InputText: "input"
     expected:
       # Under 'expected' we have the workflow's expected output datasets
       #   Format -> Id: filename
       # Get the output id from the output dataset's *Label* field as specified in the workflow
       OutputText: "expected_output"
-    ### Using a custom comparator function: ###
-    # OutputText:  <- this is the output Label
-    #     file: "expected_output.txt"  <- path to file containing expected output
-    #     comparator: "filecmp.cmp"    <- comparator function to use
+      ### Using a custom comparator function: ###
+      # OutputText:  <- this is the output Label
+      #     file: "expected_output.txt"  <- path to file containing expected output
+      #     comparator: "filecmp.cmp"    <- comparator function to use
+
+
 # There is a more extensive explanation on how to get input and output ids here:
 # http://wft4galaxy.readthedocs.io/notebooks/1_define_test_suite.html#1.-Workflow-preparation
