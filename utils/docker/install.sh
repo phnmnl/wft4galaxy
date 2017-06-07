@@ -81,7 +81,7 @@ if [[ ${#ARGS[@]} -eq 1 ]]; then
 elif [[ ${#ARGS[@]} -gt 1 ]]; then
     echo -e "\nERROR: invalid syntax !!"
     print_usage
-    exit -1
+    exit 99
 fi
 
 # set source script
@@ -94,7 +94,7 @@ if [[ ${STATUS_CODE} -ne 200 ]]; then
     echo -e "\nERROR: Script ${SOURCE_SCRIPT} not found!"
     echo -e "       Check if you are using the proper REPOSITORY and BRANCH."
     print_usage
-    exit -1
+    exit 99
 else
     chmod +x ${TEMP_SCRIPT}
     if [[ -w ${TARGET_FOLDER} ]]; then

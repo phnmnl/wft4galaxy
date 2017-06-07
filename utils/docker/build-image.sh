@@ -42,7 +42,7 @@ do
             ;;
         --*)
             print_usage
-            exit -1
+            exit 99
             ;;
         *)
             # support only the first argument; skip all remaining
@@ -59,7 +59,7 @@ if [[ -z ${image_type} ]]; then
     echo "No image type provided. Using the default : ${image_type}">&2
 elif [[ ${image_type} != "minimal" && ${image_type} != "develop" ]]; then
     echo -e "\nERROR: '${image_type}' not supported! Use 'minimal' or 'develop'."
-    exit -1
+    exit 99
 else
     export IMAGE_TYPE="${image_type}"
 fi
@@ -72,7 +72,7 @@ image_path="${script_path}/${image_type}"
 # check whether the image type exists
 if [[ ! -d ${image_path} ]]; then
     echo -e "\nThe image type '${image_type}' doen't exist!!!"
-    exit -1
+    exit 99
 fi
 
 # set git && image info

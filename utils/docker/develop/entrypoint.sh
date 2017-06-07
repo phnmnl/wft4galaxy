@@ -5,7 +5,7 @@ source entrypoint-argparser.sh "$@"
 if [[ ! ${ENTRYPOINT} =~ ^(bash|ipython|jupyter|wft4galaxy|runtest|wizard)$ ]]; then
     echo -e "\nERROR: Command \"${ENTRYPOINT_ARGS} \" not supported !"
     echo -e "       Supported commands: bash | ipython| jupyter | wft4galaxy | runtest | wizard \n"
-    exit -1
+    exit 99
 fi
 
 if [[ ${ENTRYPOINT} == "wft4galaxy" ]] || [[ ${ENTRYPOINT} == "runtest" ]]; then
