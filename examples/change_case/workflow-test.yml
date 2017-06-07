@@ -54,18 +54,17 @@ workflows:
     inputs:
       # The lines consist of <input id>: <filename>; the id is the *Name* field of the input
       # box defined in the workflow.
-      ### Specify dataset type ###
-      # To explicitly specify the file format of your input dataset you can use the following extended syntax:
+      InputText: "input"
+      ### You can also explicitly specify dataset type using an extended syntax ###
       # <input id>:              <-- the *Name* field of the input box defined in the workflow
       #   file: <filename>       <-- the filename of the input dataset
-      #   type: <dataset type>   <-- the file format of the input dataset as specified by Galaxy
-      InputText: "input"
+      #   type: <dataset type>   <-- the file format of the input dataset as specified by Galaxy (e.g., 'txt')
     expected:
       # Under 'expected' we have the workflow's expected output datasets
       #   Format -> Id: filename
       # Get the output id from the output dataset's *Label* field as specified in the workflow
       OutputText: "expected_output"
-      ### Using a custom comparator function: ###
+      ### Using a custom comparator function: use the extended syntax ###
       # OutputText:  <- this is the output Label
       #     file: "expected_output.txt"  <- path to file containing expected output
       #     comparator: "filecmp.cmp"    <- comparator function to use
