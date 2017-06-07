@@ -115,7 +115,7 @@ echo "${image_root_path}/${image_type}/build.sh ${opts}" >&2
 cd - > /dev/null
 
 # set optional arguments
-cmd_other_opts="--repository ${IMAGE_OWNER}/wft4galaxy --skip-update ${debug}"
+cmd_other_opts="--repository ${IMAGE_REPOSITORY} --skip-update ${debug}"
 if [[ -n ${IMAGE_TAG} ]]; then
     cmd_other_opts="${cmd_other_opts} --tag ${IMAGE_TAG}"
 fi
