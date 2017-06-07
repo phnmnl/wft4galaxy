@@ -57,10 +57,11 @@ else  # neither IMAGE nor IMAGE_REPOSITORY are setted
     # set IMAGE_NAME if not defined
     if [[ -z "${IMAGE_NAME}" ]]; then
         IMAGE_NAME="wft4galaxy"
+
+        # append image suffix
+        IMAGE_NAME="${IMAGE_NAME}${image_suffix}"
     fi
 
-    # append image suffix
-    IMAGE_NAME="${IMAGE_NAME}${image_suffix}"
 
     # if image tag isn't set, trying getting it from git
     if [[ -z "${IMAGE_TAG}" ]]; then
