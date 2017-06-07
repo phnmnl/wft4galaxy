@@ -57,7 +57,7 @@ the following command which will download and install the script to
 
 .. code-block:: bash
 
-  curl -s https://raw.githubusercontent.com/phnmnl/wft4galaxy/develop/utils/docker/install.sh | bash
+  curl -s https://raw.githubusercontent.com/phnmnl/wft4galaxy/master/utils/docker/install.sh | bash
 
 If your ``PATH`` includes ``/usr/local/bin`` you will have the ``wft4galaxy-docker`` script
 immediately available from your terminal. Alternatively, you can install the ``wft4galaxy-docker`` script
@@ -67,6 +67,6 @@ For example, if you want to install the script to your current directory, cut an
 
 .. code-block:: bash
 
-  curl -s https://raw.githubusercontent.com/phnmnl/wft4galaxy/develop/utils/docker/install.sh | bash /dev/stdin .
+  curl -s https://raw.githubusercontent.com/phnmnl/wft4galaxy/master/utils/docker/install.sh | bash /dev/stdin .
 
 Then, type ``./wft4galaxy-docker`` to launch from your current path.

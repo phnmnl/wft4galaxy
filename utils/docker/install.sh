@@ -6,7 +6,7 @@ set -e
 DEFAULT_REPO="phnmnl/wft4galaxy"
 
 # set default repo owner
-DEFAULT_REPO_BRANCH="develop"
+DEFAULT_REPO_BRANCH="master"
 
 # set default target folder
 DEFAULT_TARGET_FOLDER="/usr/local/bin"
