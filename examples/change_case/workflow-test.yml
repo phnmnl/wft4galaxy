@@ -2,7 +2,9 @@
 # This is a self-documenting example.
 #
 # For the full documentation see http://wft4galaxy.readthedocs.io/test-definition-file.html
-
+#
+# Remember that the wft4galaxy-wizard can generate test definitions automatically for you.
+#     http://wft4galaxy.readthedocs.io/wizard-tool.html
 
 ##########################################################################################
 #  Global settings
@@ -46,18 +48,21 @@ workflows:
   # We define a test case called "change_case"
   change_case:
     # 'file' is the path to file defining the workflow to be tested.
-    #     You can generate this through the wft4galaxy wizard, or by exporting
-    #     the workflow from Galaxy
+    #     You can generate this file by exporting the workflow from Galaxy
     file: "workflow.ga"
     # The input datasets for the workflow.  Specify them under "inputs:"
     inputs:
-      # Id: filename; the id is the name of the input defined in the workflow
+      # The lines consist of <input id>: <filename>; the id is the *Name* field of the input
+      # box defined in the workflow
       InputText: "input"
-    # Under 'expected' we have the workflow's expected output datasets
     expected:
-      # Id: filename
+      # Under 'expected' we have the workflow's expected output datasets
+      #   Format -> Id: filename
+      # Get the output id from the output dataset's *Label* field as specified in the workflow
       OutputText: "expected_output"
-    # OutputText with non-default comparator function:
-    # OutputText:  <- this is the output ID
+    ### Using a custom comparator function: ###
+    # OutputText:  <- this is the output Label
     #     file: "expected_output.txt"  <- path to file containing expected output
     #     comparator: "filecmp.cmp"    <- comparator function to use
+# There is a more extensive explanation on how to get input and output ids here:
+# http://wft4galaxy.readthedocs.io/notebooks/1_define_test_suite.html#1.-Workflow-preparation
