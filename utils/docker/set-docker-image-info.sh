@@ -8,6 +8,13 @@ export IMAGE_OWNER="${IMAGE_OWNER:-}"
 export IMAGE_REGISTRY="${IMAGE_REGISTRY:-}"
 export IMAGE_REPOSITORY="${IMAGE_REPOSITORY:-}"
 export IMAGE_TAG="${IMAGE_TAG:-}"
+export IMAGE_TYPE="${IMAGE_TYPE:-}"
+
+# configure image suffix
+image_suffix=""
+if [[ ${IMAGE_TYPE} == "develop" ]]; then
+    image_suffix="-${IMAGE_TYPE}"
+fi
 
 # parse existing IMAGE or IMAGE_REPOSITORY env variable
 pattern="((([[:alnum:]]*)\/)|((([[:alnum:]]*)\/)(([[:alnum:]]*)\/)))?([[:alnum:]]*)(\:([[:alnum:]]*))?$"
@@ -50,7 +57,11 @@ else  # neither IMAGE nor IMAGE_REPOSITORY are setted
     # set IMAGE_NAME if not defined
     if [[ -z "${IMAGE_NAME}" ]]; then
         IMAGE_NAME="wft4galaxy"
+
+        # append image suffix
+        IMAGE_NAME="${IMAGE_NAME}${image_suffix}"
     fi
+
 
     # if image tag isn't set, trying getting it from git
     if [[ -z "${IMAGE_TAG}" ]]; then
@@ -71,6 +82,9 @@ else  # neither IMAGE nor IMAGE_REPOSITORY are setted
         fi
     fi
 fi
+
+# replace not valid forward and backward slashes with dashes
+IMAGE_TAG="${IMAGE_TAG//[\/\\]/-}"
 
 # set image tag if not specified or detected
 if [[ -z "${IMAGE_TAG}" ]]; then

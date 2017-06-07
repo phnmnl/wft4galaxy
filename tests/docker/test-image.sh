@@ -91,10 +91,20 @@ settings=(image_type GALAXY_URL GALAXY_API_KEY)
 for s in ${settings[@]}; do
     if [[ -z ${!s} ]]; then
         echo "No ${s} provided." >&2
-        exit 1
+        exit 99
     fi
 done
 
+# check image type
+if [[ -z ${image_type} ]]; then
+    image_type="minimal"
+    echo "No image type provided. Using the default : ${image_type}">&2
+elif [[ ${image_type} != "minimal" && ${image_type} != "develop" ]]; then
+    echo -e "\nERROR: '${image_type}' not supported! Use 'minimal' or 'develop'."
+    exit 99
+else
+    export IMAGE_TYPE="${image_type}"
+fi
 
 # extract git info & Docker image name
 source ${image_root_path}/set-git-repo-info.sh ${repo_url} ${repo_branch}
@@ -115,7 +125,7 @@ echo "${image_root_path}/${image_type}/build.sh ${opts}" >&2
 cd - > /dev/null
 
 # set optional arguments
-cmd_other_opts="--repository ${IMAGE_OWNER}/wft4galaxy --skip-update ${debug}"
+cmd_other_opts="--repository ${IMAGE_REPOSITORY} --skip-update ${debug}"
 if [[ -n ${IMAGE_TAG} ]]; then
     cmd_other_opts="${cmd_other_opts} --tag ${IMAGE_TAG}"
 fi

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
+import re as _re
 import os as _os
 import sys as _sys
 import json as _json
@@ -175,7 +176,8 @@ class _CommandLineHelper:
 
         # here we hardcode the possible values of wft4galaxy.core.OutputFormat because we don't
         # want to require installing the package to use the docker runner.
-        wft4g_parser.add_argument('--output-format', choices=('text', 'xunit'), help='Choose output type', default='text')
+        wft4g_parser.add_argument('--output-format', choices=('text', 'xunit'), help='Choose output type',
+                                  default='text')
         wft4g_parser.add_argument('--xunit-file', default=None, metavar="PATH",
                                   help='Set the path of the xUnit report file (absolute or relative to the output folder)')
         wft4g_parser.add_argument("test", help="Workflow Test Name", nargs="*")
@@ -251,6 +253,9 @@ class Container():
                 if image_tag is None \
                         and _properties["Repository"]["branch"] and "branch" in _properties["Repository"]:
                     image_tag = _properties["Repository"]["branch"]
+
+        # replace not valid forward, backward slashes and other not valid characters with dashes
+        image_tag = _re.sub('[\\\\/:*?"<>|]', '-', image_tag)
 
         # build the fully qualified image name
         docker_image_fqn = "{0}:{1}".format(image_repository, image_tag)
