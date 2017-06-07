@@ -56,7 +56,12 @@ done
 
 if [[ -z ${image_type} ]]; then
     image_type="minimal"
-    echo "No image type provided. Using the default : ${image_type}"
+    echo "No image type provided. Using the default : ${image_type}">&2
+elif [[ ${image_type} != "minimal" && ${image_type} != "develop" ]]; then
+    echo -e "\nERROR: '${image_type}' not supported! Use 'minimal' or 'develop'."
+    exit -1
+else
+    export IMAGE_TYPE="${image_type}"
 fi
 
 # absolute path of the current script
