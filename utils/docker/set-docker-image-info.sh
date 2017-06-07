@@ -72,6 +72,9 @@ else  # neither IMAGE nor IMAGE_REPOSITORY are setted
     fi
 fi
 
+# replace not valid forward and backward slashes with dashes
+IMAGE_TAG="${IMAGE_TAG//[\/\\]/-}"
+
 # set image tag if not specified or detected
 if [[ -z "${IMAGE_TAG}" ]]; then
     IMAGE_TAG="latest"
