@@ -1,21 +1,74 @@
+#
+# This is a self-documenting example.
+#
+# For the full documentation see http://wft4galaxy.readthedocs.io/test-definition-file.html
+#
+# Remember that the wft4galaxy-wizard can generate test definitions automatically for you.
+#     http://wft4galaxy.readthedocs.io/wizard-tool.html
+
 ##########################################################################################
 #  Global settings
+#    - These apply to all the tests defined in this file
 ##########################################################################################
-# galaxy_url: "http://192.168.64.8:30700" # default is GALAXY_URL
-# galaxy_api_key: "4b86f51252b5f220012b3e259d0877f9" # default is GALAXY_API_KEY
-#enable_logger: True
-#enable_debug: True
-#output_folder: "results"
+
+# galaxy_url -> URL of the Galaxy instance to be used.
+#               If unspecified, wft4galaxy will check the GALAXY_URL environment variable
+#               You can also specify the URL on the command line
+#galaxy_url: "http://192.168.64.8:30700"
+#
+# API key:  analogously to the URL, wft4galaxy can also get values from the GALAXY_API_KEY
+#           environment variable and from the command line
+#galaxy_api_key: "4b86f51252b5f220012b3e259d0877f9"
+
+# The base_path is the directory with respect to which all other paths are evaluated.
+# The default value is the directory that contains this file.
+#base_path: .
+
+# Don't delete the workflow's output datasets (which are compared to the expected output).
+# This way you can examine them yourself after executing the tests
 #disable_cleanup: True
+
+# The path where the downloaded output datasets, logs and XUnit reports are written when they are enabled
+#output_folder: "results"`
+
+# Enables wft4galaxy's logger, which results in additional console output about
+# wft4galaxy's operations
+#enable_logger: True
+
+# Enable to print yet more information
+#enable_debug: True
 
 ##########################################################################################
 #  Workflow tests
 ##########################################################################################
 workflows:
-  # workflow test "change case"
+  # This is the "workflows" test suite.
+  # You can define multiple tests in this suite
+  # 
+  # We define a test case called "change_case"
   change_case:
+    # 'file' is the path to file defining the workflow to be tested.
+    #  You can generate this file by exporting the workflow from Galaxy
     file: "workflow.ga"
+    # The input datasets for the workflow.  Specify them under "inputs:"
     inputs:
+      # The lines consist of <input id>: <filename>; the id is the *Name* field of the input
+      # box defined in the workflow.
       InputText: "input"
+      ### You can also explicitly specify dataset type using an extended syntax ###
+      # <input id>:              <-- the *Name* field of the input box defined in the workflow
+      #   file: <filename>       <-- the filename of the input dataset
+      #   type: <dataset type>   <-- the file format of the input dataset as specified by Galaxy (e.g., 'txt')
     expected:
+      # Under 'expected' we have the workflow's expected output datasets
+      #   Format -> Id: filename
+      # Get the output id from the output dataset's *Label* field as specified in the workflow
       OutputText: "expected_output"
+      ### Using a custom comparator function: use the extended syntax ###
+      # OutputText:  <- this is the output Label
+      #     file: "expected_output.txt"  <- path to file containing expected output
+      #     comparator: "filecmp.cmp"    <- comparator function to use
+
+
+# There is a more extensive explanation on how to get input and output ids here:
+# http://wft4galaxy.readthedocs.io/notebooks/1_define_test_suite.html#1.-Workflow-preparation
