@@ -28,7 +28,7 @@ This script is called **wft4galaxy-docker**.
           -h, --help            show this help message and exit
           --registry REGISTRY   Alternative Docker registry (default is "DockerHub")
           --repository REPO     Alternative Docker repository containing the "wft4galaxy" Docker image (default is "crs4")
-          --version VERSION     Alternative version of the "wft4galaxy" Docker image(default is "develop")
+          --version VERSION     Alternative version of the "wft4galaxy" Docker image(default is "latest")
           --image IMAGE         Alternative "wft4galaxy" Docker image name specified as NAME:TAG
           --os {alpine,ubuntu}  Base OS of the Docker image (default is "alpine" and it is ignored when the "--image" option is specified)
           --skip-update         Skip the update of the "wft4galaxy" Docker image and use the local version if it is available
@@ -173,7 +173,7 @@ You can also build your custom Docker image and tell ``wft4galaxy-docker`` how t
 
    --registry REGISTRY   Alternative Docker registry (default is "DockerHub")
    --repository REPO     Alternative Docker repository containing the "wft4galaxy" Docker image (default is "crs4")
-   --version VERSION     Alternative version of the "wft4galaxy" Docker image(default is "develop")
+   --version VERSION     Alternative version of the "wft4galaxy" Docker image(default is "latest")
    --image IMAGE         Alternative "wft4galaxy" Docker image name specified as NAME:TAG
 
 
@@ -191,7 +191,7 @@ For a direct Docker usage the following syntax holds:
 
 .. code-block:: bash
 
-  docker run -it --rm [DOCKER_OPTIONS] crs4/wft4galaxy[-develop]:[alpine|ubuntu]-develop \
+  docker run -it --rm [DOCKER_OPTIONS] crs4/wft4galaxy[-develop]:[image-version-tag] \
                       <ENTRYPOINT> [ENTRYPOINT_OPTIONS]
 
 .. note:: When using ``docker`` directly you will need to explicitly mount the volumes that are required \
