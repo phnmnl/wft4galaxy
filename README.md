@@ -1,6 +1,6 @@
 # wft4galaxy: <br> Workflow Tester for Galaxy
 
-Version: 0.1.0
+[![Build Status](https://travis-ci.org/phnmnl/wft4galaxy.svg?branch=master)](https://travis-ci.org/phnmnl/wft4galaxy) 
 
 ## Description
 **wft4galaxy** is a Python module which allows to automate the running of Galaxy workflow tests. It can be used either as local Python library or a Docker image running inside a Docker container.
