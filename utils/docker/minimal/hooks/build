@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
+echo ${DOCKER_TAG}
+
 # absolute path of the current script
 script_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # call the build script
-${script_path}/../build.sh
+#${script_path}/../build.sh
