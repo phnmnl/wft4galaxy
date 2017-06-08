@@ -4,4 +4,4 @@
 script_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # call the build script
-${script_path}/../build.sh
+${script_path}/../build.sh -t ${DOCKER_TAG}
