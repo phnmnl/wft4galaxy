@@ -646,24 +646,26 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
         for output in actual_outputs:
             if output.name in expected_output_map:
                 _logger.debug("Checking OUTPUT '%s' ...", output.name)
+                
+                # Get expected output file path
+                config = expected_output_map[output.name]
+                expected_output_filename = config["file"] if _os.path.isabs(config["file"]) else _os.path.join(base_path, config["file"])
+                
                 output_filename = _os.path.join(output_folder, output.name)
                 with open(output_filename, "wb") as out_file:
                     output.wait()
                     output.download(out_file)
-                    if output.file_size == 0:
+                    if output.file_size == 0 and _os.path.getsize(expected_output_filename) > 0:
                         _logger.error("Downloaded an empty file for output {0} (dataset_id '{1}', filename '{2}').".format(output_filename, output.id, output_filename))
                     output_file_map[output.name] = {"dataset": output, "filename": output_filename}
                     _logger.debug(
                         "Downloaded output {0}: dataset_id '{1}', filename '{2}'".format(output.name, output.id,
                                                                                          output_filename))
-                config = expected_output_map[output.name]
                 comparator_fn = config.get("comparator", None)
                 _logger.debug("Configured comparator function: %s", comparator_fn)
                 comparator = _comparators.load_comparator(comparator_fn) \
                     if comparator_fn else _comparators.base_comparator
                 if comparator:
-                    expected_output_filename = config["file"] if _os.path.isabs(config["file"]) \
-                        else _os.path.join(base_path, config["file"])
                     result = comparator(output_filename, expected_output_filename)
                     _logger.debug(
                         "Output '{0}' {1} the expected: dataset '{2}', actual-output '{3}', expected-output '{4}'"
