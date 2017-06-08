@@ -1,0 +1,20 @@
+ID,Name,Stoichiometry,Minimum,Maximum
+Rbottom_Glc,Glyceraldehyde phosphate dehydrogenase,Gap --> Pep,0.8681,0.8682
+RextraPyr,extra pyruvate, --> Pyr,0.1318,0.1319
+Rfba,Aldolase,Fru16bp <=> Dhap + Gap,0.422867,0.422933
+Rglc6p_pdif,Difussion between Glucose 6-phosphate pools,Glc6p_a <=> Glc6p_b,0.445217,0.445283
+RglcEx,Glucose uptake, --> Glc,0.4348,0.4349
+RglycEx,Glycogen utilization, --> Glc6p_a,0.010317,0.010483
+Rhex1,Hexokinase,Glc --> Glc6p_a,0.4348,0.4349
+RlacEx,Lactate release,Lac --> ,1.0,1.0
+Rldh_l,L-lactate dehydrogenase,Pyr <=> Lac,1.0,1.0
+RoxPPP,Glucose 6-Phosphate dehydrogenase,Glc6p_b --> Rul5p,0.067,0.0671
+Rpfk,Phosphofructokinase,Fru6p --> Fru16bp,0.422867,0.422933
+Rpgi,Glucose-6-phosphate isomerase,Glc6p_b <=> Fru6p,0.378133,0.378267
+Rpyk,Pyruvate Kinase,Pep --> Pyr,0.8681,0.8682
+Rrpe,Ribulose 5 phosphate epimerase,Rul5p <=> Xyl5p,0.044667,0.044733
+Rrpi,Ribose phosphate isomerase,Rul5p <=> Rib5p,0.022333,0.022367
+Rtala,Transaldolase,Gap + Sed7p <=> E4p + Fru6p,0.022333,0.022367
+Rtkt1,Transketolase 1,Rib5p + Xyl5p <=> Gap + Sed7p,0.022333,0.022367
+Rtkt2,Transketolase 2,E4p + Xyl5p <=> Fru6p + Gap,0.022333,0.022367
+Rtpi,Triose-phosphate isomerase,Dhap <=> Gap,0.422867,0.422933

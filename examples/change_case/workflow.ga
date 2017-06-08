@@ -1,0 +1,92 @@
+{
+    "a_galaxy_workflow": "true", 
+    "annotation": "", 
+    "format-version": "0.1", 
+    "name": "Change Case", 
+    "steps": {
+        "0": {
+            "annotation": "", 
+            "content_id": null, 
+            "id": 0, 
+            "input_connections": {}, 
+            "inputs": [
+                {
+                    "description": "", 
+                    "name": "InputText"
+                }
+            ], 
+            "label": null, 
+            "name": "Input dataset", 
+            "outputs": [], 
+            "position": {
+                "left": 198, 
+                "top": 107.5
+            }, 
+            "tool_errors": null, 
+            "tool_id": null, 
+            "tool_state": "{\"name\": \"InputText\"}", 
+            "tool_version": null, 
+            "type": "data_input", 
+            "uuid": "00bd81ab-17f6-4722-98b6-3217a8144b9c", 
+            "workflow_outputs": [
+                {
+                    "label": null, 
+                    "output_name": "output", 
+                    "uuid": "f980ba21-8dde-4504-9c76-068e17b23c73"
+                }
+            ]
+        }, 
+        "1": {
+            "annotation": "", 
+            "content_id": "ChangeCase", 
+            "id": 1, 
+            "input_connections": {
+                "input": {
+                    "id": 0, 
+                    "output_name": "output"
+                }
+            }, 
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool Change Case", 
+                    "name": "input"
+                }
+            ], 
+            "label": null, 
+            "name": "Change Case", 
+            "outputs": [
+                {
+                    "name": "out_file1", 
+                    "type": "tabular"
+                }
+            ], 
+            "position": {
+                "left": 438, 
+                "top": 186.5
+            }, 
+            "post_job_actions": {
+                "RenameDatasetActionout_file1": {
+                    "action_arguments": {
+                        "newname": "OutputText"
+                    }, 
+                    "action_type": "RenameDatasetAction", 
+                    "output_name": "out_file1"
+                }
+            }, 
+            "tool_errors": null, 
+            "tool_id": "ChangeCase", 
+            "tool_state": "{\"__page__\": 0, \"casing\": \"\\\"up\\\"\", \"__rerun_remap_job_id__\": null, \"cols\": \"\\\"c1,c2\\\"\", \"delimiter\": \"\\\"TAB\\\"\", \"input\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\"}", 
+            "tool_version": "1.0.0", 
+            "type": "tool", 
+            "uuid": "593beb9e-3ce8-4bc6-84c7-03ce625a6ebc", 
+            "workflow_outputs": [
+                {
+                    "label": "OutputText", 
+                    "output_name": "out_file1", 
+                    "uuid": "9a060103-9bb9-4360-8a1e-410b5baf7e78"
+                }
+            ]
+        }
+    }, 
+    "uuid": "29d5dd98-c529-433e-91ba-94bfa714da3f"
+}

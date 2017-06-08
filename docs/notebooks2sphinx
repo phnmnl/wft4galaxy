@@ -1,0 +1,13 @@
+#!/bin/bash
+
+echo "Converting ipython notebooks to .rst"
+
+TUTORIAL_IPYNB="tutorial/"
+TUTORIAL_RST="../docs/_tutorial/"
+
+notebooks=($(ls ${TUTORIAL_IPYNB}))
+for notebook in "${notebooks[@]}"
+do
+    echo "Converting notebook '${notebook}...'"
+    ipython nbconvert ${TUTORIAL_IPYNB}/${notebook} --to rst --output-dir=${TUTORIAL_RST}
+done

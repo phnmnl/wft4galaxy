@@ -1,0 +1,51 @@
+##########################################################################################
+#  Global settings
+##########################################################################################
+{{ "galaxy_url:".ljust(15) }} {{ '"{0}"'.format(config.galaxy_url).ljust(40) }} # default is GALAXY_URL
+{{ "galaxy_api_key:".ljust(15) }} {{ '"{0}"'.format(config.galaxy_api_key).ljust(40) }} # default is GALAXY_API_KEY
+{{ "enable_debug:".ljust(15) }} {{ '"{0}"'.format(config.enable_debug).ljust(40) }} # enable debug level
+{{ "output_folder:".ljust(15) }} {{ '"{0}"'.format(config.output_folder).ljust(40) }} # path folder for outputs
+
+##########################################################################################
+#  Workflow tests
+##########################################################################################
+workflows:
+{% for wf in config.workflow_tests.values() %}
+
+  ########################################################################################
+  # workflow test case: "{{ wf.name }}"
+  ########################################################################################
+  {{ wf.name }}:
+
+    # worflow definition file (i.e., `.ga`file)
+    file: "{{ wf.filename }}"
+
+    # input section
+    #######################################################################################
+    inputs:
+    {% for _input in wf.inputs.values() %}
+
+      # short form
+      # {{ _input.name }}: "{{ _input.file[0] }}"
+
+      # extended form
+      {{ _input.name }}:
+        file: "{{ _input.file[0] }}"
+        type: "{{ _input.type }}"
+    {% endfor %}
+
+    # expected outputs
+    #######################################################################################
+    expected:
+    {% for _output in wf.expected_outputs.values() %}
+
+      # short form
+      # {{ _output.name }}: "{{ _output.file }}"
+
+      # extended form
+      {{ _output.name }}:
+        file: "{{ _output.file }}"
+        comparator: "{{ _output.comparator }}"
+    {% endfor %}
+
+{% endfor %}

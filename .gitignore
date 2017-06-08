@@ -1,0 +1,13 @@
+**/.DS_Store
+**/EGG-INFO
+**/*.pyc
+**/.ipynb_checkpoints/
+.idea
+.tools
+.venv/**
+docs/_build
+build
+dist
+results
+wft4galaxy.egg-info
+wft4galaxy/wft4galaxy.properties

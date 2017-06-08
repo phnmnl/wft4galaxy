@@ -1,0 +1,96 @@
+{
+  "galaxy_url": null, 
+  "enable_logger": false, 
+  "galaxy_api_key": null, 
+  "output_folder": "results", 
+  "workflows": {
+    "change_case": {
+      "expected": {
+        "output2": {
+          "name": "output2", 
+          "file": "change_case/expected_output_2", 
+          "comparator": null
+        }, 
+        "output1": {
+          "name": "output1", 
+          "file": "change_case/expected_output_1", 
+          "comparator": null
+        }
+      }, 
+      "inputs": {
+        "Input Dataset": "change_case/input"
+      }, 
+      "params": {}, 
+      "name": "change_case", 
+      "file": "change_case/workflow.ga"
+    }, 
+    "multivariate": {
+      "expected": {
+        "variableMetadata_out": {
+          "name": "variableMetadata_out", 
+          "file": "multivariate/variableMetadata_out", 
+          "comparator": null
+        }, 
+        "sampleMetadata_out": {
+          "name": "sampleMetadata_out", 
+          "file": "multivariate/sampleMetadata_out", 
+          "comparator": null
+        }
+      }, 
+      "inputs": {
+        "DataMatrix": "multivariate/dataMatrix.tsv", 
+        "SampleMetadata": "multivariate/sampleMetadata.tsv", 
+        "VariableMetadata": "multivariate/variableMetadata.tsv"
+      }, 
+      "params": {
+        "3": {
+          "predI": "1", 
+          "respC": "gender", 
+          "orthoI": "NA", 
+          "testL": "FALSE"
+        }
+      }, 
+      "name": "multivariate", 
+      "file": "multivariate/workflow.ga"
+    }, 
+    "sacurine": {
+      "expected": {
+        "Univariate_variableMetadata": {
+          "name": "Univariate_variableMetadata", 
+          "file": "sacurine/expected/Univariate_variableMetadata.tsv", 
+          "comparator": null
+        }, 
+        "Multivariate_variableMetadata": {
+          "name": "Multivariate_variableMetadata", 
+          "file": "sacurine/expected/Multivariate_variableMetadata.tsv", 
+          "comparator": null
+        }, 
+        "Biosigner_variableMetadata": {
+          "name": "Biosigner_variableMetadata", 
+          "file": "sacurine/expected/Biosigner_variableMetadata.tsv", 
+          "comparator": null
+        }, 
+        "Multivariate_sampleMetadata": {
+          "name": "Multivariate_sampleMetadata", 
+          "file": "sacurine/expected/Multivariate_sampleMetadata.tsv", 
+          "comparator": null
+        }
+      }, 
+      "inputs": {
+        "DataMatrix": "sacurine/input/dataMatrix.tsv", 
+        "SampleMetadata": "sacurine/input/sampleMetadata.tsv", 
+        "VariableMetadata": "sacurine/input/variableMetadata.tsv"
+      }, 
+      "params": {
+        "3": {
+          "predI": "1", 
+          "respC": "gender", 
+          "orthoI": "NA", 
+          "testL": "FALSE"
+        }
+      }, 
+      "name": "sacurine", 
+      "file": "sacurine/workflow.ga"
+    }
+  }
+}

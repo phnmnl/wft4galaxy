@@ -1,0 +1,376 @@
+{
+    "a_galaxy_workflow": "true", 
+    "annotation": "", 
+    "format-version": "0.1", 
+    "name": "w4m-sacurine-statistics", 
+    "steps": {
+        "0": {
+            "annotation": "", 
+            "content_id": null, 
+            "id": 0, 
+            "input_connections": {}, 
+            "inputs": [
+                {
+                    "description": "", 
+                    "name": "DataMatrix"
+                }
+            ], 
+            "label": null, 
+            "name": "Input dataset", 
+            "outputs": [], 
+            "position": {
+                "left": 108.5, 
+                "top": 269.859375
+            }, 
+            "tool_errors": null, 
+            "tool_id": null, 
+            "tool_state": "{\"name\": \"DataMatrix\"}", 
+            "tool_version": null, 
+            "type": "data_input", 
+            "uuid": "cd230378-55ed-4601-8606-acaa4aa4c641", 
+            "workflow_outputs": [
+                {
+                    "label": null, 
+                    "output_name": "output", 
+                    "uuid": "1d91cd42-3e6a-45c1-b812-84d03a52a343"
+                }
+            ]
+        }, 
+        "1": {
+            "annotation": "", 
+            "content_id": null, 
+            "id": 1, 
+            "input_connections": {}, 
+            "inputs": [
+                {
+                    "description": "", 
+                    "name": "SampleMetadata"
+                }
+            ], 
+            "label": null, 
+            "name": "Input dataset", 
+            "outputs": [], 
+            "position": {
+                "left": 111.5, 
+                "top": 360.875
+            }, 
+            "tool_errors": null, 
+            "tool_id": null, 
+            "tool_state": "{\"name\": \"SampleMetadata\"}", 
+            "tool_version": null, 
+            "type": "data_input", 
+            "uuid": "be3e4bb5-62d1-4cc9-b13d-6431632fed59", 
+            "workflow_outputs": [
+                {
+                    "label": null, 
+                    "output_name": "output", 
+                    "uuid": "040a7788-3c3a-4d81-8646-28fb39db861c"
+                }
+            ]
+        }, 
+        "2": {
+            "annotation": "", 
+            "content_id": null, 
+            "id": 2, 
+            "input_connections": {}, 
+            "inputs": [
+                {
+                    "description": "", 
+                    "name": "VariableMetadata"
+                }
+            ], 
+            "label": null, 
+            "name": "Input dataset", 
+            "outputs": [], 
+            "position": {
+                "left": 111.5, 
+                "top": 448.859375
+            }, 
+            "tool_errors": null, 
+            "tool_id": null, 
+            "tool_state": "{\"name\": \"VariableMetadata\"}", 
+            "tool_version": null, 
+            "type": "data_input", 
+            "uuid": "34d0e840-da06-4cc0-8e1f-9d03b231e644", 
+            "workflow_outputs": [
+                {
+                    "label": null, 
+                    "output_name": "output", 
+                    "uuid": "9e7620e2-05b0-4ff9-aa19-d1818ffab2e8"
+                }
+            ]
+        }, 
+        "3": {
+            "annotation": "", 
+            "content_id": "Univariate", 
+            "id": 3, 
+            "input_connections": {
+                "dataMatrix_in": {
+                    "id": 0, 
+                    "output_name": "output"
+                }, 
+                "sampleMetadata_in": {
+                    "id": 1, 
+                    "output_name": "output"
+                }, 
+                "variableMetadata_in": {
+                    "id": 2, 
+                    "output_name": "output"
+                }
+            }, 
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool Univariate", 
+                    "name": "sampleMetadata_in"
+                }, 
+                {
+                    "description": "runtime parameter for tool Univariate", 
+                    "name": "variableMetadata_in"
+                }, 
+                {
+                    "description": "runtime parameter for tool Univariate", 
+                    "name": "dataMatrix_in"
+                }
+            ], 
+            "label": null, 
+            "name": "Univariate", 
+            "outputs": [
+                {
+                    "name": "variableMetadata_out", 
+                    "type": "tabular"
+                }, 
+                {
+                    "name": "information", 
+                    "type": "txt"
+                }
+            ], 
+            "position": {
+                "left": 544.5, 
+                "top": 609.875
+            }, 
+            "post_job_actions": {
+                "HideDatasetActioninformation": {
+                    "action_arguments": {}, 
+                    "action_type": "HideDatasetAction", 
+                    "output_name": "information"
+                }, 
+                "RenameDatasetActionvariableMetadata_out": {
+                    "action_arguments": {
+                        "newname": "Univariate_variableMetadata"
+                    }, 
+                    "action_type": "RenameDatasetAction", 
+                    "output_name": "variableMetadata_out"
+                }
+            }, 
+            "tool_errors": null, 
+            "tool_id": "Univariate", 
+            "tool_state": "{\"thrN\": \"\\\"0.05\\\"\", \"__page__\": 0, \"facC\": \"\\\"gender\\\"\", \"__rerun_remap_job_id__\": null, \"sampleMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"tesC\": \"\\\"ttest\\\"\", \"variableMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"adjC\": \"\\\"fdr\\\"\", \"dataMatrix_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\"}", 
+            "tool_version": "2.1.1", 
+            "type": "tool", 
+            "uuid": "79d9a6e9-694e-499d-837f-77ce3752558c", 
+            "workflow_outputs": [
+                {
+                    "label": "Univariate_variableMetadata", 
+                    "output_name": "variableMetadata_out", 
+                    "uuid": "4ccd0ed4-8814-46fa-8e5b-fb9ccd5bcc95"
+                }
+            ]
+        }, 
+        "4": {
+            "annotation": "", 
+            "content_id": "Multivariate", 
+            "id": 4, 
+            "input_connections": {
+                "dataMatrix_in": {
+                    "id": 0, 
+                    "output_name": "output"
+                }, 
+                "sampleMetadata_in": {
+                    "id": 1, 
+                    "output_name": "output"
+                }, 
+                "variableMetadata_in": {
+                    "id": 3, 
+                    "output_name": "variableMetadata_out"
+                }
+            }, 
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool Multivariate", 
+                    "name": "sampleMetadata_in"
+                }, 
+                {
+                    "description": "runtime parameter for tool Multivariate", 
+                    "name": "variableMetadata_in"
+                }, 
+                {
+                    "description": "runtime parameter for tool Multivariate", 
+                    "name": "dataMatrix_in"
+                }
+            ], 
+            "label": null, 
+            "name": "Multivariate", 
+            "outputs": [
+                {
+                    "name": "sampleMetadata_out", 
+                    "type": "tabular"
+                }, 
+                {
+                    "name": "variableMetadata_out", 
+                    "type": "tabular"
+                }, 
+                {
+                    "name": "figure", 
+                    "type": "pdf"
+                }, 
+                {
+                    "name": "information", 
+                    "type": "txt"
+                }
+            ], 
+            "position": {
+                "left": 833.5, 
+                "top": 447.875
+            }, 
+            "post_job_actions": {
+                "HideDatasetActionfigure": {
+                    "action_arguments": {}, 
+                    "action_type": "HideDatasetAction", 
+                    "output_name": "figure"
+                }, 
+                "HideDatasetActioninformation": {
+                    "action_arguments": {}, 
+                    "action_type": "HideDatasetAction", 
+                    "output_name": "information"
+                }, 
+                "RenameDatasetActionsampleMetadata_out": {
+                    "action_arguments": {
+                        "newname": "Multivariate_sampleMetadata"
+                    }, 
+                    "action_type": "RenameDatasetAction", 
+                    "output_name": "sampleMetadata_out"
+                }, 
+                "RenameDatasetActionvariableMetadata_out": {
+                    "action_arguments": {
+                        "newname": "Multivariate_variableMetadata"
+                    }, 
+                    "action_type": "RenameDatasetAction", 
+                    "output_name": "variableMetadata_out"
+                }
+            }, 
+            "tool_errors": null, 
+            "tool_id": "Multivariate", 
+            "tool_state": "{\"advGph\": \"{\\\"__current_case__\\\": 0, \\\"opgC\\\": \\\"default\\\"}\", \"__page__\": 0, \"sampleMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"__rerun_remap_job_id__\": null, \"predI\": \"\\\"1\\\"\", \"respC\": \"\\\"gender\\\"\", \"orthoI\": \"\\\"NA\\\"\", \"advCpt\": \"{\\\"opcC\\\": \\\"default\\\", \\\"__current_case__\\\": 0}\", \"variableMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"dataMatrix_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"testL\": \"\\\"FALSE\\\"\"}", 
+            "tool_version": "2.3.2", 
+            "type": "tool", 
+            "uuid": "cff48e13-a4ea-4e77-860b-86941632f984", 
+            "workflow_outputs": [
+                {
+                    "label": "Multivariate_variableMetadata", 
+                    "output_name": "variableMetadata_out", 
+                    "uuid": "ab6b3005-11ee-47b0-9bd6-99f29b4a85dd"
+                }, 
+                {
+                    "label": "Multivariate_sampleMetad", 
+                    "output_name": "sampleMetadata_out", 
+                    "uuid": "145e2b6b-3622-4bfb-958c-f54c14a2916d"
+                }
+            ]
+        }, 
+        "5": {
+            "annotation": "", 
+            "content_id": "biosigner", 
+            "id": 5, 
+            "input_connections": {
+                "dataMatrix_in": {
+                    "id": 0, 
+                    "output_name": "output"
+                }, 
+                "sampleMetadata_in": {
+                    "id": 4, 
+                    "output_name": "sampleMetadata_out"
+                }, 
+                "variableMetadata_in": {
+                    "id": 4, 
+                    "output_name": "variableMetadata_out"
+                }
+            }, 
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool Biosigner", 
+                    "name": "sampleMetadata_in"
+                }, 
+                {
+                    "description": "runtime parameter for tool Biosigner", 
+                    "name": "dataMatrix_in"
+                }, 
+                {
+                    "description": "runtime parameter for tool Biosigner", 
+                    "name": "variableMetadata_in"
+                }
+            ], 
+            "label": null, 
+            "name": "Biosigner", 
+            "outputs": [
+                {
+                    "name": "variableMetadata_out", 
+                    "type": "tabular"
+                }, 
+                {
+                    "name": "figure_tier", 
+                    "type": "pdf"
+                }, 
+                {
+                    "name": "figure_boxplot", 
+                    "type": "pdf"
+                }, 
+                {
+                    "name": "information", 
+                    "type": "txt"
+                }
+            ], 
+            "position": {
+                "left": 1232.5, 
+                "top": 268.875
+            }, 
+            "post_job_actions": {
+                "HideDatasetActionfigure_boxplot": {
+                    "action_arguments": {}, 
+                    "action_type": "HideDatasetAction", 
+                    "output_name": "figure_boxplot"
+                }, 
+                "HideDatasetActionfigure_tier": {
+                    "action_arguments": {}, 
+                    "action_type": "HideDatasetAction", 
+                    "output_name": "figure_tier"
+                }, 
+                "HideDatasetActioninformation": {
+                    "action_arguments": {}, 
+                    "action_type": "HideDatasetAction", 
+                    "output_name": "information"
+                }, 
+                "RenameDatasetActionvariableMetadata_out": {
+                    "action_arguments": {
+                        "newname": "Biosigner_variableMetadata"
+                    }, 
+                    "action_type": "RenameDatasetAction", 
+                    "output_name": "variableMetadata_out"
+                }
+            }, 
+            "tool_errors": null, 
+            "tool_id": "biosigner", 
+            "tool_state": "{\"__page__\": 0, \"sampleMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"__rerun_remap_job_id__\": null, \"respC\": \"\\\"gender\\\"\", \"variableMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"advCpt\": \"{\\\"seedI\\\": \\\"123\\\", \\\"tierC\\\": \\\"S\\\", \\\"pvalN\\\": \\\"0.05\\\", \\\"methodC\\\": \\\"all\\\", \\\"__current_case__\\\": 0, \\\"bootI\\\": \\\"50\\\", \\\"opcC\\\": \\\"full\\\"}\", \"dataMatrix_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\"}", 
+            "tool_version": "2.2.2", 
+            "type": "tool", 
+            "uuid": "bc78ef41-6eee-4fe2-9fdf-e423b1ba33c7", 
+            "workflow_outputs": [
+                {
+                    "label": "Biosigner_variableMetadata", 
+                    "output_name": "variableMetadata_out", 
+                    "uuid": "fd01c7c6-2bfb-47c8-9036-ac1a9f00ac57"
+                }
+            ]
+        }
+    }, 
+    "uuid": "56f5af54-1026-41f0-9bdd-a9fde6f534a2"
+}
