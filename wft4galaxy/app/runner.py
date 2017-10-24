@@ -126,15 +126,16 @@ def run_tests(filename,
     # load suite configuration
     suite = _core.WorkflowTestSuite.load(filename,
                                          output_folder=output_folder)  # FIXME: do we need output_folder here ?
-    _configure_test(galaxy_url=galaxy_url, galaxy_api_key=galaxy_api_key,
-                    suite=suite, tests=tests, output_folder=output_folder,
-                    enable_logger=enable_logger, enable_debug=enable_debug,
-                    disable_cleanup=disable_cleanup, disable_assertions=disable_assertions)
+    # log the current configuration
+    _logger.info("Configuration: %s", suite)
 
     # run the configured test suite
-    result = suite.run(galaxy_url=galaxy_url, galaxy_api_key=galaxy_api_key, verbosity=2,
+    result = suite.run(galaxy_url=galaxy_url, galaxy_api_key=galaxy_api_key, verbosity=2, tests=tests,
                        enable_xunit=enable_xunit or (xunit_file != None), xunit_file=xunit_file,
-                       enable_logger=enable_logger, enable_debug=enable_debug, disable_cleanup=disable_cleanup)
+                       output_folder=output_folder,
+                       enable_logger=enable_logger, enable_debug=enable_debug,
+                       disable_cleanup=disable_cleanup, disable_assertions=disable_assertions,
+                       max_retries=max_retries, retry_delay=retry_delay, polling_interval=polling_interval)
     # compute exit code
     exit_code = len([r for r in result.test_case_results if r.failed()])
     _logger.debug("wft4galaxy.run_tests exiting with code: %s", exit_code)
