@@ -38,6 +38,15 @@
 # Enable to print yet more information
 #enable_debug: True
 
+# Maximum number of retries after a connection failure
+# max_retries: 10
+
+# Delay between consecutive retries
+# retry_delay: 1
+
+# Wait time between consecutive checks of the workflow state
+# polling_interval: 1
+
 ##########################################################################################
 #  Workflow tests
 ##########################################################################################
