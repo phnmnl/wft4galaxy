@@ -9,6 +9,7 @@ import shutil as _shutil
 import logging as _logging
 import unittest as _unittest
 from uuid import uuid1 as _uuid1
+
 try:
     from StringIO import StringIO as _StringIO
 except ImportError:
@@ -22,6 +23,9 @@ from xmlrunner.result import _XMLTestResult
 import wft4galaxy.core as _core
 from wft4galaxy import common as _common
 from wft4galaxy import comparators as _comparators
+
+# http settings
+from common import MAX_RETRIES, RETRY_DELAY, POLLING_INTERVAL
 
 # the encoding name needs to be one of
 # http://www.iana.org/assignments/character-sets/character-sets.xhtml
@@ -55,12 +59,15 @@ class WorkflowTestsRunner():
     """
 
     def __init__(self, galaxy_url=None, galaxy_api_key=None,
+                 max_retries=None, retry_delay=None, polling_interval=None,
                  output_folder='.', stream=_sys.stderr,
                  descriptions=True, verbosity=1, elapsed_times=True):
         self.galaxy_api_key = galaxy_api_key
 
         # create Galaxy instance
-        self._galaxy_instance = _common.get_galaxy_instance(galaxy_url, galaxy_api_key)
+        self._galaxy_instance = _common.get_galaxy_instance(galaxy_url, galaxy_api_key,
+                                                            max_retries=max_retries, retry_delay=retry_delay,
+                                                            polling_interval=polling_interval)
 
         # create WorkflowLoader
         self._workflow_loader = _common.WorkflowLoader.get_instance(self._galaxy_instance)
@@ -74,7 +81,8 @@ class WorkflowTestsRunner():
                                               descriptions=descriptions, elapsed_times=elapsed_times)
 
     def _setup(self, test, output_folder=None, verbosity=2,
-               disable_assertions=None, disable_cleanup=None, enable_logger=None, enable_debug=None):
+               disable_assertions=None, disable_cleanup=None, enable_logger=None, enable_debug=None,
+               max_retries=None, retry_delay=None, polling_interval=None):
         """ Update runner configuration accordingly to the test configuration"""
 
         if enable_logger is not None:
@@ -85,6 +93,11 @@ class WorkflowTestsRunner():
             test.disable_cleanup = disable_cleanup
         if disable_assertions is not None:
             test.disable_assertions = disable_assertions
+
+        # update http properties
+        self._galaxy_instance.max_retries = max_retries or getattr(test, "max_retries", MAX_RETRIES)
+        self._galaxy_instance.retry_delay = retry_delay or getattr(test, "retry_delay", RETRY_DELAY)
+        self._galaxy_instance.polling_interval = polling_interval or getattr(test, "polling_interval", POLLING_INTERVAL)
 
         # update verbosity level
         self._runner.verbosity = verbosity
@@ -113,7 +126,8 @@ class WorkflowTestsRunner():
     def run(self, test, filter=None, stream=_sys.stderr, verbosity=2,
             output_folder=None, output_suffix=None,
             report_format=None, report_filename=None,
-            disable_assertions=None, disable_cleanup=None, enable_logger=None, enable_debug=None):
+            disable_assertions=None, disable_cleanup=None, enable_logger=None, enable_debug=None,
+            max_retries=None, retry_delay=None, polling_interval=None):
 
         """ Run a single test case or a suite of test cases. """
 
@@ -123,7 +137,8 @@ class WorkflowTestsRunner():
         # update configuration
         self._setup(test, output_folder=output_folder, verbosity=verbosity,
                     disable_assertions=disable_assertions, disable_cleanup=disable_cleanup,
-                    enable_logger=enable_logger, enable_debug=enable_debug)
+                    enable_logger=enable_logger, enable_debug=enable_debug,
+                    max_retries=max_retries, retry_delay=retry_delay, polling_interval=polling_interval)
 
         # prepare wrappers
         self._logger.debug("Creating unittest wrappers...")
@@ -542,7 +557,8 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
 
                 # run the workflow
                 _logger.info("Workflow '%s' (id: %s) running ...", workflow.name, workflow.id)
-                outputs, output_history = workflow.run(datamap, history, params=params, wait=True, polling_interval=0.5)
+                outputs, output_history = workflow.run(datamap, history, params=params, wait=True,
+                                                       polling_interval=self._galaxy_instance.polling_interval)
                 _logger.info("Workflow '%s' (id: %s) executed", workflow.name, workflow.id)
 
                 # check outputs
