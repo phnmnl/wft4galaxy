@@ -8,16 +8,17 @@ import types as _types
 import logging as _logging
 import datetime as _datetime
 
-# bioblend dependencies
+# BioBlend dependency
 from bioblend.galaxy.objects import GalaxyInstance as ObjGalaxyInstance
 
 # Galaxy ENV variable names
 ENV_KEY_GALAXY_URL = "GALAXY_URL"
 ENV_KEY_GALAXY_API_KEY = "GALAXY_API_KEY"
 
-# configure logger
-
-
+# http settings
+MAX_RETRIES = 1
+RETRY_DELAY = 10
+POLLING_INTERVAL = 10
 
 # map `StandardError` to `Exception` to allow compatibility both with Python2 and Python3
 RunnerStandardError = Exception
@@ -318,3 +319,41 @@ class WorkflowLoader(object):
             raise RuntimeError("WorkflowLoader not initialized")
         for _, wf in _iteritems(self._workflows):
             self.unload_workflow(wf.id)
+
+
+# GalaxyInstance wrapper
+class GalaxyInstance(ObjGalaxyInstance):
+    def __init__(self, url, api_key=None, email=None, password=None,
+                 max_retries=MAX_RETRIES, retry_delay=RETRY_DELAY, polling_interval=POLLING_INTERVAL):
+        super(GalaxyInstance, self).__init__(url, api_key, email, password)
+        if max_retries is not None:
+            self.max_retries = max_retries
+        if retry_delay is not None:
+            self.retry_delay = retry_delay
+        if polling_interval is not None:
+            self.polling_interval = polling_interval
+
+    @property
+    def max_retries(self):
+        return self.gi.max_get_attempts
+
+    @max_retries.setter
+    def max_retries(self, v):
+        self.gi.max_get_attempts = v
+
+    @property
+    def retry_delay(self):
+        return self.gi.get_retry_delay
+
+    @retry_delay.setter
+    def retry_delay(self, v):
+        self.gi.get_retry_delay = v
+
+    @property
+    def polling_interval(self):
+        return self._polling_interval
+
+    @polling_interval.setter
+    def polling_interval(self, interval):
+        self._polling_interval = interval
+
