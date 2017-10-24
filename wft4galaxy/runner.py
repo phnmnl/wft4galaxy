@@ -24,9 +24,6 @@ import wft4galaxy.core as _core
 from wft4galaxy import common as _common
 from wft4galaxy import comparators as _comparators
 
-# http settings
-from common import MAX_RETRIES, RETRY_DELAY, POLLING_INTERVAL
-
 # the encoding name needs to be one of
 # http://www.iana.org/assignments/character-sets/character-sets.xhtml
 _UTF8 = 'UTF-8'
@@ -95,9 +92,10 @@ class WorkflowTestsRunner():
             test.disable_assertions = disable_assertions
 
         # update http properties
-        self._galaxy_instance.max_retries = max_retries or getattr(test, "max_retries", MAX_RETRIES)
-        self._galaxy_instance.retry_delay = retry_delay or getattr(test, "retry_delay", RETRY_DELAY)
-        self._galaxy_instance.polling_interval = polling_interval or getattr(test, "polling_interval", POLLING_INTERVAL)
+        self._galaxy_instance.max_retries = max_retries or getattr(test, "max_retries") or _common.MAX_RETRIES
+        self._galaxy_instance.retry_delay = retry_delay or getattr(test, "retry_delay") or _common.RETRY_DELAY
+        self._galaxy_instance.polling_interval = polling_interval \
+                                                 or getattr(test, "polling_interval") or _common.POLLING_INTERVAL
 
         # update verbosity level
         self._runner.verbosity = verbosity
