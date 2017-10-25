@@ -92,10 +92,10 @@ class WorkflowTestsRunner():
             test.disable_assertions = disable_assertions
 
         # update http properties
-        self._galaxy_instance.max_retries = max_retries or getattr(test, "max_retries") or _common.MAX_RETRIES
-        self._galaxy_instance.retry_delay = retry_delay or getattr(test, "retry_delay") or _common.RETRY_DELAY
+        self._galaxy_instance.max_retries = max_retries or getattr(test, "max_retries", None) or _common.MAX_RETRIES
+        self._galaxy_instance.retry_delay = retry_delay or getattr(test, "retry_delay", None) or _common.RETRY_DELAY
         self._galaxy_instance.polling_interval = polling_interval \
-                                                 or getattr(test, "polling_interval") or _common.POLLING_INTERVAL
+                                                 or getattr(test, "polling_interval", None) or _common.POLLING_INTERVAL
 
         # update verbosity level
         self._runner.verbosity = verbosity
