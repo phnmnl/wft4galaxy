@@ -41,10 +41,10 @@
 # Maximum number of retries after a connection failure
 # max_retries: 10
 
-# Delay between consecutive retries
+# Delay between consecutive retries (in seconds)
 # retry_delay: 1
 
-# Wait time between consecutive checks of the workflow state
+# Wait time between consecutive checks of the workflow state (in seconds)
 # polling_interval: 1
 
 ##########################################################################################
