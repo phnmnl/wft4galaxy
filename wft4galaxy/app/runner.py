@@ -45,8 +45,8 @@ def _make_parser():
     parser.add_argument('-o', '--output', dest="output_folder", metavar="PATH", help='Path of the output folder')
 
     parser.add_argument('--max-retries', type=_check_positive, help='Max number of retries', default=None)
-    parser.add_argument('--retry-delay', type=_check_positive, help='Delay between retries', default=None)
-    parser.add_argument('--polling-interval', type=_check_positive, help='Delay between polling requests', default=None)
+    parser.add_argument('--retry-delay', type=_check_positive, help='Delay between retries in seconds', default=None)
+    parser.add_argument('--polling-interval', type=_check_positive, help='Delay between polling requests in seconds', default=None)
 
     return parser
 
