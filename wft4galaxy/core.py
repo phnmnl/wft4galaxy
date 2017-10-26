@@ -5,6 +5,7 @@ from future.utils import iteritems as _iteritems
 from past.builtins import basestring as _basestring
 
 import os as _os
+import sys as _sys
 import logging as _logging
 from json import dumps as _json_dumps
 from uuid import uuid1 as  _uuid1
@@ -538,17 +539,21 @@ class WorkflowTestCase(object):
 
     def run(self, galaxy_url=None, galaxy_api_key=None, output_folder=None,
             enable_xunit=False, xunit_file=None, verbosity=0,
-            enable_logger=None, enable_debug=None, disable_cleanup=None):
+            enable_logger=None, enable_debug=None, disable_cleanup=None,
+            max_retries=None, retry_delay=None, polling_interval=None):
         _common.LoggerManager.configure_logging(
             _logging.DEBUG if enable_debug is True else _logging.INFO if enable_logger is True else _logging.ERROR)
         import wft4galaxy.runner as _runner
         return _runner.WorkflowTestsRunner(
-            galaxy_url, galaxy_api_key).run(self, verbosity=verbosity,
-                                            output_folder=output_folder or self.output_folder,
-                                            report_format="xunit" if enable_xunit else None,
-                                            report_filename=xunit_file,
-                                            enable_logger=enable_logger, enable_debug=enable_debug,
-                                            disable_cleanup=disable_cleanup)
+            galaxy_url, galaxy_api_key,
+            max_retries=max_retries, retry_delay=retry_delay,
+            polling_interval=polling_interval).run(self, verbosity=verbosity,
+                                                   output_folder=output_folder or self.output_folder,
+                                                   report_format="xunit" if enable_xunit else None,
+                                                   report_filename=xunit_file,
+                                                   enable_logger=enable_logger,
+                                                   enable_debug=enable_debug,
+                                                   disable_cleanup=disable_cleanup)
 
 
 class WorkflowTestSuite(object):
@@ -558,7 +563,8 @@ class WorkflowTestSuite(object):
 
     def __init__(self, galaxy_url=None, galaxy_api_key=None,
                  output_folder=WorkflowTestCase.DEFAULT_OUTPUT_FOLDER,
-                 enable_logger=True, enable_debug=False, disable_cleanup=False, disable_assertions=False):
+                 enable_logger=True, enable_debug=False, disable_cleanup=False, disable_assertions=False,
+                 max_retries=None, retry_delay=None, polling_interval=None):
         """
         Create an instance of :class:`WorkflowTestSuite`.
 
@@ -578,6 +584,10 @@ class WorkflowTestSuite(object):
         self.disable_cleanup = disable_cleanup
         self.disable_assertions = disable_assertions
         self.output_folder = output_folder
+        self.max_retries = max_retries
+        self.retry_delay = retry_delay
+        self.polling_interval = polling_interval
+
         # instantiate the dict for worklofws
         self._workflows = {}
 
@@ -641,7 +651,10 @@ class WorkflowTestSuite(object):
                 disable_assertions=file_configuration.get("disable_assertions", False),
                 output_folder=output_folder \
                               or file_configuration.get("output_folder") \
-                              or WorkflowTestCase.DEFAULT_OUTPUT_FOLDER
+                              or WorkflowTestCase.DEFAULT_OUTPUT_FOLDER,
+                max_retries=file_configuration.get("max_retries", None),
+                retry_delay=file_configuration.get("retry_delay", None),
+                polling_interval=file_configuration.get("polling_interval", None)
             )
             for wf_name, wf_config in _iteritems(file_configuration.get("workflows")):
                 wf_base_path = _os.path.join(base_path, wf_config.get("base_path", ""))
@@ -659,17 +672,20 @@ class WorkflowTestSuite(object):
 
     def run(self, galaxy_url=None, galaxy_api_key=None, tests=None, output_folder=None,
             enable_xunit=False, xunit_file=None, verbosity=0,
-            enable_logger=None, enable_debug=None, disable_cleanup=None):
+            enable_logger=None, enable_debug=None, disable_cleanup=None, disable_assertions=None,
+            max_retries=None, retry_delay=None, polling_interval=None):
+        # configure logger
         _common.LoggerManager.configure_logging(
             _logging.DEBUG if enable_debug is True else _logging.INFO if enable_logger is True else _logging.ERROR)
+
         import wft4galaxy.runner as _runner
-        return _runner.WorkflowTestsRunner(
-            galaxy_url, galaxy_api_key).run(self, filter=tests, verbosity=verbosity,
-                                            output_folder=output_folder or self.output_folder,
-                                            report_format="xunit" if enable_xunit else None,
-                                            report_filename=xunit_file,
-                                            enable_logger=enable_logger, enable_debug=enable_debug,
-                                            disable_cleanup=disable_cleanup)
+        return _runner.WorkflowTestsRunner(galaxy_url, galaxy_api_key, max_retries=max_retries,
+                                           retry_delay=retry_delay, polling_interval=polling_interval) \
+            .run(self, filter=tests, verbosity=verbosity,
+                 output_folder=output_folder or self.output_folder,
+                 report_format="xunit" if enable_xunit else None, report_filename=xunit_file,
+                 enable_logger=enable_logger, enable_debug=enable_debug, disable_cleanup=disable_cleanup,
+                 max_retries=max_retries, retry_delay=retry_delay, polling_interval=polling_interval)
 
 
 class WorkflowTestResult(object):

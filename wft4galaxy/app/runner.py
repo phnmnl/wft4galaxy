@@ -20,6 +20,13 @@ class _CustomFormatter(_argparse.RawTextHelpFormatter):
         super(_CustomFormatter, self).__init__(prog, indent_increment, max_help_position, width)
 
 
+def _check_positive(value):
+    int_value = int(value)
+    if int_value <= 0:
+        raise _argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
+    return int_value
+
+
 def _make_parser():
     parser = _argparse.ArgumentParser(add_help=True, formatter_class=_CustomFormatter)
     parser.add_argument("test", help="Workflow Test Name", nargs="*")
@@ -33,10 +40,14 @@ def _make_parser():
     parser.add_argument('--disable-cleanup', help='Disable cleanup', action='store_true', default=None)
 
     parser.add_argument('--output-format', choices=OutputFormat, help='Choose output type', default=OutputFormat.text)
-
     parser.add_argument('--xunit-file', default=None, metavar="FILE_PATH",
                         help='Set the path of the xUnit report file (absolute or relative to the output folder)')
     parser.add_argument('-o', '--output', dest="output_folder", metavar="PATH", help='Path of the output folder')
+
+    parser.add_argument('--max-retries', type=_check_positive, help='Max number of retries', default=None)
+    parser.add_argument('--retry-delay', type=_check_positive, help='Delay between retries in seconds', default=None)
+    parser.add_argument('--polling-interval', type=_check_positive, help='Delay between polling requests in seconds', default=None)
+
     return parser
 
 
@@ -54,56 +65,11 @@ def _parse_cli_arguments(parser, cmd_args):
     return args
 
 
-def _configure_test(galaxy_url, galaxy_api_key, suite, output_folder, tests,
-                    enable_logger, enable_debug, disable_cleanup, disable_assertions):
-    # configure `galaxy_url`
-    suite.galaxy_url = galaxy_url or suite.galaxy_url or _os.environ.get(_common.ENV_KEY_GALAXY_URL)
-    if not suite.galaxy_url:
-        raise _common.TestConfigError("Galaxy URL not defined!  Use --server or the environment variable {} "
-                                      "or specify it in the test configuration".format(_common.ENV_KEY_GALAXY_URL))
-    # configure `galaxy_api_key`
-    suite.galaxy_api_key = galaxy_api_key \
-                           or suite.galaxy_api_key \
-                           or _os.environ.get(_common.ENV_KEY_GALAXY_API_KEY)
-    if not suite.galaxy_api_key:
-        raise _common.TestConfigError("Galaxy API key not defined!  Use --api-key or the environment variable {} "
-                                      "or specify it in the test configuration".format(_common.ENV_KEY_GALAXY_API_KEY))
-    # configure `output_folder`
-    suite.output_folder = output_folder \
-                          or suite.output_folder \
-                          or _core.WorkflowTestCase.DEFAULT_OUTPUT_FOLDER
-
-    if enable_logger is not None:
-        suite.enable_logger = enable_logger
-
-    if enable_debug is not None:
-        suite.enable_debug = enable_debug
-
-    if disable_cleanup is not None:
-        suite.disable_cleanup = disable_cleanup
-
-    if disable_assertions is not None:
-        suite.disable_assertions = disable_assertions
-
-    for test_config in suite.workflow_tests.values():
-        test_config.disable_cleanup = suite.disable_cleanup
-        test_config.disable_assertions = suite.disable_assertions
-
-    # enable the logger with the proper detail level
-    if suite.enable_logger or suite.enable_debug:
-        _common.LoggerManager.update_log_level(_logging.DEBUG if suite.enable_debug else _logging.INFO)
-
-    # log Python version
-    _logger.debug("Python version: %s", _sys.version)
-
-    # log the current configuration
-    _logger.info("Configuration: %s", suite)
-
-
 def run_tests(filename,
               galaxy_url=None, galaxy_api_key=None,
               enable_logger=None, enable_debug=None,
               disable_cleanup=None, disable_assertions=None,
+              max_retries=None, retry_delay=None, polling_interval=None,
               output_folder=None, enable_xunit=False, xunit_file=None, tests=None):
     """
     Run a workflow test suite defined in a configuration file.
@@ -126,15 +92,16 @@ def run_tests(filename,
     # load suite configuration
     suite = _core.WorkflowTestSuite.load(filename,
                                          output_folder=output_folder)  # FIXME: do we need output_folder here ?
-    _configure_test(galaxy_url=galaxy_url, galaxy_api_key=galaxy_api_key,
-                    suite=suite, tests=tests, output_folder=output_folder,
-                    enable_logger=enable_logger, enable_debug=enable_debug,
-                    disable_cleanup=disable_cleanup, disable_assertions=disable_assertions)
+    # log the current configuration
+    _logger.info("Configuration: %s", suite)
 
     # run the configured test suite
-    result = suite.run(galaxy_url=galaxy_url, galaxy_api_key=galaxy_api_key, verbosity=2,
+    result = suite.run(galaxy_url=galaxy_url, galaxy_api_key=galaxy_api_key, verbosity=2, tests=tests,
                        enable_xunit=enable_xunit or (xunit_file != None), xunit_file=xunit_file,
-                       enable_logger=enable_logger, enable_debug=enable_debug, disable_cleanup=disable_cleanup)
+                       output_folder=output_folder,
+                       enable_logger=enable_logger, enable_debug=enable_debug,
+                       disable_cleanup=disable_cleanup, disable_assertions=disable_assertions,
+                       max_retries=max_retries, retry_delay=retry_delay, polling_interval=polling_interval)
     # compute exit code
     exit_code = len([r for r in result.test_case_results if r.failed()])
     _logger.debug("wft4galaxy.run_tests exiting with code: %s", exit_code)
@@ -153,6 +120,9 @@ def main():
             show_logger_name=True if options.debug else False
         )
 
+        # log Python version
+        _logger.debug("Python version: %s", _sys.version)
+
         # run tests and collect exit code
         code = run_tests(filename=options.file,
                          galaxy_url=options.galaxy_url,
@@ -161,6 +131,9 @@ def main():
                          enable_logger=options.enable_logger,
                          enable_debug=options.debug,
                          disable_cleanup=options.disable_cleanup,
+                         max_retries=options.max_retries,
+                         retry_delay=options.retry_delay,
+                         polling_interval=options.polling_interval,
                          enable_xunit=(options.output_format == OutputFormat.xunit),
                          xunit_file=options.xunit_file,
                          tests=options.test)
