@@ -72,7 +72,7 @@ do
             ;;
         --*)
             print_usage
-            exit -1
+            exit  1
             ;;
         *)
             # support only the first argument; skip all remaining
@@ -122,7 +122,7 @@ cd ${image_root_path} > /dev/null
 
 # build docker image
 echo "${image_root_path}/${image_type}/build.sh ${opts}" >&2
-"${image_root_path}/${image_type}/build.sh" ${repo_branch}
+"${image_root_path}/${image_type}/build.sh" ${repo_url} ${repo_branch}
 cd - > /dev/null
 
 # set optional arguments
