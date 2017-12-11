@@ -554,6 +554,10 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
                             datamap[label].append(history.upload_dataset(dataset_filename))
 
                 # run the workflow
+                _logger.debug("About to launch workflow.")
+                _logger.debug("history: %r", history)
+                _logger.debug("datamap: %r", datamap)
+                _logger.debug("params: %r", params)
                 _logger.info("Workflow '%s' (id: %s) running ...", workflow.name, workflow.id)
                 outputs, output_history = workflow.run(datamap, history, params=params, wait=True,
                                                        polling_interval=self._galaxy_instance.polling_interval)
