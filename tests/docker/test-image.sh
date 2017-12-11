@@ -113,8 +113,11 @@ source ${image_root_path}/set-docker-image-info.sh
 # download wft4galaxy script
 owner=${GIT_OWNER:-"phnmnl"}
 branch=${GIT_BRANCH:-"develop"}
-curl -s https://raw.githubusercontent.com/${owner}/wft4galaxy/${branch}/utils/docker/install.sh | bash /dev/stdin --repo "${owner}/wft4galaxy" --branch ${branch} .
-echo "Downloaded 'wft4galaxy-docker' Github repository: ${owner}/wft4galaxy (branch: ${branch})" >&2
+#curl -s https://raw.githubusercontent.com/${owner}/wft4galaxy/${branch}/utils/docker/install.sh | bash /dev/stdin --repo "${owner}/wft4galaxy" --branch ${branch} .
+#echo "Downloaded 'wft4galaxy-docker' Github repository: ${owner}/wft4galaxy (branch: ${branch})" >&2
+
+cp "${script_path}/../../wft4galaxy/app/docker_runner.py" "./wft4galaxy-docker"
+chmod +x "./wft4galaxy-docker"
 
 # switch the Docker image context
 cd ${image_root_path} > /dev/null
