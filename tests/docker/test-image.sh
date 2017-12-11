@@ -11,9 +11,7 @@ image_root_path="${script_path}/../../utils/docker"
 
 # print help
 function print_usage(){
-    (   echo "USAGE: $0 [--server URL] [--api-key API-KEY] [--network ADDRESS] "
-        echo "          [-r|--image-registry REGISTRY] [-o|--image-owner OWNER] [-n|--image-name NAME] [-t|--image-tag TAG]"
-        echo "          {minimal,develop}"
+    (   echo "USAGE: $0 [--server URL] [--api-key API-KEY] [--network ADDRESS] {minimal,develop}"
         echo ""
         echo "If no options related to the Docker image are provided, this script will try to get the"
         echo "required image information from the local repository itself") >&2
