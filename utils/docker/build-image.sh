@@ -120,9 +120,6 @@ function build_local_image() {
     echo "BUG! Trying to build a local image without image information" >&2
     exit 2
   fi
-  if  [[ "${IMAGE_TYPE}" != "minimal" ]]; then
-    error "Sorry.  At the moment local builds are only supported with the 'minimal' image type"
-  fi
 
   # assemble any missing image info
   source ${script_path}/set-docker-image-info.sh
@@ -135,7 +132,7 @@ function build_local_image() {
   fi
 
   cd "${src_dir_root}" > /dev/null
-  docker build . -f "${script_path}/Dockerfile.local.minimal" -t ${IMAGE}
+  docker build . -f "${script_path}/Dockerfile.local.${IMAGE_TYPE}" -t ${IMAGE}
 }
 
 function build_repo_image() {
