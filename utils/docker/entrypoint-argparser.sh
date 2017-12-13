@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Collect arguments to be passed on to the next program in an array, rather than
+# a simple string. This choice lets us deal with arguments that contain spaces.
+ENTRYPOINT_ARGS=()
+
 # parse arguments
 while [ -n "$1" ]; do
     # Copy so we can modify it (can't modify $1)
@@ -8,7 +12,8 @@ while [ -n "$1" ]; do
     if [ x"$OPT" = x"--" ]; then
             shift
             for OPT ; do
-                    OTHER_OPTS="$OTHER_OPTS \"$OPT\""
+                    # append to array
+                    ENTRYPOINT_ARGS+=("$OPT")
             done
             break
     fi
@@ -35,7 +40,8 @@ while [ -n "$1" ]; do
                           shift
                           ;;
                   * )
-                          OTHER_OPTS="$OTHER_OPTS $OPT"
+                          # append to array
+                          ENTRYPOINT_ARGS+=("$OPT")
                           break
                           ;;
             esac
@@ -53,9 +59,9 @@ while [ -n "$1" ]; do
 done
 
 # set BIOBLEND
-export GALAXY_URL=${GALAXY_SERVER}
-export GALAXY_API_KEY=${GALAXY_API_KEY}
+export GALAXY_URL="${GALAXY_SERVER}"
+export GALAXY_API_KEY="${GALAXY_API_KEY}"
 
 # export wft4galaxy arguments
 export ENTRYPOINT
-export ENTRYPOINT_ARGS=${OTHER_OPTS}
+export ENTRYPOINT_ARGS
