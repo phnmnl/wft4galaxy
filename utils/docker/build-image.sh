@@ -177,7 +177,7 @@ fi
 # restore the original path
 cd - > /dev/null
 
-echo "Built image: ${IMAGE}" &>2
+echo "Built image: ${IMAGE}" >&2
 
 # Don't modify this output without updating test-image.sh!"
 Template="{
