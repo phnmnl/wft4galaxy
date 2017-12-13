@@ -39,7 +39,7 @@ script:
 - wft4galaxy -f examples/change_case/workflow-test.yml --server ${GALAXY_URL} --api-key ${GALAXY_API_KEY}
 - export GALAXY_URL=http://${GALAXY_ADDRESS} # use the address of the Galaxy container within the Docker network
 - branch=${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_BRANCH}}
-- tests/docker/run-all.sh --branch ${branch} --server ${GALAXY_URL} --api-key ${GALAXY_API_KEY} --network ${GALAXY_NETWORK}
+- tests/docker/run-all.sh --branch ${branch} --server ${GALAXY_URL} --api-key ${GALAXY_API_KEY} --network ${GALAXY_NETWORK} --local-copy
 
 
 after_script:
