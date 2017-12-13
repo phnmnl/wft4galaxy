@@ -11,151 +11,167 @@ image_root_path="${script_path}/../../utils/docker"
 
 # print help
 function print_usage(){
-    (   echo "USAGE: $0 [--server URL] [--api-key API-KEY] [--network ADDRESS] {minimal,develop}"
-        echo ""
-        echo "If no options related to the Docker image are provided, this script will try to get the"
-        echo "required image information from the local repository itself") >&2
+    echo "USAGE: $0 [--server URL] [--api-key API-KEY] [--network ADDRESS] { any options build-image.sh accepts }" >&2
 }
 
-# init argument variables
-image_type=''
+function error() {
+  if [[ $# -gt 0 ]]; then
+    echo "$@" >&2
+  else
+    echo "Sorry.  There's been an error!" >&2
+  fi
+  exit 2
+}
+
+function usage_error() {
+  if [[ $# -gt 0 ]]; then
+    echo "$@" >&2
+  fi
+  print_usage
+  exit 2
+}
+
+function parse_args() {
+  # this function parses the arguments it receives in $@ and sets variables
+  while test $# -gt 0
+  do
+      case "$1" in
+          -h|--help)
+              print_usage
+              exit 0
+              ;;
+          --server )
+              [ $# -ge 2 ] || { echo "Missing value for '$1'"; exit 1; }
+              GALAXY_URL="$2"
+              shift
+              ;;
+          --api-key)
+              [ $# -ge 2 ] || { echo "Missing value for '$1'"; exit 1; }
+              GALAXY_API_KEY="$2"
+              shift
+              ;;
+          --network )
+              [ $# -ge 2 ] || { echo "Missing value for '$1'"; exit 1; }
+              GALAXY_NETWORK="$2"
+              shift
+              ;;
+          --debug )
+              debug="--debug"
+              shift
+              ;;
+          *)
+              OTHER_ARGS+=("${1}")
+              ;;
+      esac
+      shift
+  done
+
+  # check required options
+  local settings=(GALAXY_URL GALAXY_API_KEY)
+  for s in ${settings[@]}; do
+      if [[ -z ${!s} ]]; then
+          echo "No ${s} provided." >&2
+          exit 99
+      fi
+  done
+}
+
+function extract_build_image_info() { # args: (filename, tag)
+  if [[ $# -ne 2 ]]; then
+    error "BUG!  extract_build_image_tag called with $# arguments (expected 2)"
+  fi
+  local filename="${1}"
+  local tag="${2}"
+
+  local sed_expr="/${tag}/s/\s*${tag}\s*:\s*\([^,]*\),\?\s*/\1/p"
+  local value="$(sed -n -e "${sed_expr}" "${filename}")"
+  echo "Extracted ${tag}: '${value}'" &>2
+  echo "${value}"
+
+  return 0
+}
+
+########## main ###########
+
+# absolute path of the current script
+script_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# initialize variables to default values, if any
 GALAXY_URL=''
 GALAXY_API_KEY=''
 GALAXY_NETWORK=''
-repo_url=''
-GIT_BRANCH=''
-repo_branch=''
 
-# options
-opts="$@"
+# other options to be passed to build-image.sh
+OTHER_ARGS=()
 
 # disable debug
 debug=""
 
-# parse args
-while test $# -gt 0
-do
-    case "$1" in
-        -h|--help)
-            print_usage
-            exit 0
-            ;;
-        --server )
-            [ $# -ge 2 ] || { echo "Missing value for '$1'"; exit 1; }
-            GALAXY_URL="$2"
-            shift
-            ;;
-        --api-key)
-            [ $# -ge 2 ] || { echo "Missing value for '$1'"; exit 1; }
-            GALAXY_API_KEY="$2"
-            shift
-            ;;
-        --network )
-            [ $# -ge 2 ] || { echo "Missing value for '$1'"; exit 1; }
-            GALAXY_NETWORK="$2"
-            shift
-            ;;
-        --url|--repo-url)
-            [ $# -ge 2 ] || { echo "Missing value for '$1'"; exit 1; }
-            repo_url="--url $2"
-            shift
-            ;;
-        --branch|--repo-branch)
-            [ $# -ge 2 ] || { echo "Missing value for '$1'"; exit 1; }
-            GIT_BRANCH=$2
-            repo_branch="--branch $2"
-            shift
-            ;;
-        --debug )
-            debug="--debug"
-            shift
-            ;;
-        --*)
-            print_usage
-            exit  1
-            ;;
-        *)
-            # support only the first argument; skip all remaining
-            if [[ -z ${image_type} ]]; then
-                image_type=${1}
-            fi
-            ;;
-    esac
-    shift
-done
+parse_args "${@}"
 
-# check required options
-settings=(image_type GALAXY_URL GALAXY_API_KEY)
-for s in ${settings[@]}; do
-    if [[ -z ${!s} ]]; then
-        echo "No ${s} provided." >&2
-        exit 99
-    fi
-done
+# copy the wft4galaxy script
+docker_runner="${script_path}/../../wft4galaxy/app/docker_runner.py"
 
-# check image type
-if [[ -z ${image_type} ]]; then
-    image_type="minimal"
-    echo "No image type provided. Using the default : ${image_type}">&2
-elif [[ ${image_type} != "minimal" && ${image_type} != "develop" ]]; then
-    echo -e "\nERROR: '${image_type}' not supported! Use 'minimal' or 'develop'."
-    exit 99
+echo "Building docker image" >&2
+build_image="${script_path}/../../utils/docker/build-image.sh"
+
+# Use a temporary file to capture the name of the image being created
+tmpfile=$(mktemp --tmpdir wft4galaxy-test-image.XXXXX)
+trap "rm -f '${tmpfile}'" EXIT # remove that file on exit
+
+# fail if any step in the pipe files (we especially care about build-image.sh :-) )
+set -o pipefail
+# We want to capture the last section of the stdout from build-image.sh where it's
+# going to print the name of the docker image it created. At the same time, we
+# want the output to go to the console so that we can see what's going on.  >()
+# is the syntax for bash's process substitution: tee writes to an "anonymous"
+# pipe which is connected to sed's stdin. The sed command will delete everything
+# up to and including the line with the marker
+
+if [[ ${#OTHER_ARGS[@]} -eq 0 ]]; then
+  # This works around bash's quirky behaviour of raising an error if nounset is on and
+  # you expand an empty (but declared) array
+  "${build_image}" | tee >(sed -e '1,/^=== build-image.sh complete ===$/d' > "${tmpfile}")
 else
-    export IMAGE_TYPE="${image_type}"
+  "${build_image}" "${OTHER_ARGS[@]}" | tee >(sed -e '1,/^=== build-image.sh complete ===$/d' > "${tmpfile}")
 fi
 
-# extract git info & Docker image name
-source ${image_root_path}/set-git-repo-info.sh ${repo_url} ${repo_branch}
-source ${image_root_path}/set-docker-image-info.sh
+image_repo="$(extract_build_image_info "${tmpfile}" image_repository)"
+image_tag="$(extract_build_image_info "${tmpfile}" image_tag)"
 
-# download wft4galaxy script
-owner=${GIT_OWNER:-"phnmnl"}
-branch=${GIT_BRANCH:-"develop"}
-#curl -s https://raw.githubusercontent.com/${owner}/wft4galaxy/${branch}/utils/docker/install.sh | bash /dev/stdin --repo "${owner}/wft4galaxy" --branch ${branch} .
-#echo "Downloaded 'wft4galaxy-docker' Github repository: ${owner}/wft4galaxy (branch: ${branch})" >&2
+# array of arguments for the docker run
+cmd_args=(--server "${GALAXY_URL}" --api-key "${GALAXY_API_KEY}" --skip-update)
 
-cp "${script_path}/../../wft4galaxy/app/docker_runner.py" "./wft4galaxy-docker"
-chmod +x "./wft4galaxy-docker"
-
-# switch the Docker image context
-cd ${image_root_path} > /dev/null
-
-# build docker image
-echo "${image_root_path}/${image_type}/build.sh ${opts}" >&2
-"${image_root_path}/${image_type}/build.sh" ${repo_url} ${repo_branch}
-cd - > /dev/null
-
-# set optional arguments
-cmd_other_opts="--repository ${IMAGE_REPOSITORY} --skip-update ${debug}"
-if [[ -n ${IMAGE_TAG} ]]; then
-    cmd_other_opts="${cmd_other_opts} --tag ${IMAGE_TAG}"
+if [[ -n "${image_repo}" ]]; then
+  cmd_args+=(--repository "${image_repo}")
 fi
-if [[ -n ${GALAXY_NETWORK} ]]; then
-    cmd_other_opts="${cmd_other_opts} --network ${GALAXY_NETWORK}"
+if [[ -n "${image_tag}" ]]; then
+  cmd_args+=(--tag "${image_tag}")
 fi
+if [[ -n "${debug}" ]]; then
+  cmd_args+=("${debug}")
+fi
+if [[ -n "${GALAXY_NETWORK}" ]]; then
+  cmd_args+=(--network "${GALAXY_NETWORK}")
+fi
+
+# finally, add the test definition argument
+cmd_args+=(-f "${script_path}/../../examples/change_case/workflow-test.yml")
 
 # uncomment for debug
 #echo "Trying to contact Galaxy sever..."
-#docker run --rm --network ${GALAXY_NETWORK} \
+#docker run --rm --network "${GALAXY_NETWORK}" \
 #            ubuntu bash -c "apt-get update && apt-get install -y iputils-ping && timeout 5 ping 172.18.0.22"
 
-# build cmd
-base_cmd="./wft4galaxy-docker ${cmd_other_opts} --server ${GALAXY_URL} --api-key ${GALAXY_API_KEY}"
-cmd="${base_cmd} -f examples/change_case/workflow-test.yml"
-echo -e "CMD: ${cmd}\n">&2
-
-# turn off command error checking
+# now run the tests
+echo -e "CMD: ${docker_runner} ${cmd_args[@]}\n" >&2
+# first turn off command error checking
 set +o errexit
-
-# run test
-${cmd} 
+"${docker_runner}" "${cmd_args[@]}"
 exit_code=$?
 
-# cleanup
-rm -f wft4galaxy-docker
-
-if [ ${exit_code} -ne 0 ]; then
-    echo "Test failed (exit code: ${exit_code}" >&2
+if [[ ${exit_code} -ne 0 ]]; then
+  echo "Test failed (exit code: ${exit_code}" >&2
 fi
 
 exit ${exit_code}
