@@ -132,7 +132,7 @@ function build_local_image() {
   fi
 
   cd "${src_dir_root}" > /dev/null
-  docker build . -f "${script_path}/Dockerfile.local.${IMAGE_TYPE}" -t ${IMAGE}
+  docker build . -f "${script_path}/${IMAGE_TYPE}/Dockerfile.local" -t ${IMAGE}
 }
 
 function build_repo_image() {
@@ -140,17 +140,10 @@ function build_repo_image() {
   source ${script_path}/set-git-repo-info.sh ${repo_url} ${repo_branch}
   source ${script_path}/set-docker-image-info.sh
 
-  # Need to cd into this script's directory because image-config assumes it's running within it
-  local image_path="${script_path}/${IMAGE_TYPE}"
-  # check whether the image type exists
-  if [[ ! -d ${image_path} ]]; then
-      echo -e "\nThe specified image type '${image_type}' doen't exist!!!" >&2
-      exit 99
-  fi
-  cd "${image_path}" > /dev/null
-
+  cd "${src_dir_root}" > /dev/null
   # build the Docker image
-  docker build --build-arg git_branch=${GIT_BRANCH} --build-arg git_url=${GIT_HTTPS} -t ${IMAGE} .
+  docker build . -f "${script_path}/${IMAGE_TYPE}/Dockerfile.git" \
+		     --build-arg git_branch=${GIT_BRANCH} --build-arg git_url=${GIT_HTTPS} -t ${IMAGE}
 }
 
 ########## main ###########

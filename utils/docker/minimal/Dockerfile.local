@@ -43,14 +43,14 @@ RUN echo "Installing dependencies" >&2 \
 # Don't bother removing /opt/wft4galaxy since we've already committed that step
 
 # setup bash custom prompt (PS1)
-ADD utils/docker/minimal/bashrc /root/.bashrc
+ADD utils/docker/bashrc /root/.bashrc
 
 # update the working dir
 WORKDIR /root
 
 # add container entrypoint
 COPY utils/docker/minimal/entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY utils/docker/minimal/entrypoint-argparser.sh /usr/local/bin/entrypoint-argparser.sh
+COPY utils/docker/entrypoint-argparser.sh /usr/local/bin/entrypoint-argparser.sh
 
 # set the entrypoint
 ENTRYPOINT ["entrypoint.sh"]
