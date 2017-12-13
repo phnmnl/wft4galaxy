@@ -115,6 +115,17 @@ function parse_args() {
   fi
 }
 
+function cd_to_project_root() {
+  local src_dir_root="${script_path}/../../"
+  # Try to verify that we have the right directory
+  if [[ ! -d "${src_dir_root}/wft4galaxy" || ! -d "${src_dir_root}/utils" ]]; then
+    error "I think the wft4galaxy root directory should be '${src_dir_root}' but I can't \n" \
+          "find the 'wft4galaxy' and 'utils' subdirectories there. Aborting!"
+  fi
+
+  cd "${src_dir_root}"
+}
+
 function build_local_image() {
   if [[ -z "${IMAGE}" && -z "${IMAGE_REPOSITORY}" && -z "${IMAGE_OWNER}" ]]; then
     echo "BUG! Trying to build a local image without image information" >&2
@@ -124,14 +135,7 @@ function build_local_image() {
   # assemble any missing image info
   source ${script_path}/set-docker-image-info.sh
 
-  src_dir_root="${script_path}/../../"
-  # Try to verify that we have the right directory
-  if [[ ! -d "${src_dir_root}/wft4galaxy" || ! -d "${src_dir_root}/utils" ]]; then
-    error "I think the wft4galaxy root directory should be '${src_dir_root}' but I can't \n" \
-          "find the 'wft4galaxy' and 'utils' subdirectories there. Aborting!"
-  fi
-
-  cd "${src_dir_root}" > /dev/null
+  cd_to_project_root
   docker build . -f "${script_path}/${IMAGE_TYPE}/Dockerfile.local" -t ${IMAGE}
 }
 
@@ -140,8 +144,7 @@ function build_repo_image() {
   source ${script_path}/set-git-repo-info.sh ${repo_url} ${repo_branch}
   source ${script_path}/set-docker-image-info.sh
 
-  cd "${src_dir_root}" > /dev/null
-  # build the Docker image
+  cd_to_project_root
   docker build . -f "${script_path}/${IMAGE_TYPE}/Dockerfile.git" \
 		     --build-arg git_branch=${GIT_BRANCH} --build-arg git_url=${GIT_HTTPS} -t ${IMAGE}
 }
