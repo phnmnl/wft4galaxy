@@ -107,7 +107,9 @@ OTHER_ARGS=()
 # disable debug
 debug=""
 
-parse_args "${@}"
+# parse args. An empty $@ will result in the empty string "" being passed, which is ok
+# (we'll raise an error later for lack of mandatory arguments)
+parse_args "${@:-}"
 
 # copy the wft4galaxy script
 docker_runner="${script_path}/../../wft4galaxy/app/docker_runner.py"

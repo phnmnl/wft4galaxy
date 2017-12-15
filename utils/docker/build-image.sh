@@ -81,8 +81,8 @@ function parse_args() {
               ;;
           *)
               # support only the first argument; skip all remaining
-              if [[ -z ${image_type} ]]; then
-                  image_type=${1}
+              if [[ -z "${image_type}" ]]; then
+                  image_type="${1}"
               fi
               ;;
       esac
@@ -166,7 +166,8 @@ repo_url=""
 repo_branch=""
 local_copy="false"
 
-parse_args "${@}"
+# parse args. An empty $@ will result in the empty string "" being passed, which is ok
+parse_args "${@:-}"
 
 if [[ "${local_copy}" = "true" ]]; then
   build_local_image
