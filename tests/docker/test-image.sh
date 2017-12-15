@@ -118,7 +118,8 @@ echo "Building docker image" >&2
 build_image="${script_path}/../../utils/docker/build-image.sh"
 
 # Use a temporary file to capture the name of the image being created
-tmpfile=$(mktemp --tmpdir wft4galaxy-test-image.XXXXX)
+# `mktemp -t` is deprecated on Linux, but it gives us compatibility with both Linux and MacOS
+tmpfile=$(mktemp -t wft4galaxy-test-image.XXXXX)
 trap "rm -f '${tmpfile}'" EXIT # remove that file on exit
 
 # fail if any step in the pipe files (we especially care about build-image.sh :-) )
