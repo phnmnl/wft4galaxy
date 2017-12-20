@@ -90,6 +90,9 @@ if [[ -d .git || -d $(git rev-parse --git-dir 2> /dev/null) ]]; then
         echo "Getting git repository URL from local repository" >&2
         first_remote=$(git remote | head -n 1)
         echo "Using git remote '${first_remote}'" >&2
+        if [ "${first_remote}" != "origin" ]; then
+          echo "=*=*=*=*=*=*= WARNING: automatically choosing first remote in list: ${first_remote}" >&2
+        fi
         git_url=$(git config --get remote.${first_remote}.url)
     fi
 
