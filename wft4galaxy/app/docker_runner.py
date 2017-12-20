@@ -416,8 +416,8 @@ class NonInteractiveContainer(Container):
         if options.debug:
             cmd.append("--debug")
         # Galaxy settings server (redundant)
-        cmd += ["--server ", options.server]
-        cmd += ["--api-key ", options.api_key]
+        cmd += ["--server", options.server]
+        cmd += ["--api-key", options.api_key]
         # configuration file
         cmd += ["-f",
                 options.file if options.entrypoint in ("generate-test", "generate-template")
