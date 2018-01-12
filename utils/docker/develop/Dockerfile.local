@@ -1,0 +1,57 @@
+FROM alpine:3.6
+
+# metadata
+MAINTAINER PhenoMeNal-H2020 Project ( phenomenal-h2020-users@googlegroups.com )
+
+# set the term var
+ENV TERM xterm-256color
+
+# wft4galaxy path
+ENV WFT4GALAXY_PATH /opt/wft4galaxy
+
+# Copy the wft4galaxy project, skipping hidden files (such as the .git repo)
+COPY "." "${WFT4GALAXY_PATH}"
+
+# install base packages
+RUN echo "Installing dependencies" >&2 \
+    && apk update && apk add \
+        bash \
+        build-base \
+        gcc \
+        git \
+        iputils \
+        make \
+        nano \
+        py-lxml \
+        py-pip \
+        py-setuptools \
+        python \
+        python-dev \
+        vim \
+    && pip install --upgrade pip \
+    && pip install ipython jupyter bash_kernel \
+    && cd ${WFT4GALAXY_PATH} \
+    && pip install -r requirements.txt \
+    && python -m bash_kernel.install \
+    && echo "Building and installing wft4galaxy" >&2 \
+    && python setup.py install \
+    && rm -rf /var/cache/apk/*
+
+# setup bash custom prompt (PS1)
+ADD utils/docker/bashrc /root/.bashrc
+
+# build a tutorial folder within the user's home
+RUN mkdir ${HOME}/tutorial && \
+    ln -s ${WFT4GALAXY_PATH}/examples ${HOME}/tutorial/examples && \
+    ln -s ${WFT4GALAXY_PATH}/docs/notebooks ${HOME}/tutorial/notebooks && \
+    ln -s ${WFT4GALAXY_PATH}/docs/images ${HOME}/tutorial/images
+
+# update the working dir
+WORKDIR /root
+
+# add container entrypoint
+COPY utils/docker/develop/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY utils/docker/entrypoint-argparser.sh /usr/local/bin/entrypoint-argparser.sh
+
+# set the entrypoint
+ENTRYPOINT ["entrypoint.sh"]

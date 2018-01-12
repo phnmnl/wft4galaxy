@@ -43,14 +43,14 @@ if [[ -n ${IMAGE} && ${IMAGE} =~ ${pattern} || -n ${IMAGE_REPOSITORY} && ${IMAGE
         IMAGE_REPOSITORY="${IMAGE_REGISTRY}/${IMAGE_OWNER}/${IMAGE_NAME}"
     fi
 
-else  # neither IMAGE nor IMAGE_REPOSITORY are setted
+else  # neither IMAGE nor IMAGE_REPOSITORY are set
     # set image owner
     if [[ -z "${IMAGE_OWNER}" ]]; then
         # map the git phnmnl repository to the Crs4 DockerHub repository
-        if [[ ${GIT_OWNER} == "phnmnl" ]]; then
+        if [[ ${GIT_OWNER:-} == "phnmnl" ]]; then
             IMAGE_OWNER="crs4"
         else
-            IMAGE_OWNER="${GIT_OWNER}"
+            IMAGE_OWNER="${GIT_OWNER:-}" # Do we absolutely need an owner?  If so, there are cases where we'd need to raise an error here
         fi
     fi
 
@@ -65,11 +65,10 @@ else  # neither IMAGE nor IMAGE_REPOSITORY are setted
 
     # if image tag isn't set, trying getting it from git
     if [[ -z "${IMAGE_TAG}" ]]; then
-        if [[ -n ${GIT_BRANCH} || -n ${GIT_TAG} ]]; then
+        if [[ -n "${GIT_BRANCH:-}" ]]; then
             IMAGE_TAG="${GIT_BRANCH}"
-            if [[ -n ${GIT_TAG} ]]; then
-                IMAGE_TAG="${GIT_TAG}" # preference to git tag name over branch
-            fi
+        elif [[ -n "${GIT_TAG:-}" ]]; then
+            IMAGE_TAG="${GIT_TAG}" # preference to git tag name over branch
         fi
     fi
 

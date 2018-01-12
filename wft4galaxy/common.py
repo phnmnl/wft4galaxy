@@ -8,16 +8,17 @@ import types as _types
 import logging as _logging
 import datetime as _datetime
 
-# bioblend dependencies
+# BioBlend dependency
 from bioblend.galaxy.objects import GalaxyInstance as ObjGalaxyInstance
 
 # Galaxy ENV variable names
 ENV_KEY_GALAXY_URL = "GALAXY_URL"
 ENV_KEY_GALAXY_API_KEY = "GALAXY_API_KEY"
 
-# configure logger
-
-
+# http settings
+MAX_RETRIES = 1
+RETRY_DELAY = 10
+POLLING_INTERVAL = 10
 
 # map `StandardError` to `Exception` to allow compatibility both with Python2 and Python3
 RunnerStandardError = Exception
@@ -137,55 +138,6 @@ def makedirs(path, check_if_exists=False):
     except OSError as e:
         if check_if_exists:
             raise OSError(e.message)
-
-
-def configure_env_galaxy_server_instance(config, options, base_config=None):
-    config["galaxy_url"] = options.galaxy_url \
-                           or base_config and base_config.get("galaxy_url") \
-                           or _os.environ.get(ENV_KEY_GALAXY_URL)
-    if not config["galaxy_url"]:
-        raise TestConfigError("Galaxy URL not defined!  Use --server or the environment variable {} "
-                              "or specify it in the test configuration".format(ENV_KEY_GALAXY_URL))
-
-    config["galaxy_api_key"] = options.galaxy_api_key \
-                               or base_config and base_config.get("galaxy_api_key") \
-                               or _os.environ.get(ENV_KEY_GALAXY_API_KEY)
-    if not config["galaxy_api_key"]:
-        raise TestConfigError("Galaxy API key not defined!  Use --api-key or the environment variable {} "
-                              "or specify it in the test configuration".format(ENV_KEY_GALAXY_API_KEY))
-
-
-def get_galaxy_instance(galaxy_url=None, galaxy_api_key=None):
-    """
-    Private utility function to instantiate and configure a :class:`bioblend.GalaxyInstance`
-
-    :type galaxy_url: str
-    :param galaxy_url: the URL of the Galaxy server
-
-    :type galaxy_api_key: str
-    :param galaxy_api_key: a registered Galaxy API KEY
-
-    :rtype: :class:`bioblend.objects.GalaxyInstance`
-    :return: a new :class:`bioblend.objects.GalaxyInstance` instance
-    """
-    # configure `galaxy_url`
-    if galaxy_url is None:
-        if ENV_KEY_GALAXY_URL not in _os.environ:
-            raise TestConfigError("Galaxy URL not defined!  Use --server or the environment variable {} "
-                                  "or specify it in the test configuration".format(ENV_KEY_GALAXY_URL))
-        else:
-            galaxy_url = _os.environ[ENV_KEY_GALAXY_URL]
-
-    # configure `galaxy_api_key`
-    if galaxy_api_key is None:
-        if ENV_KEY_GALAXY_API_KEY not in _os.environ:
-            raise TestConfigError("Galaxy API key not defined!  Use --api-key or the environment variable {} "
-                                  "or specify it in the test configuration".format(ENV_KEY_GALAXY_API_KEY))
-        else:
-            galaxy_api_key = _os.environ[ENV_KEY_GALAXY_API_KEY]
-
-    # initialize the galaxy instance
-    return ObjGalaxyInstance(galaxy_url, galaxy_api_key)
 
 
 class WorkflowLoader(object):
@@ -318,3 +270,91 @@ class WorkflowLoader(object):
             raise RuntimeError("WorkflowLoader not initialized")
         for _, wf in _iteritems(self._workflows):
             self.unload_workflow(wf.id)
+
+
+# GalaxyInstance wrapper
+class GalaxyInstance(ObjGalaxyInstance):
+    def __init__(self, url, api_key=None, email=None, password=None,
+                 max_retries=MAX_RETRIES, retry_delay=RETRY_DELAY, polling_interval=POLLING_INTERVAL):
+        super(GalaxyInstance, self).__init__(url, api_key, email, password)
+        if max_retries is not None:
+            self.max_retries = max_retries
+        if retry_delay is not None:
+            self.retry_delay = retry_delay
+        if polling_interval is not None:
+            self.polling_interval = polling_interval
+
+    @property
+    def max_retries(self):
+        return self.gi.max_get_attempts
+
+    @max_retries.setter
+    def max_retries(self, v):
+        self.gi.max_get_attempts = v
+
+    @property
+    def retry_delay(self):
+        return self.gi.get_retry_delay
+
+    @retry_delay.setter
+    def retry_delay(self, v):
+        self.gi.get_retry_delay = v
+
+    @property
+    def polling_interval(self):
+        return self._polling_interval
+
+    @polling_interval.setter
+    def polling_interval(self, interval):
+        self._polling_interval = interval
+
+
+def configure_env_galaxy_server_instance(config, options, base_config=None):
+    config["galaxy_url"] = options.galaxy_url \
+                           or base_config and base_config.get("galaxy_url") \
+                           or _os.environ.get(ENV_KEY_GALAXY_URL)
+    if not config["galaxy_url"]:
+        raise TestConfigError("Galaxy URL not defined!  Use --server or the environment variable {} "
+                              "or specify it in the test configuration".format(ENV_KEY_GALAXY_URL))
+
+    config["galaxy_api_key"] = options.galaxy_api_key \
+                               or base_config and base_config.get("galaxy_api_key") \
+                               or _os.environ.get(ENV_KEY_GALAXY_API_KEY)
+    if not config["galaxy_api_key"]:
+        raise TestConfigError("Galaxy API key not defined!  Use --api-key or the environment variable {} "
+                              "or specify it in the test configuration".format(ENV_KEY_GALAXY_API_KEY))
+
+
+def get_galaxy_instance(galaxy_url=None, galaxy_api_key=None,
+                        max_retries=MAX_RETRIES, retry_delay=RETRY_DELAY, polling_interval=POLLING_INTERVAL):
+    """
+    Private utility function to instantiate and configure a :class:`bioblend.GalaxyInstance`
+
+    :type galaxy_url: str
+    :param galaxy_url: the URL of the Galaxy server
+
+    :type galaxy_api_key: str
+    :param galaxy_api_key: a registered Galaxy API KEY
+
+    :rtype: :class:`bioblend.objects.GalaxyInstance`
+    :return: a new :class:`bioblend.objects.GalaxyInstance` instance
+    """
+    # configure `galaxy_url`
+    if galaxy_url is None:
+        if ENV_KEY_GALAXY_URL not in _os.environ:
+            raise TestConfigError("Galaxy URL not defined!  Use --server or the environment variable {} "
+                                  "or specify it in the test configuration".format(ENV_KEY_GALAXY_URL))
+        else:
+            galaxy_url = _os.environ[ENV_KEY_GALAXY_URL]
+
+    # configure `galaxy_api_key`
+    if galaxy_api_key is None:
+        if ENV_KEY_GALAXY_API_KEY not in _os.environ:
+            raise TestConfigError("Galaxy API key not defined!  Use --api-key or the environment variable {} "
+                                  "or specify it in the test configuration".format(ENV_KEY_GALAXY_API_KEY))
+        else:
+            galaxy_api_key = _os.environ[ENV_KEY_GALAXY_API_KEY]
+
+    # initialize the galaxy instance
+    return GalaxyInstance(galaxy_url, galaxy_api_key,
+                          max_retries=max_retries, retry_delay=retry_delay, polling_interval=polling_interval)

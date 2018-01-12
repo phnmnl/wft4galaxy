@@ -22,16 +22,16 @@ ENV WFT4GALAXY_BRANCH ${git_branch:-develop}
 # install base packages
 RUN echo "Installing dependencies" >&2 \
     && apk update && apk add \
+        bash \
         build-base \
         gcc \
-        make \
         git \
-        py-pip \
-        bash \
+        make \
         python \
-        py-setuptools \
         python-dev \
         py-lxml \
+        py-pip \
+        py-setuptools \
     && pip install --upgrade pip \
     && echo "Cloning wft4galaxy: branch=${WFT4GALAXY_BRANCH} url=${WFT4GALAXY_REPOSITORY_URL}" >&2 \
     && git clone --single-branch --depth 1 -b ${WFT4GALAXY_BRANCH} ${WFT4GALAXY_REPOSITORY_URL} ${WFT4GALAXY_PATH} \
@@ -45,20 +45,20 @@ RUN echo "Installing dependencies" >&2 \
         gcc \
         make \
         git \
-        py-pip \
         python-dev \
+        py-pip \
     && rm -rf ${WFT4GALAXY_PATH} \
     && rm -rf /var/cache/apk/*
 
 # setup bash custom prompt (PS1)
-ADD bashrc /root/.bashrc
+ADD utils/docker/bashrc /root/.bashrc
 
 # update the working dir
 WORKDIR /root
 
 # add container entrypoint
-COPY entrypoint.sh /bin/entrypoint.sh
-COPY entrypoint-argparser.sh /usr/local/bin/entrypoint-argparser.sh
+COPY utils/docker/minimal/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY utils/docker/entrypoint-argparser.sh /usr/local/bin/entrypoint-argparser.sh
 
 # set the entrypoint
 ENTRYPOINT ["entrypoint.sh"]

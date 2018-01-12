@@ -47,7 +47,7 @@ RUN echo "Installing dependencies" >&2 \
     && rm -rf /var/cache/apk/*
 
 # setup bash custom prompt (PS1)
-ADD bashrc /root/.bashrc
+ADD utils/docker/bashrc /root/.bashrc
 
 # build a tutorial folder within the user's home
 RUN mkdir ${HOME}/tutorial && \
@@ -59,8 +59,8 @@ RUN mkdir ${HOME}/tutorial && \
 WORKDIR /root
 
 # add container entrypoint
-COPY entrypoint.sh /bin/entrypoint.sh
-COPY entrypoint-argparser.sh /usr/local/bin/entrypoint-argparser.sh
+COPY utils/docker/develop/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY utils/docker/entrypoint-argparser.sh /usr/local/bin/entrypoint-argparser.sh
 
 # set the entrypoint
 ENTRYPOINT ["entrypoint.sh"]
