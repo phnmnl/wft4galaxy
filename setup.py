@@ -145,7 +145,7 @@ setup(
     name='wft4galaxy',
     description='Utility module for testing Galaxy workflows',
     url='https://github.com/phnmnl/wft4galaxy',
-    version='0.1',
+    version='0.3',
     install_requires=requirements,
     package_data={'wft4galaxy': ['wft4galaxy.properties'], 'templates': ['*']},
     packages=["wft4galaxy", "wft4galaxy.comparators", "wft4galaxy.app", "templates"],
