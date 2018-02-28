@@ -1,0 +1,810 @@
+{
+    "a_galaxy_workflow": "true",
+    "annotation": "This workflow shows an example of statistical analysis on a multivariate metabolomics dataset. It starts with batch correction, normalization, and outlier filtering, and then performs univariate testing, multivariate modeling, and feature selection.",
+    "format-version": "0.1",
+    "name": "Metabolomics univariate and multivariate statistics",
+    "steps": {
+        "0": {
+            "annotation": "Imports the MTBLS404 (Sacurine) dataset from MetaboLights",
+            "content_id": "mtbls-dwnld",
+            "errors": null,
+            "id": 0,
+            "input_connections": {},
+            "inputs": [],
+            "label": null,
+            "name": "Metabolights downloader",
+            "outputs": [
+                {
+                    "name": "isastudy",
+                    "type": "isa-tab"
+                }
+            ],
+            "position": {
+                "left": 200,
+                "top": 200
+            },
+            "post_job_actions": {},
+            "tool_id": "mtbls-dwnld",
+            "tool_state": "{\"__page__\": null, \"downloader\": \"\\\"wget\\\"\", \"study\": \"\\\"MTBLS404\\\"\", \"__job_resource\": \"{\\\"__current_case__\\\": 0, \\\"__job_resource__select\\\": \\\"no\\\"}\", \"token\": \"\\\"\\\"\", \"type\": \"\\\"public\\\"\", \"__rerun_remap_job_id__\": null, \"metadata\": \"\\\"true\\\"\"}",
+            "tool_version": "3.1.0",
+            "type": "tool",
+            "uuid": "c2fcd777-f5d0-4d38-ba0f-cf02744ae120",
+            "workflow_outputs": []
+        },
+        "1": {
+            "annotation": "Converting ISA data and metadata formats into W4M formats (dataMatrix, sampleMetadata, and variableMetadata tables).",
+            "content_id": "isa2w4m",
+            "errors": null,
+            "id": 1,
+            "input_connections": {
+                "isa": {
+                    "id": 0,
+                    "output_name": "isastudy"
+                }
+            },
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool ISA to W4M",
+                    "name": "isa"
+                }
+            ],
+            "label": null,
+            "name": "ISA to W4M",
+            "outputs": [
+                {
+                    "name": "w4m_variable_metadata",
+                    "type": "tabular"
+                },
+                {
+                    "name": "w4m_sample_metadata",
+                    "type": "tabular"
+                },
+                {
+                    "name": "w4m_data_matrix",
+                    "type": "tabular"
+                }
+            ],
+            "position": {
+                "left": 324,
+                "top": 339.5
+            },
+            "post_job_actions": {},
+            "tool_id": "isa2w4m",
+            "tool_state": "{\"__page__\": null, \"sample_na_filtering\": \"\\\"\\\"\", \"assay\": \"\\\"\\\"\", \"study\": \"\\\"\\\"\", \"variable_na_filtering\": \"\\\"\\\"\", \"__job_resource\": \"{\\\"__current_case__\\\": 0, \\\"__job_resource__select\\\": \\\"no\\\"}\", \"isa\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"__rerun_remap_job_id__\": null}",
+            "tool_version": "1.0.4",
+            "type": "tool",
+            "uuid": "d328d889-d03c-4c38-b801-142a96225546",
+            "workflow_outputs": []
+        },
+        "10": {
+            "annotation": "PCA; score plot colored by the 'gender' factor.",
+            "content_id": "Multivariate",
+            "errors": null,
+            "id": 10,
+            "input_connections": {
+                "dataMatrix_in": {
+                    "id": 9,
+                    "output_name": "dataMatrix_out"
+                },
+                "sampleMetadata_in": {
+                    "id": 9,
+                    "output_name": "sampleMetadata_out"
+                },
+                "variableMetadata_in": {
+                    "id": 9,
+                    "output_name": "variableMetadata_out"
+                }
+            },
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool Multivariate",
+                    "name": "sampleMetadata_in"
+                },
+                {
+                    "description": "runtime parameter for tool Multivariate",
+                    "name": "variableMetadata_in"
+                },
+                {
+                    "description": "runtime parameter for tool Multivariate",
+                    "name": "dataMatrix_in"
+                }
+            ],
+            "label": null,
+            "name": "Multivariate",
+            "outputs": [
+                {
+                    "name": "sampleMetadata_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "variableMetadata_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "figure",
+                    "type": "pdf"
+                },
+                {
+                    "name": "information",
+                    "type": "txt"
+                }
+            ],
+            "position": {
+                "left": 2113,
+                "top": 532.5
+            },
+            "post_job_actions": {},
+            "tool_id": "Multivariate",
+            "tool_state": "{\"advGph\": \"{\\\"parLabVc\\\": \\\"none\\\", \\\"parCexN\\\": \\\"0.8\\\", \\\"parMahalC\\\": \\\"Factor.Value.Gender.\\\", \\\"typeC\\\": \\\"summary\\\", \\\"parPc1I\\\": \\\"1\\\", \\\"__current_case__\\\": 1, \\\"opgC\\\": \\\"full\\\", \\\"parPc2I\\\": \\\"2\\\", \\\"parAsColC\\\": \\\"none\\\"}\", \"__page__\": null, \"sampleMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"__rerun_remap_job_id__\": null, \"predI\": \"\\\"NA\\\"\", \"respC\": \"\\\"none\\\"\", \"orthoI\": \"\\\"0\\\"\", \"variableMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"advCpt\": \"{\\\"opcC\\\": \\\"default\\\", \\\"__current_case__\\\": 0}\", \"dataMatrix_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"testL\": \"\\\"FALSE\\\"\"}",
+            "tool_version": "2.3.10",
+            "type": "tool",
+            "uuid": "f8092d0f-0850-411b-91e3-089f13d95c6a",
+            "workflow_outputs": []
+        },
+        "11": {
+            "annotation": "t-test of significant differences between gender means, with FDR control for multiple testing at the 5% threshold.",
+            "content_id": "Univariate",
+            "errors": null,
+            "id": 11,
+            "input_connections": {
+                "dataMatrix_in": {
+                    "id": 9,
+                    "output_name": "dataMatrix_out"
+                },
+                "sampleMetadata_in": {
+                    "id": 10,
+                    "output_name": "sampleMetadata_out"
+                },
+                "variableMetadata_in": {
+                    "id": 10,
+                    "output_name": "variableMetadata_out"
+                }
+            },
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool Univariate",
+                    "name": "sampleMetadata_in"
+                },
+                {
+                    "description": "runtime parameter for tool Univariate",
+                    "name": "variableMetadata_in"
+                },
+                {
+                    "description": "runtime parameter for tool Univariate",
+                    "name": "dataMatrix_in"
+                }
+            ],
+            "label": null,
+            "name": "Univariate",
+            "outputs": [
+                {
+                    "name": "variableMetadata_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "figure",
+                    "type": "pdf"
+                },
+                {
+                    "name": "information",
+                    "type": "txt"
+                }
+            ],
+            "position": {
+                "left": 2377,
+                "top": 589
+            },
+            "post_job_actions": {},
+            "tool_id": "Univariate",
+            "tool_state": "{\"thrN\": \"\\\"0.05\\\"\", \"__page__\": null, \"facC\": \"\\\"Factor.Value.Gender.\\\"\", \"__rerun_remap_job_id__\": null, \"sampleMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"tesC\": \"\\\"ttest\\\"\", \"variableMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"adjC\": \"\\\"fdr\\\"\", \"dataMatrix_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\"}",
+            "tool_version": "2.2.3",
+            "type": "tool",
+            "uuid": "9f00d14d-3df0-459b-8cae-949bc7b9edc6",
+            "workflow_outputs": []
+        },
+        "12": {
+            "annotation": "OPLS-DA modeling of the 'gender' response.",
+            "content_id": "Multivariate",
+            "errors": null,
+            "id": 12,
+            "input_connections": {
+                "dataMatrix_in": {
+                    "id": 9,
+                    "output_name": "dataMatrix_out"
+                },
+                "sampleMetadata_in": {
+                    "id": 10,
+                    "output_name": "sampleMetadata_out"
+                },
+                "variableMetadata_in": {
+                    "id": 11,
+                    "output_name": "variableMetadata_out"
+                }
+            },
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool Multivariate",
+                    "name": "sampleMetadata_in"
+                },
+                {
+                    "description": "runtime parameter for tool Multivariate",
+                    "name": "variableMetadata_in"
+                },
+                {
+                    "description": "runtime parameter for tool Multivariate",
+                    "name": "dataMatrix_in"
+                }
+            ],
+            "label": null,
+            "name": "Multivariate",
+            "outputs": [
+                {
+                    "name": "sampleMetadata_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "variableMetadata_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "figure",
+                    "type": "pdf"
+                },
+                {
+                    "name": "information",
+                    "type": "txt"
+                }
+            ],
+            "position": {
+                "left": 2648,
+                "top": 526.5
+            },
+            "post_job_actions": {},
+            "tool_id": "Multivariate",
+            "tool_state": "{\"advGph\": \"{\\\"__current_case__\\\": 0, \\\"opgC\\\": \\\"default\\\"}\", \"__page__\": null, \"sampleMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"__rerun_remap_job_id__\": null, \"predI\": \"\\\"1\\\"\", \"respC\": \"\\\"Factor.Value.Gender.\\\"\", \"orthoI\": \"\\\"NA\\\"\", \"variableMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"advCpt\": \"{\\\"opcC\\\": \\\"default\\\", \\\"__current_case__\\\": 0}\", \"dataMatrix_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"testL\": \"\\\"FALSE\\\"\"}",
+            "tool_version": "2.3.10",
+            "type": "tool",
+            "uuid": "12c0d79e-e30d-4497-9596-bbeebb7c0611",
+            "workflow_outputs": []
+        },
+        "13": {
+            "annotation": "Feature selection for discrimination between genders by PLS-DA, Random Forest, and SVM.",
+            "content_id": "biosigner",
+            "errors": null,
+            "id": 13,
+            "input_connections": {
+                "dataMatrix_in": {
+                    "id": 9,
+                    "output_name": "dataMatrix_out"
+                },
+                "sampleMetadata_in": {
+                    "id": 12,
+                    "output_name": "sampleMetadata_out"
+                },
+                "variableMetadata_in": {
+                    "id": 12,
+                    "output_name": "variableMetadata_out"
+                }
+            },
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool Biosigner",
+                    "name": "sampleMetadata_in"
+                },
+                {
+                    "description": "runtime parameter for tool Biosigner",
+                    "name": "variableMetadata_in"
+                },
+                {
+                    "description": "runtime parameter for tool Biosigner",
+                    "name": "dataMatrix_in"
+                }
+            ],
+            "label": null,
+            "name": "Biosigner",
+            "outputs": [
+                {
+                    "name": "variableMetadata_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "figure_tier",
+                    "type": "pdf"
+                },
+                {
+                    "name": "figure_boxplot",
+                    "type": "pdf"
+                },
+                {
+                    "name": "information",
+                    "type": "txt"
+                }
+            ],
+            "position": {
+                "left": 2920,
+                "top": 421.5
+            },
+            "post_job_actions": {},
+            "tool_id": "biosigner",
+            "tool_state": "{\"__page__\": null, \"respC\": \"\\\"Factor.Value.Gender.\\\"\", \"__rerun_remap_job_id__\": null, \"sampleMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"__job_resource\": \"{\\\"__current_case__\\\": 0, \\\"__job_resource__select\\\": \\\"no\\\"}\", \"variableMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"advCpt\": \"{\\\"seedI\\\": \\\"123\\\", \\\"tierC\\\": \\\"S\\\", \\\"pvalN\\\": \\\"0.05\\\", \\\"methodC\\\": \\\"all\\\", \\\"__current_case__\\\": 1, \\\"bootI\\\": \\\"50\\\", \\\"opcC\\\": \\\"full\\\"}\", \"dataMatrix_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\"}",
+            "tool_version": "2.2.7",
+            "type": "tool",
+            "uuid": "19e47c83-839a-48e1-bfb8-6fdf57817442",
+            "workflow_outputs": []
+        },
+        "2": {
+            "annotation": "Discarding blank observations.",
+            "content_id": "generic_filter",
+            "errors": null,
+            "id": 2,
+            "input_connections": {
+                "dataMatrix_in": {
+                    "id": 1,
+                    "output_name": "w4m_data_matrix"
+                },
+                "sampleMetadata_in": {
+                    "id": 1,
+                    "output_name": "w4m_sample_metadata"
+                },
+                "variableMetadata_in": {
+                    "id": 1,
+                    "output_name": "w4m_variable_metadata"
+                }
+            },
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool Generic_Filter",
+                    "name": "sampleMetadata_in"
+                },
+                {
+                    "description": "runtime parameter for tool Generic_Filter",
+                    "name": "variableMetadata_in"
+                },
+                {
+                    "description": "runtime parameter for tool Generic_Filter",
+                    "name": "dataMatrix_in"
+                }
+            ],
+            "label": null,
+            "name": "Generic_Filter",
+            "outputs": [
+                {
+                    "name": "dataMatrix_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "sampleMetadata_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "variableMetadata_out",
+                    "type": "tabular"
+                }
+            ],
+            "position": {
+                "left": 625,
+                "top": 368.5
+            },
+            "post_job_actions": {},
+            "tool_id": "generic_filter",
+            "tool_state": "{\"__page__\": null, \"__rerun_remap_job_id__\": null, \"sampleMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"__job_resource\": \"{\\\"__current_case__\\\": 0, \\\"__job_resource__select\\\": \\\"no\\\"}\", \"numeric_condition\": \"{\\\"__current_case__\\\": 1, \\\"Factors\\\": \\\"FALSE\\\"}\", \"variableMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"dataMatrix_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"qualitative_condition\": \"{\\\"qualitative_repeat\\\": [{\\\"factor_col\\\": \\\"Factor.Value.Material.type.\\\", \\\"__index__\\\": 0, \\\"qual_file\\\": \\\"sample\\\", \\\"factors_value\\\": \\\"blank\\\"}], \\\"__current_case__\\\": 0, \\\"Factors\\\": \\\"TRUE\\\"}\"}",
+            "tool_version": "2017.06",
+            "type": "tool",
+            "uuid": "0210efd4-1864-45b8-b9ad-8d929ba35629",
+            "workflow_outputs": []
+        },
+        "3": {
+            "annotation": "Signal drift and batch-effect corrections for each variables according to the loess modeling of intensities in pools.",
+            "content_id": "Batch_correction",
+            "errors": null,
+            "id": 3,
+            "input_connections": {
+                "dataMatrix": {
+                    "id": 2,
+                    "output_name": "dataMatrix_out"
+                },
+                "sampleMetadata": {
+                    "id": 2,
+                    "output_name": "sampleMetadata_out"
+                },
+                "variableMetadata": {
+                    "id": 2,
+                    "output_name": "variableMetadata_out"
+                }
+            },
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool Batch_correction",
+                    "name": "dataMatrix"
+                },
+                {
+                    "description": "runtime parameter for tool Batch_correction",
+                    "name": "sampleMetadata"
+                },
+                {
+                    "description": "runtime parameter for tool Batch_correction",
+                    "name": "variableMetadata"
+                }
+            ],
+            "label": null,
+            "name": "Batch_correction",
+            "outputs": [
+                {
+                    "name": "dataMatrix_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "variableMetadata_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "graph_output",
+                    "type": "pdf"
+                },
+                {
+                    "name": "rdata_output",
+                    "type": "rdata"
+                }
+            ],
+            "position": {
+                "left": 939,
+                "top": 351.5
+            },
+            "post_job_actions": {},
+            "tool_id": "Batch_correction",
+            "tool_state": "{\"sample_type_col_name\": \"\\\"Factor.Value.Material.type.\\\"\", \"injection_order_col_name\": \"\\\"Factor.Value.Injection.order.\\\"\", \"sampleTypeTagBlank\": \"\\\"blank\\\"\", \"sampleTypeTagSample\": \"\\\"biological material\\\"\", \"batch_col_name\": \"\\\"Factor.Value.Batch.\\\"\", \"dataMatrix\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"__page__\": null, \"sampleTypeTagPool\": \"\\\"pool\\\"\", \"__rerun_remap_job_id__\": null, \"span_condition\": \"{\\\"span\\\": \\\"1.0\\\", \\\"method\\\": \\\"all_loess_pool\\\", \\\"__current_case__\\\": 3}\", \"sampleMetadata\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"variableMetadata\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\"}",
+            "tool_version": "2.2.0",
+            "type": "tool",
+            "uuid": "10c64fc7-1a92-40bb-8514-2abcd756d259",
+            "workflow_outputs": []
+        },
+        "4": {
+            "annotation": "Computing the pool CV (in progress)",
+            "content_id": "quality_metrics",
+            "errors": null,
+            "id": 4,
+            "input_connections": {
+                "dataMatrix_in": {
+                    "id": 3,
+                    "output_name": "dataMatrix_out"
+                },
+                "sampleMetadata_in": {
+                    "id": 2,
+                    "output_name": "sampleMetadata_out"
+                },
+                "variableMetadata_in": {
+                    "id": 3,
+                    "output_name": "variableMetadata_out"
+                }
+            },
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool Quality Metrics",
+                    "name": "sampleMetadata_in"
+                },
+                {
+                    "description": "runtime parameter for tool Quality Metrics",
+                    "name": "variableMetadata_in"
+                },
+                {
+                    "description": "runtime parameter for tool Quality Metrics",
+                    "name": "dataMatrix_in"
+                }
+            ],
+            "label": null,
+            "name": "Quality Metrics",
+            "outputs": [
+                {
+                    "name": "sampleMetadata_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "variableMetadata_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "figure",
+                    "type": "pdf"
+                },
+                {
+                    "name": "information",
+                    "type": "txt"
+                }
+            ],
+            "position": {
+                "left": 910,
+                "top": 738.5
+            },
+            "post_job_actions": {},
+            "tool_id": "quality_metrics",
+            "tool_state": "{\"__page__\": null, \"advPar\": \"{\\\"sampleTypeTagBlank\\\": \\\"blank\\\", \\\"sampleTypeTagSample\\\": \\\"biological material\\\", \\\"sampleTypeColName\\\": \\\"Factor.Value.Material.type.\\\", \\\"sampleTypeTagPool\\\": \\\"pool\\\", \\\"poolAsPool1L\\\": \\\"true\\\", \\\"optC\\\": \\\"full\\\", \\\"__current_case__\\\": 0}\", \"sampleMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"__job_resource\": \"{\\\"__current_case__\\\": 0, \\\"__job_resource__select\\\": \\\"no\\\"}\", \"__rerun_remap_job_id__\": null, \"variableMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"dataMatrix_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"CV_condition\": \"{\\\"Compa\\\": \\\"TRUE\\\", \\\"CV\\\": \\\"FALSE\\\", \\\"__current_case__\\\": 1, \\\"seuil\\\": \\\"1\\\"}\"}",
+            "tool_version": "2.2.8",
+            "type": "tool",
+            "uuid": "7458e116-8419-4774-aa84-361e88e74dd9",
+            "workflow_outputs": []
+        },
+        "5": {
+            "annotation": "Discarding variables with CV > 30% in pools.\nDiscarding pool observations.",
+            "content_id": "generic_filter",
+            "errors": null,
+            "id": 5,
+            "input_connections": {
+                "dataMatrix_in": {
+                    "id": 2,
+                    "output_name": "dataMatrix_out"
+                },
+                "sampleMetadata_in": {
+                    "id": 4,
+                    "output_name": "sampleMetadata_out"
+                },
+                "variableMetadata_in": {
+                    "id": 4,
+                    "output_name": "variableMetadata_out"
+                }
+            },
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool Generic_Filter",
+                    "name": "sampleMetadata_in"
+                },
+                {
+                    "description": "runtime parameter for tool Generic_Filter",
+                    "name": "variableMetadata_in"
+                },
+                {
+                    "description": "runtime parameter for tool Generic_Filter",
+                    "name": "dataMatrix_in"
+                }
+            ],
+            "label": null,
+            "name": "Generic_Filter",
+            "outputs": [
+                {
+                    "name": "dataMatrix_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "sampleMetadata_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "variableMetadata_out",
+                    "type": "tabular"
+                }
+            ],
+            "position": {
+                "left": 1209,
+                "top": 497.5
+            },
+            "post_job_actions": {},
+            "tool_id": "generic_filter",
+            "tool_state": "{\"__page__\": null, \"__rerun_remap_job_id__\": null, \"sampleMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"__job_resource\": \"{\\\"__current_case__\\\": 0, \\\"__job_resource__select\\\": \\\"no\\\"}\", \"numeric_condition\": \"{\\\"__current_case__\\\": 1, \\\"Factors\\\": \\\"FALSE\\\"}\", \"variableMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"dataMatrix_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"qualitative_condition\": \"{\\\"qualitative_repeat\\\": [{\\\"factor_col\\\": \\\"Factor.Value.Material.type.\\\", \\\"__index__\\\": 0, \\\"qual_file\\\": \\\"sample\\\", \\\"factors_value\\\": \\\"pool\\\"}], \\\"__current_case__\\\": 0, \\\"Factors\\\": \\\"TRUE\\\"}\"}",
+            "tool_version": "2017.06",
+            "type": "tool",
+            "uuid": "8a58b871-a0b8-471f-a504-74fb5fc86832",
+            "workflow_outputs": []
+        },
+        "6": {
+            "annotation": "Sample normalization by the osmolality.",
+            "content_id": "normalization",
+            "errors": null,
+            "id": 6,
+            "input_connections": {
+                "dataMatrix": {
+                    "id": 5,
+                    "output_name": "dataMatrix_out"
+                },
+                "scalingMethod|sampleMetadata": {
+                    "id": 5,
+                    "output_name": "sampleMetadata_out"
+                }
+            },
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool Normalization",
+                    "name": "dataMatrix"
+                },
+                {
+                    "description": "runtime parameter for tool Normalization",
+                    "name": "scalingMethod"
+                }
+            ],
+            "label": null,
+            "name": "Normalization",
+            "outputs": [
+                {
+                    "name": "logOut",
+                    "type": "txt"
+                },
+                {
+                    "name": "dataMatrixOut",
+                    "type": "tabular"
+                },
+                {
+                    "name": "graphOut",
+                    "type": "pdf"
+                }
+            ],
+            "position": {
+                "left": 1462,
+                "top": 606.5
+            },
+            "post_job_actions": {},
+            "tool_id": "normalization",
+            "tool_state": "{\"dataMatrix\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"__page__\": null, \"__rerun_remap_job_id__\": null, \"graphType\": \"\\\"None\\\"\", \"scalingMethod\": \"{\\\"sampleMetadata\\\": {\\\"__class__\\\": \\\"RuntimeValue\\\"}, \\\"method\\\": \\\"QuantitativeVariable\\\", \\\"__current_case__\\\": 3, \\\"factor\\\": \\\"Factor.Value.Osmolality.\\\"}\", \"__job_resource\": \"{\\\"__current_case__\\\": 0, \\\"__job_resource__select\\\": \\\"no\\\"}\"}",
+            "tool_version": "1.0.6",
+            "type": "tool",
+            "uuid": "f552375b-add4-438a-9016-173ddc4a0a4e",
+            "workflow_outputs": []
+        },
+        "7": {
+            "annotation": "log10 transformation of the data intensities.",
+            "content_id": "Transformation",
+            "errors": null,
+            "id": 7,
+            "input_connections": {
+                "dataMatrix_in": {
+                    "id": 6,
+                    "output_name": "dataMatrixOut"
+                }
+            },
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool Transformation",
+                    "name": "dataMatrix_in"
+                }
+            ],
+            "label": null,
+            "name": "Transformation",
+            "outputs": [
+                {
+                    "name": "dataMatrix_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "information",
+                    "type": "txt"
+                }
+            ],
+            "position": {
+                "left": 1277,
+                "top": 261.5
+            },
+            "post_job_actions": {},
+            "tool_id": "Transformation",
+            "tool_state": "{\"__page__\": null, \"dataMatrix_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"__rerun_remap_job_id__\": null, \"method\": \"\\\"log10\\\"\"}",
+            "tool_version": "2.2.0",
+            "type": "tool",
+            "uuid": "1c9f5c71-aa96-4c75-89bf-b07c0a29f177",
+            "workflow_outputs": []
+        },
+        "8": {
+            "annotation": "",
+            "content_id": "quality_metrics",
+            "errors": null,
+            "id": 8,
+            "input_connections": {
+                "dataMatrix_in": {
+                    "id": 7,
+                    "output_name": "dataMatrix_out"
+                },
+                "sampleMetadata_in": {
+                    "id": 5,
+                    "output_name": "sampleMetadata_out"
+                },
+                "variableMetadata_in": {
+                    "id": 5,
+                    "output_name": "variableMetadata_out"
+                }
+            },
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool Quality Metrics",
+                    "name": "sampleMetadata_in"
+                },
+                {
+                    "description": "runtime parameter for tool Quality Metrics",
+                    "name": "variableMetadata_in"
+                },
+                {
+                    "description": "runtime parameter for tool Quality Metrics",
+                    "name": "dataMatrix_in"
+                }
+            ],
+            "label": null,
+            "name": "Quality Metrics",
+            "outputs": [
+                {
+                    "name": "sampleMetadata_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "variableMetadata_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "figure",
+                    "type": "pdf"
+                },
+                {
+                    "name": "information",
+                    "type": "txt"
+                }
+            ],
+            "position": {
+                "left": 1538,
+                "top": 313.5
+            },
+            "post_job_actions": {},
+            "tool_id": "quality_metrics",
+            "tool_state": "{\"__page__\": null, \"advPar\": \"{\\\"sampleTypeTagBlank\\\": \\\"blank\\\", \\\"sampleTypeTagSample\\\": \\\"biological material\\\", \\\"sampleTypeColName\\\": \\\"Factor.Value.Material.type.\\\", \\\"sampleTypeTagPool\\\": \\\"pool\\\", \\\"poolAsPool1L\\\": \\\"true\\\", \\\"optC\\\": \\\"full\\\", \\\"__current_case__\\\": 0}\", \"sampleMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"__job_resource\": \"{\\\"__current_case__\\\": 0, \\\"__job_resource__select\\\": \\\"no\\\"}\", \"__rerun_remap_job_id__\": null, \"variableMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"dataMatrix_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"CV_condition\": \"{\\\"Compa\\\": \\\"TRUE\\\", \\\"CV\\\": \\\"FALSE\\\", \\\"__current_case__\\\": 1, \\\"seuil\\\": \\\"1\\\"}\"}",
+            "tool_version": "2.2.8",
+            "type": "tool",
+            "uuid": "13d2bc6d-14b3-4bc9-b15f-6f2893550a95",
+            "workflow_outputs": []
+        },
+        "9": {
+            "annotation": "Discarding the sample outlier according to pval < 1e-4 for the Hotelling test.",
+            "content_id": "generic_filter",
+            "errors": null,
+            "id": 9,
+            "input_connections": {
+                "dataMatrix_in": {
+                    "id": 7,
+                    "output_name": "dataMatrix_out"
+                },
+                "sampleMetadata_in": {
+                    "id": 8,
+                    "output_name": "sampleMetadata_out"
+                },
+                "variableMetadata_in": {
+                    "id": 8,
+                    "output_name": "variableMetadata_out"
+                }
+            },
+            "inputs": [
+                {
+                    "description": "runtime parameter for tool Generic_Filter",
+                    "name": "sampleMetadata_in"
+                },
+                {
+                    "description": "runtime parameter for tool Generic_Filter",
+                    "name": "variableMetadata_in"
+                },
+                {
+                    "description": "runtime parameter for tool Generic_Filter",
+                    "name": "dataMatrix_in"
+                }
+            ],
+            "label": null,
+            "name": "Generic_Filter",
+            "outputs": [
+                {
+                    "name": "dataMatrix_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "sampleMetadata_out",
+                    "type": "tabular"
+                },
+                {
+                    "name": "variableMetadata_out",
+                    "type": "tabular"
+                }
+            ],
+            "position": {
+                "left": 1836,
+                "top": 364.5
+            },
+            "post_job_actions": {},
+            "tool_id": "generic_filter",
+            "tool_state": "{\"__page__\": null, \"__rerun_remap_job_id__\": null, \"sampleMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"__job_resource\": \"{\\\"__current_case__\\\": 0, \\\"__job_resource__select\\\": \\\"no\\\"}\", \"numeric_condition\": \"{\\\"numeric_repeat\\\": [{\\\"__index__\\\": 0, \\\"interval_condition\\\": {\\\"interval\\\": \\\"lower\\\", \\\"low_value\\\": \\\"0.0001\\\", \\\"__current_case__\\\": 0}, \\\"parm_col_num\\\": \\\"hotelling_pval\\\", \\\"num_file\\\": \\\"sample\\\"}], \\\"__current_case__\\\": 0, \\\"Factors\\\": \\\"TRUE\\\"}\", \"variableMetadata_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"dataMatrix_in\": \"{\\\"__class__\\\": \\\"RuntimeValue\\\"}\", \"qualitative_condition\": \"{\\\"__current_case__\\\": 1, \\\"Factors\\\": \\\"FALSE\\\"}\"}",
+            "tool_version": "2017.06",
+            "type": "tool",
+            "uuid": "a6c6810e-c1a6-4525-9346-5a7d35ad726e",
+            "workflow_outputs": []
+        }
+    },
+    "tags": [],
+    "uuid": "4846c164-35c3-471c-a095-83f2c9b7decc"
+}

@@ -498,8 +498,6 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
         if inputs is None:
             if len(self._workflow_test_config.inputs) > 0:
                 inputs = self._workflow_test_config.inputs
-            else:
-                raise ValueError("No input configured !!!")
 
         # check params
         if params is None:
@@ -543,15 +541,16 @@ class WorkflowTestCaseRunner(_unittest.TestCase):
                 # upload input data to the current history
                 # and generate the datamap INPUT --> DATASET
                 datamap = {}
-                for label, config in _iteritems(inputs):
-                    datamap[label] = []
-                    for filename in config["file"]:
-                        dataset_filename = filename if _os.path.isabs(filename) else _os.path.join(base_path, filename)
-                        if config["type"]:
-                            datamap[label].append(
-                                history.upload_dataset(dataset_filename, file_type=config["type"]))
-                        else:
-                            datamap[label].append(history.upload_dataset(dataset_filename))
+                if inputs:
+                    for label, config in _iteritems(inputs):
+                        datamap[label] = []
+                        for filename in config["file"]:
+                            dataset_filename = filename if _os.path.isabs(filename) else _os.path.join(base_path, filename)
+                            if config["type"]:
+                                datamap[label].append(
+                                    history.upload_dataset(dataset_filename, file_type=config["type"]))
+                            else:
+                                datamap[label].append(history.upload_dataset(dataset_filename))
 
                 # run the workflow
                 _logger.debug("About to launch workflow.")
