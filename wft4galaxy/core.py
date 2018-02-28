@@ -662,7 +662,7 @@ class WorkflowTestSuite(object):
                                                            wf_config.get("output_folder", wf_name))
                 # add the workflow
                 w = WorkflowTestCase(name=wf_name, base_path=wf_base_path, workflow_filename=wf_config["file"],
-                                     inputs=wf_config["inputs"], params=wf_config.get("params", {}),
+                                     inputs=(wf_config["inputs"] if 'inputs' in wf_config else None), params=wf_config.get("params", {}),
                                      expected_outputs=wf_config["expected"],
                                      output_folder=wf_config["output_folder"])
                 suite.add_workflow_test(w)
@@ -789,20 +789,22 @@ def _load_configuration(config_filename):
             raise ValueError("Not valid format for the configuration file '%s'.", config_filename)
     # update inputs/expected fields
     for wf_name, wf in _iteritems(workflows_conf["workflows"]):
-        wf["inputs"] = _parse_dict(wf["inputs"])
+        if "inputs" in wf:
+            wf["inputs"] = _parse_dict(wf["inputs"])
         wf["expected"] = _parse_dict(wf["expected"])
     return workflows_conf
 
 
 def _parse_dict(elements):
     results = {}
-    for name, value in _iteritems(elements):
-        result = value
-        if isinstance(value, _basestring):
-            result = {"name": name, "file": value}
-        elif isinstance(value, dict):
-            result["name"] = name
-        else:
-            raise ValueError("Configuration error: %r", elements)
-        results[name] = result
+    if elements:
+        for name, value in _iteritems(elements):
+            result = value
+            if isinstance(value, _basestring):
+                result = {"name": name, "file": value}
+            elif isinstance(value, dict):
+                result["name"] = name
+            else:
+                raise ValueError("Configuration error: %r", elements)
+            results[name] = result
     return results

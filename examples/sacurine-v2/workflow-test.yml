@@ -14,7 +14,6 @@
 workflows:
   sacurine:
     file: "workflow.ga"
-    inputs:
     expected:
       Univariate_variableMetadata: "expected/Univariate_variableMetadata.tsv"
       Multivariate_sampleMetadata: "expected/Multivariate_sampleMetadata.tsv"
