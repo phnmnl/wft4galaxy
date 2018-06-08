@@ -16,7 +16,7 @@ DEFAULT_TARGET_FOLDER="/usr/local/bin"
 TEMP_DIR=""
 
 # print usage
-function print_usage(){
+function print_usage() {
     echo -e "\nUSAGE: ${0} [--repo <REPOSITORY>] [--branch <REPOSITORY_BRANCH>] [TARGET_FOLDER]"
     echo -e "\n\t Options:"
     echo -e "\t - REPOSITORY:        the name of the GitHub repository (default: \"${DEFAULT_REPO}\")"
@@ -67,6 +67,10 @@ while [ $# -gt 0 ]; do
                   --branch )
                           REPO_BRANCH="$2"
                           shift
+                          ;;
+                  --help|-h )
+                          print_usage
+                          exit 0
                           ;;
                   * )
                           OTHER_OPTS="$OTHER_OPTS $OPT"
