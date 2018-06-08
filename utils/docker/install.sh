@@ -95,7 +95,7 @@ ARGS=(${OTHER_OPTS})
 if [[ ${#ARGS[@]} -eq 1 ]]; then
     TARGET_FOLDER=${ARGS[0]}
 elif [[ ${#ARGS[@]} -gt 1 ]]; then
-    echo -e "\nERROR: invalid syntax !!"
+    echo -e "\nERROR: invalid syntax !!" >&2
     print_usage
     exit 99
 fi
@@ -111,16 +111,16 @@ TEMP_DIR=$(mktemp -d)
 TEMP_SCRIPT="${TEMP_DIR}/wft4galaxy-docker"
 STATUS_CODE=$(curl --silent --output ${TEMP_SCRIPT} --write-out "%{http_code}" ${SOURCE_SCRIPT})
 if [[ ${STATUS_CODE} -ne 200 ]]; then
-    echo -e "\nERROR: Script ${SOURCE_SCRIPT} not found!"
-    echo -e "       Check if you are using the proper REPOSITORY and BRANCH."
-    print_usage
+    echo -e "\nERROR: Script ${SOURCE_SCRIPT} not found!" >&2
+    echo -e "       Check if you are using the proper REPOSITORY and BRANCH." >&2
+    print_usage >&2
     exit 99
 else
     chmod +x ${TEMP_SCRIPT}
     if [[ -w ${TARGET_FOLDER} ]]; then
         mv ${TEMP_SCRIPT} ${TARGET_FOLDER}/
     else
-        echo -e "\nTo install 'wft4galaxy-docker' within the '${TARGET_FOLDER}' you need root permissions"
+        echo -e "\nTo install 'wft4galaxy-docker' within the '${TARGET_FOLDER}' you need root permissions" >&2
         sudo mv ${TEMP_SCRIPT} ${TARGET_FOLDER}/
     fi
     exit 0;
