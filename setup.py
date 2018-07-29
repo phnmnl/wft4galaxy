@@ -3,10 +3,8 @@ import shutil
 from setuptools import setup
 import subprocess as _subprocess
 from json import dump as _json_dump
-from pip.req import parse_requirements
 from distutils.command.clean import clean
 from setuptools.command.build_py import build_py
-
 
 def _run_txt_cmd(cmd):
     # Using universal_newlines=True causes subprocess to always
@@ -138,15 +136,11 @@ class CleanCommand(clean):
         for p in garbage_list:
             self._rmrf(p)
 
-
-install_reqs = parse_requirements("requirements.txt", session="hack")
-requirements = [str(ir.req) for ir in install_reqs]
 setup(
     name='wft4galaxy',
     description='Utility module for testing Galaxy workflows',
     url='https://github.com/phnmnl/wft4galaxy',
     version='0.3',
-    install_requires=requirements,
     package_data={'wft4galaxy': ['wft4galaxy.properties'], 'templates': ['*']},
     packages=["wft4galaxy", "wft4galaxy.comparators", "wft4galaxy.app", "templates"],
     entry_points={'console_scripts': [
