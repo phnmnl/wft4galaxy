@@ -27,6 +27,13 @@ def _check_is_git_repo():
     else:
         return True
 
+def _parse_requirements(req_file):
+    """
+    Parse requirements.txt to extract a list of requirements suitable for `setup`.
+    """
+    with open(req_file):
+        clean_lines = (line.strip() for line in req_file)
+        return [ req for req in clean_lines if req and not req.startswith("#") ]
 
 def update_properties(config):
     # do not write properties file if the current project directory
@@ -136,11 +143,14 @@ class CleanCommand(clean):
         for p in garbage_list:
             self._rmrf(p)
 
+requirements_filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "requirements.txt")
+
 setup(
     name='wft4galaxy',
     description='Utility module for testing Galaxy workflows',
     url='https://github.com/phnmnl/wft4galaxy',
     version='0.3',
+    install_requires=_parse_requirements(requirements_filename),
     package_data={'wft4galaxy': ['wft4galaxy.properties'], 'templates': ['*']},
     packages=["wft4galaxy", "wft4galaxy.comparators", "wft4galaxy.app", "templates"],
     entry_points={'console_scripts': [
