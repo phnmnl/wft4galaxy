@@ -32,8 +32,8 @@ def _parse_requirements(req_file):
     """
     Parse requirements.txt to extract a list of requirements suitable for `setup`.
     """
-    with open(req_file):
-        clean_lines = (line.strip() for line in req_file)
+    with open(req_file) as f:
+        clean_lines = (line.strip() for line in f)
         return [ req for req in clean_lines if req and not req.startswith("#") ]
 
 def update_properties(config):
