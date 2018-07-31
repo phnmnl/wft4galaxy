@@ -8,6 +8,4 @@ Jinja2>=2.9
 docker>=2.1.0
 dockerpty>=0.4.1
 unittest-xml-reporting
-
-# Bioblend (latest version on the master branch)
-git+https://github.com/galaxyproject/bioblend.git/@master#egg=bioblend
+bioblend>=0.10.0

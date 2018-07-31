@@ -1,12 +1,11 @@
 import os
 import shutil
+import sys
 from setuptools import setup
 import subprocess as _subprocess
 from json import dump as _json_dump
-from pip.req import parse_requirements
 from distutils.command.clean import clean
 from setuptools.command.build_py import build_py
-
 
 def _run_txt_cmd(cmd):
     # Using universal_newlines=True causes subprocess to always
@@ -29,12 +28,19 @@ def _check_is_git_repo():
     else:
         return True
 
+def _parse_requirements(req_file):
+    """
+    Parse requirements.txt to extract a list of requirements suitable for `setup`.
+    """
+    with open(req_file) as f:
+        clean_lines = (line.strip() for line in f)
+        return [ req for req in clean_lines if req and not req.startswith("#") ]
 
 def update_properties(config):
     # do not write properties file if the current project directory
     # is not a Git repository
     if not _check_is_git_repo():
-        print("Not a Git repository")
+        sys.stderr.write("Not a Git repository\n")
         return False
 
     first_remote = _run_txt_cmd(['git', 'remote']).split('\n')[0]
@@ -115,7 +121,7 @@ class BuildCommand(build_py):
 class CleanCommand(clean):
     def _rmrf(self, path):
         """
-        Remove a file or directory.         
+        Remove a file or directory.
         """
         try:
             if os.path.isdir(path) and not os.path.islink(path):
@@ -128,7 +134,6 @@ class CleanCommand(clean):
     def run(self):
         clean.run(self)
         garbage_list = [
-            "DEFAULT_HADOOP_HOME",
             "build",
             "dist",
             "wft4galaxy.egg-info",
@@ -138,15 +143,14 @@ class CleanCommand(clean):
         for p in garbage_list:
             self._rmrf(p)
 
+requirements_filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "requirements.txt")
 
-install_reqs = parse_requirements("requirements.txt", session="hack")
-requirements = [str(ir.req) for ir in install_reqs]
 setup(
     name='wft4galaxy',
     description='Utility module for testing Galaxy workflows',
     url='https://github.com/phnmnl/wft4galaxy',
     version='0.3',
-    install_requires=requirements,
+    install_requires=_parse_requirements(requirements_filename),
     package_data={'wft4galaxy': ['wft4galaxy.properties'], 'templates': ['*']},
     packages=["wft4galaxy", "wft4galaxy.comparators", "wft4galaxy.app", "templates"],
     entry_points={'console_scripts': [
