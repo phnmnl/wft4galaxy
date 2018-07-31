@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 from setuptools import setup
 import subprocess as _subprocess
 from json import dump as _json_dump
@@ -39,7 +40,7 @@ def update_properties(config):
     # do not write properties file if the current project directory
     # is not a Git repository
     if not _check_is_git_repo():
-        print("Not a Git repository")
+        sys.stderr.write("Not a Git repository\n")
         return False
 
     first_remote = _run_txt_cmd(['git', 'remote']).split('\n')[0]
@@ -120,7 +121,7 @@ class BuildCommand(build_py):
 class CleanCommand(clean):
     def _rmrf(self, path):
         """
-        Remove a file or directory.         
+        Remove a file or directory.
         """
         try:
             if os.path.isdir(path) and not os.path.islink(path):
@@ -133,7 +134,6 @@ class CleanCommand(clean):
     def run(self):
         clean.run(self)
         garbage_list = [
-            "DEFAULT_HADOOP_HOME",
             "build",
             "dist",
             "wft4galaxy.egg-info",
